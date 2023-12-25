@@ -7,10 +7,13 @@
 #include "readwrite.h"
 #include "device_commands.h"
 
+enum class BoosterState : uint8_t {ON, OFF};
+enum class BehaveState  : uint8_t {AUTO, ADVANCED};
+
 struct Info
 {
-    std::int16_t temperature{0};
-    std::int16_t fanRPM{0};
+    std::uint16_t temperature{0};
+    std::uint16_t fanRPM{0};
     Info() = delete;
     Info(const AddressedValueAny& temp, const AddressedValueAny& rpm);
 };
@@ -35,9 +38,6 @@ struct CpuGpuFanCurve
 class CDevice
 {
 public:
-    enum class BoosterState {ON, OFF};
-    enum class BehaveState  {AUTO, ADVANCED};
-
     CDevice() = delete;
     explicit CDevice(CReadWrite readWrite);
     virtual ~CDevice();

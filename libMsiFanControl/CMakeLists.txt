@@ -10,7 +10,7 @@ find_library(CPUID cpuid REQUIRED)
 include(CMakePrintHelpers)
 cmake_print_variables(CPUID)
 
-add_library(libMsiFanControl STATIC
+add_library(MsiFanControl STATIC
   device_commands.h
   readwrite.h
   readwrite_provider.h
@@ -21,7 +21,8 @@ add_library(libMsiFanControl STATIC
   intelbeforegen10.h intelbeforegen10.cpp
 
   msi_fan_control.h msi_fan_control.cpp
+
 )
 
-target_compile_definitions(libMsiFanControl PRIVATE LIBMSIFANCONTROL_LIBRARY)
-target_link_libraries(libMsiFanControl SYSTEM ${CPUID})
+target_compile_definitions(MsiFanControl PRIVATE LIBMSIFANCONTROL_LIBRARY)
+target_link_libraries(MsiFanControl ${CPUID})

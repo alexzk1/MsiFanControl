@@ -50,7 +50,7 @@ CpuGpuInfo CDevice::ReadInfo() const
     return {std::move(cpu), std::move(gpu)};
 }
 
-CDevice::BoosterState CDevice::GetBoosterState() const
+BoosterState CDevice::GetBoosterState() const
 {
     auto cmd   = GetCmdBoosterStates();
     const auto clone = cmd;
@@ -75,7 +75,7 @@ void CDevice::SetBooster(const BoosterState what) const
     SetBooster(handle, what);
 }
 
-CDevice::BehaveState CDevice::ReadBehaveState() const
+BehaveState CDevice::ReadBehaveState() const
 {
     auto cmd = GetCmdBehaveStates();
     const auto clone = cmd;

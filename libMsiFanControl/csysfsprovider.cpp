@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <fstream>
 #include <ios>
+#include <iostream>
 #include <memory>
 #include <array>
 
@@ -33,12 +34,14 @@ CReadWrite CSysFsProvider::CreateIoObject(bool dryRun)
 {
     static const auto genDryRun = []()->std::filesystem::path
     {
-        auto name = std::filesystem::path(std::tmpnam(nullptr));
+        auto name = std::filesystem::temp_directory_path();
+        name /=std::filesystem::path("msiDryRun.bin");
+
         std::array<char, 256> zeroes{};
         std::fill(zeroes.begin(), zeroes.end(), 0);
         std::ofstream ofs(name, std::ios_base::out | std::ios_base::trunc | std::ios_base::binary);
         ofs.write(zeroes.data(), zeroes.size());
-
+        std::cerr << "Path to dry-run file: " << name << std::endl;
         return name;
     };
     return CReadWrite(std::make_shared<ReadWriteProviderImpl>(dryRun ? genDryRun() :
