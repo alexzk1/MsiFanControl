@@ -46,7 +46,7 @@ void MainWindow::CreateCommunicator()
                 UpdateUiWithInfo(std::move(info), broken);
 
                 using namespace std::chrono_literals;
-                std::this_thread::sleep_for(2s);
+                std::this_thread::sleep_for(3s);
             }
         }
         catch(std::exception& ex)

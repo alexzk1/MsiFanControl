@@ -20,7 +20,7 @@ void threadBody(const utility::runnerint_t shouldStop)
         {
             sharedDevice.Communicate();
             using namespace std::chrono_literals;
-            std::this_thread::sleep_for(1s);
+            std::this_thread::sleep_for(2s);
         }
     }
     catch (std::exception & l_exception)
