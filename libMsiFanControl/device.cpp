@@ -1,20 +1,36 @@
 #include "device.h"
 #include <algorithm>
-#include <cassert>
 #include <cstdint>
+#include <optional>
 #include <stdexcept>
+
+bool ___GLOBAL_DRY_RUN___ = false;
+
+//Cannot use assert! Because it does not call destructors and shared memory remains allocated in daemon.
+#ifndef NDEBUG
+static void Throw(bool cond, std::string text)
+{
+    if (!cond && !___GLOBAL_DRY_RUN___)
+    {
+        throw std::runtime_error(text);
+    }
+}
+#else
+#define Throw(COND, TEXT)
+#endif
 
 Info::Info(const AddressedValueAny &temp, const AddressedValueAny &rpm)
 {
-    assert(std::holds_alternative<AddressedValue1B>(temp)
-           && "We expect 1 byte request for the temperature.");
-    assert(std::holds_alternative<AddressedValue2B>(rpm) && "We expect 2 bytes request for the rpm.");
+    Throw(std::holds_alternative<AddressedValue1B>(temp),
+          "We expect 1 byte request for the temperature.");
+    Throw(std::holds_alternative<AddressedValue2B>(rpm),
+          "We expect 2 bytes request for the rpm.");
 
     std::visit([this](const auto& val)
     {
         temperature = val.value;
-        assert((temperature == 0 || (temperature > 10 && temperature < 150))
-               && "Something is messed up. Temperature is weird.");
+        Throw((temperature == 0 || (temperature > 10 && temperature < 150)),
+              "Something is messed up. Temperature is weird.");
     }, temp);
 
     std::visit([this](const auto& val)
@@ -23,8 +39,8 @@ Info::Info(const AddressedValueAny &temp, const AddressedValueAny &rpm)
         {
             fanRPM = static_cast<std::uint16_t>(478000.0 / val.value);
         }
-        assert((fanRPM == 0 || (fanRPM > 500 && fanRPM < 12000))
-               && "Something is messed up. RPM is weird.");
+        Throw((fanRPM == 0 || (fanRPM > 500 && fanRPM < 12000)),
+              "Something is messed up. RPM is weird.");
     }, rpm);
 }
 
@@ -41,8 +57,8 @@ CDevice::~CDevice()
 CpuGpuInfo CDevice::ReadInfo() const
 {
     auto cmd = GetCmdTempRPM();
-    assert(cmd.size() == 4
-           && "We expect 4 commands: temp getter, then RPM getter for CPU, then for GPU.");
+    Throw(cmd.size() == 4,
+          "We expect 4 commands: temp getter, then RPM getter for CPU, then for GPU.");
     readWriteAccess.Read(cmd);
     Info cpu(cmd.at(0), cmd.at(1));
     Info gpu(cmd.at(2), cmd.at(3));
@@ -50,14 +66,14 @@ CpuGpuInfo CDevice::ReadInfo() const
     return {std::move(cpu), std::move(gpu)};
 }
 
-BoosterState CDevice::GetBoosterState() const
+BoosterState CDevice::ReadBoosterState() const
 {
     auto cmd   = GetCmdBoosterStates();
     const auto clone = cmd;
     readWriteAccess.Read(cmd);
 
     const auto diff = cmd.GetOneDifference(clone);
-    assert(diff && "Something went wrong. Read should indicate changed state.");
+    Throw(diff != std::nullopt, "Something went wrong. Read should indicate changed state.");
 
     //We read OFF state different, that means there is ON state in device.
     return diff->first == BoosterState::OFF ? BoosterState::ON : BoosterState::OFF;
@@ -82,7 +98,7 @@ BehaveState CDevice::ReadBehaveState() const
     readWriteAccess.Read(cmd);
 
     const auto diff = cmd.GetOneDifference(clone);
-    assert(diff && "Something went wrong. Read should indicate changed state.");
+    Throw(diff != std::nullopt, "Something went wrong. Read should indicate changed state.");
 
     //Same logic as in booster, if "auto" is different, then "advanced" is set there.
     return diff->first == BehaveState::AUTO ? BehaveState::ADVANCED : BehaveState::AUTO;
@@ -99,6 +115,11 @@ void CDevice::SetBehaveState(const BehaveState what, CpuGpuFanCurve fanCurve) co
     readWriteAccess.Write(handle, fanCurve.cpu);
     readWriteAccess.Write(handle, fanCurve.gpu);
     readWriteAccess.Write(handle, {std::move(cmd.at(what))});
+}
+
+FullInfoBlock CDevice::ReadFullInformation() const
+{
+    return {ReadInfo(), ReadBoosterState(), ReadBehaveState()};
 }
 
 AddressedValueAnyList CDevice::GetCmdTempRPM() const

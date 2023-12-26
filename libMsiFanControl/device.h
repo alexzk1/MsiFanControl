@@ -16,12 +16,26 @@ struct Info
     std::uint16_t fanRPM{0};
     Info() = delete;
     Info(const AddressedValueAny& temp, const AddressedValueAny& rpm);
+
+    //support for Cereal
+    template <class Archive>
+    void serialize( Archive & ar )
+    {
+        ar(temperature, fanRPM);
+    }
 };
 
 struct CpuGpuInfo
 {
     Info cpu;
     Info gpu;
+
+    //support for Cereal
+    template <class Archive>
+    void serialize( Archive & ar )
+    {
+        ar(cpu, gpu);
+    }
 };
 
 //Lists must contain 1 byte values only.
@@ -33,6 +47,28 @@ struct CpuGpuFanCurve
     static CpuGpuFanCurve MakeDefault();
 
     void Validate() const;
+
+    //support for Cereal
+    template <class Archive>
+    void serialize( Archive & ar )
+    {
+        ar(cpu, gpu);
+    }
+};
+
+//! @brief this is combined information of all readers to use with IPC.
+struct FullInfoBlock
+{
+    CpuGpuInfo info;
+    BoosterState boosterState;
+    BehaveState behaveState;
+
+    //support for Cereal
+    template <class Archive>
+    void serialize( Archive & ar )
+    {
+        ar(info, boosterState, behaveState);
+    }
 };
 
 class CDevice
@@ -44,12 +80,14 @@ public:
 
     CpuGpuInfo   ReadInfo() const;
 
-    BoosterState GetBoosterState() const;
+    BoosterState ReadBoosterState() const;
     void         SetBooster(const BoosterState what) const;
 
     BehaveState  ReadBehaveState() const;
     void         SetBehaveState(const BehaveState what,
                                 CpuGpuFanCurve fanCurve = CpuGpuFanCurve::MakeDefault()) const;
+
+    FullInfoBlock ReadFullInformation() const;
 protected:
     using BoosterStates = AddressedValueStates<BoosterState>;
     using BehaveStates  = AddressedValueStates<BehaveState>;

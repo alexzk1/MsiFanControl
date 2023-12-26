@@ -30,6 +30,13 @@ struct AddressedValueTmpl
     {
         return !(*this == another);
     }
+
+    //support for Cereal
+    template <class Archive>
+    void serialize( Archive & ar )
+    {
+        ar(address, value);
+    }
 };
 
 using AddressedValue1B = AddressedValueTmpl<std::uint8_t>;
@@ -133,6 +140,13 @@ struct AddressedValueStates
     auto end() const
     {
         return data.end();
+    }
+
+    //support for Cereal
+    template <class Archive>
+    void serialize( Archive & ar )
+    {
+        ar(data);
     }
 
     DataType data;

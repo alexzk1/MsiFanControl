@@ -9,6 +9,8 @@
 #include <memory>
 #include <array>
 
+extern bool ___GLOBAL_DRY_RUN___;
+
 class ReadWriteProviderImpl : public IReadWriteProvider
 {
 private:
@@ -32,6 +34,7 @@ public:
 
 CReadWrite CSysFsProvider::CreateIoObject(bool dryRun)
 {
+    ___GLOBAL_DRY_RUN___ = dryRun;
     static const auto genDryRun = []()->std::filesystem::path
     {
         auto name = std::filesystem::temp_directory_path();

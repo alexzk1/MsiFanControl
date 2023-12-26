@@ -1,22 +1,32 @@
-#include "msi_fan_control.h"
 #include "runners.h"
+#include "communicator.h"
 
 #include <cerrno>
+#include <chrono>
 #include <iostream>
+#include <ostream>
 #include <stdexcept>
 #include<exception>
 #include <signal.h>
 #include <systemd/sd-daemon.h>
+#include <thread>
 
 void threadBody(const utility::runnerint_t shouldStop)
 {
     try
     {
-        auto device = CreateDeviceController(true);
+        CSharedDevice sharedDevice;
+        while(! (*shouldStop))
+        {
+            sharedDevice.Communicate();
+            using namespace std::chrono_literals;
+            std::this_thread::sleep_for(1s);
+        }
     }
     catch (std::exception & l_exception)
     {
         auto l_resultStatus = errno;
+        std::cerr << "Communication error: " << l_exception.what() << std::endl << std::flush;
         sd_notifyf (0, "STATUS=Failed: %s\n ERRNO=%i", l_exception.what (), l_resultStatus);
         std::exit(l_resultStatus);
     }
@@ -46,7 +56,7 @@ int main(int argc, const char** argv)
         sd_notify (0, "STOPPING=1");
 
         //Stop all threading operations
-        thread = nullptr;
+        thread.reset();
         sd_notify (0, "STATUS=STOPPED");
         std::cerr << std::string ("MSI fans control has been successfully shut down.") << std::endl <<
                   std::flush;

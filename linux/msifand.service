@@ -1,0 +1,15 @@
+[Unit]
+Description=MSI fans controller daemon.
+StartLimitBurst=5
+StartLimitIntervalSec=10
+
+[Service]
+Type=simple
+Restart=never
+RestartSec=10
+User=root
+ExecStart=/mnt/sda2/alex/Work/OpenSource/build-MsiFanControl-Desktop-Debug/MsiFanCtrlD/MsiFanCtrlD
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
