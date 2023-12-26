@@ -14,11 +14,11 @@ find_package(cereal REQUIRED)
 
 add_executable(MsiFanCtrlD
  maind.cpp
- runners.h
  communicator.h communicator.cpp
 )
 
 include_directories(${Boost_INCLUDE_DIRS})
 target_include_directories(MsiFanCtrlD PRIVATE ../libMsiFanControl)
+target_include_directories(MsiFanCtrlD PRIVATE ../common)
 target_link_libraries(MsiFanCtrlD PRIVATE MsiFanControl ${CPUID} systemd pthread ${Boost_LIBRARIES} ${cereal_LIBRARIES})
 

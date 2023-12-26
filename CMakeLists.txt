@@ -5,3 +5,4 @@ project(MsiFanControlEverything)
 
 add_subdirectory(libMsiFanControl)
 add_subdirectory(MsiFanCtrlD)
+add_subdirectory(MsiFanControlGUI)

@@ -39,8 +39,8 @@ Info::Info(const AddressedValueAny &temp, const AddressedValueAny &rpm)
         {
             fanRPM = static_cast<std::uint16_t>(478000.0 / val.value);
         }
-        Throw((fanRPM == 0 || (fanRPM > 500 && fanRPM < 12000)),
-              "Something is messed up. RPM is weird.");
+        //Just random big enough value, I had 7000 RPM.
+        Throw((fanRPM < 12000), "Something is messed up. RPM is too big.");
     }, rpm);
 }
 

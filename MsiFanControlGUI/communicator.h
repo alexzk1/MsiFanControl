@@ -1,20 +1,18 @@
 #pragma once
 
 #include <memory>
+
 #include "communicator_common.h"
 
-//This is daemon side communicator.
-
+//This is GUI side communicator
 namespace boost
 {
     namespace interprocess
     {
         class shared_memory_object;
         class named_mutex;
-        class mapped_region;
     }
 }
-class CDevice;
 
 class CSharedDevice
 {
@@ -25,6 +23,5 @@ public:
     void Communicate();
 private:
     CleanSharedMemory memoryCleaner;
-    std::shared_ptr<CDevice> device;
     std::shared_ptr<SharedMemoryWithMutex> sharedMem;
 };

@@ -14,7 +14,7 @@ struct Info
 {
     std::uint16_t temperature{0};
     std::uint16_t fanRPM{0};
-    Info() = delete;
+    Info() = default;
     Info(const AddressedValueAny& temp, const AddressedValueAny& rpm);
 
     //support for Cereal

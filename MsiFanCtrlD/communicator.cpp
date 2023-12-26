@@ -6,13 +6,15 @@
 #include <cereal/types/variant.hpp>
 #include <cereal/archives/binary.hpp>
 
-#include <boost/interprocess/shared_memory_object.hpp>
-#include <boost/interprocess/mapped_region.hpp>
 #include <boost/interprocess/sync/named_mutex.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
+#include <boost/interprocess/permissions.hpp>
 
 #include <cstddef>
 #include <exception>
+#include <filesystem>
+#include <fstream>
+#include <ios>
 #include <memory>
 
 #include <stdexcept>
@@ -22,69 +24,62 @@
 #include "msi_fan_control.h"
 #include "communicator.h"
 
-constexpr std::size_t kWholeSharedMemSize = 4096;
+//This is daemon side communicator.
+
 static_assert(kWholeSharedMemSize % 2 == 0, "Wrong size.");
 
 //Ok, idea is, on 1st half of the memory we will put cereal serialized current state like temperature / rpm.
 //From the 2nd half we will read contol if any.
 
-struct MemBuf : std::streambuf
+//Kernel does not allow to set 0x666 on shared memory.
+struct RelaxKernel
 {
-    MemBuf(char* base, std::size_t size)
+    std::filesystem::path file;
+    std::string old_value;
+    RelaxKernel(std::filesystem::path aFile) : file(std::move(aFile))
     {
-        this->setp(base, base + size);
-        this->setg(base, base, base + size);
+        {
+            std::ifstream inp(file);
+            inp >> old_value;
+        }
+        std::ofstream out(file, std::ios_base::trunc);
+        out << "0";
     }
-    std::size_t written() const
+
+    RelaxKernel() : RelaxKernel("/proc/sys/fs/protected_regular")
     {
-        return this->pptr() - this->pbase();
     }
-    std::size_t read() const
+
+    ~RelaxKernel()
     {
-        return this->gptr() - this->eback();
+        std::ofstream out(file, std::ios_base::trunc);
+        out << old_value;
     }
 };
 
 CSharedDevice::CSharedDevice()
+    : memoryCleaner()
 {
-    static const std::string kSharedMemoryName = "MSICoolersSharedControlMem6";
-    static const std::string kSharedMutexName  = "MSICoolersSharedControlMtx6";
-
-    device = CreateDeviceController(true);
+    device = CreateDeviceController(false);
     using namespace boost::interprocess;
 
-    sharedMutex = std::shared_ptr<named_mutex>(new named_mutex(create_only,
-                  kSharedMutexName.c_str()), [](auto ptr)
-    {
-        if (ptr)
-        {
-            named_mutex::remove(kSharedMutexName.c_str());
-            delete ptr;
-        }
-    });
+    RelaxKernel relax;
 
-    sharedMemory = std::shared_ptr<shared_memory_object>(new shared_memory_object(create_only,
-                   kSharedMemoryName.c_str(), read_write), [](auto* ptr)
-    {
-        if (ptr)
-        {
-            shared_memory_object::remove(kSharedMemoryName.c_str());
-            delete ptr;
-        }
-    });
-    sharedMemory->truncate(kWholeSharedMemSize);
+    permissions  unrestricted_permissions;
+    unrestricted_permissions.set_unrestricted();
 
-    if (!sharedMutex || !sharedMemory || !device)
-    {
-        throw std::runtime_error("Failed to create at least one important object.");
-    }
+    shared_memory_object shm(create_only,
+                             GetMemoryName(), read_write, unrestricted_permissions);
+    shm.truncate(kWholeSharedMemSize);
+    sharedMem = std::make_shared<SharedMemoryWithMutex>(std::move(shm));
 }
 
 CSharedDevice::~CSharedDevice()
 {
+    try
     {
         using namespace boost::interprocess;
-        scoped_lock<named_mutex> grd(*sharedMutex);
+        scoped_lock<interprocess_mutex> grd(sharedMem->Mutex());
         if (device)
         {
             //when we done - switch to AUTO most common things.
@@ -106,31 +101,26 @@ CSharedDevice::~CSharedDevice()
             device.reset();
         }
         catch(...) {}
-
-        try
-        {
-            sharedMemory.reset();
-        }
-        catch(...) {}
-    }
-    try
-    {
-        sharedMutex.reset();
     }
     catch(...)
     {
     }
+
+    try
+    {
+        sharedMem.reset();
+    }
+    catch(...) {}
 }
 
 void CSharedDevice::Communicate()
 {
     using namespace boost::interprocess;
 
-    mapped_region region{*sharedMemory, read_write};
-    scoped_lock<named_mutex> grd(*sharedMutex);
+    scoped_lock<interprocess_mutex> grd(sharedMem->Mutex());
     {
         const auto info = device->ReadFullInformation();
-        MemBuf buffer(static_cast<char*>(region.get_address()), region.get_size() / 2);
+        auto buffer = sharedMem->Daemon2UI();
         std::ostream ss(&buffer);
         cereal::BinaryOutputArchive oarchive(ss);
         oarchive(info);
