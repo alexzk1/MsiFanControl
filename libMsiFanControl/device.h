@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <cassert>
+#include <iterator>
 #include <unordered_map>
 #include <variant>
 #include "readwrite.h"
@@ -59,15 +60,18 @@ struct CpuGpuFanCurve
 //! @brief this is combined information of all readers to use with IPC.
 struct FullInfoBlock
 {
-    CpuGpuInfo info;
+    //tag is strictly incremented by daemon, used by GUI to detect disconnect or so.
+    std::size_t  tag{0};
+    CpuGpuInfo   info;
     BoosterState boosterState;
-    BehaveState behaveState;
+    BehaveState  behaveState;
+    std::string  daemonDeviceException;
 
     //support for Cereal
     template <class Archive>
     void serialize( Archive & ar )
     {
-        ar(info, boosterState, behaveState);
+        ar(tag, info, boosterState, behaveState, daemonDeviceException);
     }
 };
 
@@ -87,7 +91,7 @@ public:
     void         SetBehaveState(const BehaveState what,
                                 CpuGpuFanCurve fanCurve = CpuGpuFanCurve::MakeDefault()) const;
 
-    FullInfoBlock ReadFullInformation() const;
+    FullInfoBlock ReadFullInformation(std::size_t aTag) const;
 protected:
     using BoosterStates = AddressedValueStates<BoosterState>;
     using BehaveStates  = AddressedValueStates<BehaveState>;

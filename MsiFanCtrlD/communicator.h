@@ -18,6 +18,24 @@ class CDevice;
 
 class CSharedDevice
 {
+    struct CleanSharedMemory
+    {
+        CleanSharedMemory()
+        {
+            Clean();
+        }
+
+        ~CleanSharedMemory()
+        {
+            Clean();
+        }
+
+        static void Clean()
+        {
+            using namespace boost::interprocess;
+            shared_memory_object::remove(GetMemoryName());
+        }
+    };
 public:
     CSharedDevice();
     ~CSharedDevice();

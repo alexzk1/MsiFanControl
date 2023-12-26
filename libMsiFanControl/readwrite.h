@@ -2,7 +2,6 @@
 
 #include <fstream>
 #include <type_traits>
-#include <memory.h>
 #include <array>
 #include <variant>
 #include <vector>
@@ -93,8 +92,10 @@ private:
         readStream.seekg(offset);
         readStream.read(tmp.data(), tmp.size());
 
+        //Guess i should understand this python code as big endian:
+        // VALUE = int(file.read(2).hex(),16)
         T result;
-        memcpy(&result, tmp.data(), sizeof(T));
+        std::copy(tmp.rbegin(), tmp.rend(), &result);
         return result;
     }
 
@@ -105,8 +106,10 @@ private:
 
         static_assert(std::is_scalar_v<T>, "Only scalars are allowed.");
         std::array<char, sizeof(T)> tmp;
-        memcpy(tmp.data(), std::addressof(value), sizeof(value));
 
+        //Guess this is BIG endian too:
+        //file.write(bytes((VALUE,)))
+        std::copy_n(&value, sizeof(value), tmp.rbegin());
         writeStream.seekp(offset);
         writeStream.write(tmp.data(), tmp.size());
     }

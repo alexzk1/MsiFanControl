@@ -38,6 +38,8 @@ DevicePtr CreateDeviceController(bool dryRun)
     if (till != std::string::npos)
     {
         const auto gen = std::stoi(brand.substr(0, till));
+
+        std::cerr << "CPU Gen detected: " << gen << std::endl << std::flush;
         if (gen > 9)
         {
             return std::make_shared<CIntelGen10>(CSysFsProvider::CreateIoObject(dryRun));

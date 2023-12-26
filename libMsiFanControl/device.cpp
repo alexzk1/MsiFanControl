@@ -1,5 +1,6 @@
 #include "device.h"
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <stdexcept>
@@ -29,8 +30,6 @@ Info::Info(const AddressedValueAny &temp, const AddressedValueAny &rpm)
     std::visit([this](const auto& val)
     {
         temperature = val.value;
-        Throw((temperature == 0 || (temperature > 10 && temperature < 150)),
-              "Something is messed up. Temperature is weird.");
     }, temp);
 
     std::visit([this](const auto& val)
@@ -39,8 +38,6 @@ Info::Info(const AddressedValueAny &temp, const AddressedValueAny &rpm)
         {
             fanRPM = static_cast<std::uint16_t>(478000.0 / val.value);
         }
-        //Just random big enough value, I had 7000 RPM.
-        Throw((fanRPM < 12000), "Something is messed up. RPM is too big.");
     }, rpm);
 }
 
@@ -117,9 +114,9 @@ void CDevice::SetBehaveState(const BehaveState what, CpuGpuFanCurve fanCurve) co
     readWriteAccess.Write(handle, {std::move(cmd.at(what))});
 }
 
-FullInfoBlock CDevice::ReadFullInformation() const
+FullInfoBlock CDevice::ReadFullInformation(std::size_t aTag) const
 {
-    return {ReadInfo(), ReadBoosterState(), ReadBehaveState()};
+    return {aTag, ReadInfo(), ReadBoosterState(), ReadBehaveState()};
 }
 
 AddressedValueAnyList CDevice::GetCmdTempRPM() const

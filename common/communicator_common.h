@@ -9,7 +9,7 @@
 
 inline const char*  GetMemoryName()
 {
-    static const char* const ptr = "MSICoolersSharedControlMem8";
+    static const char* const ptr = "MSICoolersSharedControlMem9";
     return ptr;
 }
 
@@ -27,25 +27,6 @@ struct MemBuf : std::streambuf
     std::size_t read() const
     {
         return this->gptr() - this->eback();
-    }
-};
-
-struct CleanSharedMemory
-{
-    CleanSharedMemory()
-    {
-        Clean();
-    }
-
-    ~CleanSharedMemory()
-    {
-        Clean();
-    }
-
-    static void Clean()
-    {
-        using namespace boost::interprocess;
-        shared_memory_object::remove(GetMemoryName());
     }
 };
 

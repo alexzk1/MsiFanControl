@@ -20,12 +20,15 @@ set(PROJECT_SOURCES
         mainwindow.h
         mainwindow.ui
         communicator.cpp communicator.h
+        execonmainthread.cpp execonmainthread.h
     )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(MsiFanControlGUI
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
+        resources.qrc
+        delayed_buttons.h
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET MsiFanControlGUI APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

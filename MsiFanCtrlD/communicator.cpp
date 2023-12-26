@@ -1,9 +1,8 @@
-#include <boost/interprocess/creation_tags.hpp>
-#include <boost/interprocess/interprocess_fwd.hpp>
 #include <cereal/types/array.hpp>
 #include <cereal/types/vector.hpp>
 #include <cereal/types/map.hpp>
 #include <cereal/types/variant.hpp>
+#include <cereal/types/string.hpp>
 #include <cereal/archives/binary.hpp>
 
 #include <boost/interprocess/sync/named_mutex.hpp>
@@ -68,7 +67,7 @@ CSharedDevice::CSharedDevice()
     permissions  unrestricted_permissions;
     unrestricted_permissions.set_unrestricted();
 
-    shared_memory_object shm(create_only,
+    shared_memory_object shm(open_or_create,
                              GetMemoryName(), read_write, unrestricted_permissions);
     shm.truncate(kWholeSharedMemSize);
     sharedMem = std::make_shared<SharedMemoryWithMutex>(std::move(shm));
@@ -78,8 +77,13 @@ CSharedDevice::~CSharedDevice()
 {
     try
     {
+        sharedMem.reset();
+    }
+    catch(...) {}
+
+    try
+    {
         using namespace boost::interprocess;
-        scoped_lock<interprocess_mutex> grd(sharedMem->Mutex());
         if (device)
         {
             //when we done - switch to AUTO most common things.
@@ -105,28 +109,29 @@ CSharedDevice::~CSharedDevice()
     catch(...)
     {
     }
-
-    try
-    {
-        sharedMem.reset();
-    }
-    catch(...) {}
 }
 
 void CSharedDevice::Communicate()
 {
     using namespace boost::interprocess;
+    static std::size_t tag = 0;
+
+    FullInfoBlock info;
+    try
+    {
+        info = device->ReadFullInformation(++tag);
+    }
+    catch(std::exception& ex)
+    {
+        info.daemonDeviceException = ex.what();
+        std::cerr << "Failure reading info: " << ex.what() << std::endl << ::std::flush;
+    }
 
     scoped_lock<interprocess_mutex> grd(sharedMem->Mutex());
     {
-        const auto info = device->ReadFullInformation();
         auto buffer = sharedMem->Daemon2UI();
         std::ostream ss(&buffer);
         cereal::BinaryOutputArchive oarchive(ss);
         oarchive(info);
     }
-
-#ifndef NDEBUG
-    //std::cerr << "Updated..."<<std::endl;
-#endif
 }

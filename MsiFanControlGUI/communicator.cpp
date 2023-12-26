@@ -1,9 +1,8 @@
-#include <boost/interprocess/creation_tags.hpp>
-#include <boost/interprocess/interprocess_fwd.hpp>
 #include <cereal/types/array.hpp>
 #include <cereal/types/vector.hpp>
 #include <cereal/types/map.hpp>
 #include <cereal/types/variant.hpp>
+#include <cereal/types/string.hpp>
 #include <cereal/archives/binary.hpp>
 
 #include <boost/interprocess/shared_memory_object.hpp>
@@ -13,13 +12,13 @@
 
 #include <cstddef>
 #include <exception>
+#include <limits>
 #include <memory>
 
 #include <stdexcept>
 #include <string>
 #include <ostream>
 
-#include "device.h"
 #include "communicator.h"
 #include "communicator_common.h"
 
@@ -32,7 +31,6 @@ static_assert(kWholeSharedMemSize % 2 == 0, "Wrong size.");
 
 CSharedDevice::CSharedDevice()
 {
-
     using namespace boost::interprocess;
 
     shared_memory_object shm(open_only,
@@ -46,21 +44,31 @@ CSharedDevice::~CSharedDevice()
     sharedMem.reset();
 }
 
-void CSharedDevice::Communicate()
+FullInfoBlock CSharedDevice::Communicate()
 {
     using namespace boost::interprocess;
     FullInfoBlock info;
-
-    scoped_lock<interprocess_mutex> grd(sharedMem->Mutex());
     {
+        scoped_lock<interprocess_mutex> grd(sharedMem->Mutex());
         auto buffer = sharedMem->Daemon2UI();
         std::istream ss(&buffer);
         cereal::BinaryInputArchive iarchive(ss);
         iarchive(info);
     }
 
-#ifndef NDEBUG
-    std::cerr << "CPU Temp: "<< info.info.cpu.temperature << ", cpu rpm: " << info.info.cpu.fanRPM <<
-              std::endl;
-#endif
+    wrongTagCntr = lastTag < info.tag || justCreated? 0 : wrongTagCntr + 1;
+    lastTag = info.tag;
+
+    if (wrongTagCntr > 5)
+    {
+        throw std::runtime_error("Connection to the daemon looks broken.");
+    }
+    justCreated = false;
+
+    return info;
+}
+
+bool CSharedDevice::PossiblyBroken() const
+{
+    return wrongTagCntr > 0 && !justCreated;
 }
