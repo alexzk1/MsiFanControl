@@ -143,6 +143,24 @@ AddressedValueAnyList CDevice::GetCmdTempRPM() const
     return combined;
 }
 
+CDevice::BoosterStates CDevice::GetCmdBoosterStates() const
+{
+    //COOLER_BOOSTER_OFF_ON_VALUES in python example code.
+    static const AddressedBits kBoosterOff{0x98, 0x80, 0};
+    static const AddressedBits kBoosterOn {0x98, 0x80, 0x80};
+
+    static const BoosterStates booster =
+    {
+        //std::map
+        {
+            {BoosterState::OFF, kBoosterOff},
+            {BoosterState::ON, kBoosterOn},
+        }
+    };
+
+    return booster;
+}
+
 CpuGpuFanCurve CpuGpuFanCurve::MakeDefault()
 {
     //Make default fan curve. Address depends on device, and in 99% it will remain the same.

@@ -9,6 +9,5 @@ public:
     ~CIntelBeforeGen10();
 
 protected:
-    BoosterStates GetCmdBoosterStates() const;
     BehaveStates GetCmdBehaveStates() const;
 };

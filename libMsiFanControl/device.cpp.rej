@@ -1,0 +1,27 @@
+--- libMsiFanControl/device.cpp
++++ libMsiFanControl/device.cpp
+@@ -143,24 +143,6 @@ AddressedValueAnyList CDevice::GetCmdTempRPM() const
+     return combined;
+ }
+ 
+-CDevice::BoosterStates CDevice::GetCmdBoosterStates() const
+-{
+-    //COOLER_BOOSTER_OFF_ON_VALUES in python example code.
+-    static const AddressedBits kBoosterOff{0x98, 0x80, 0};
+-    static const AddressedBits kBoosterOn {0x98, 0x80, 0x80};
+-
+-    static const BoosterStates boosterGen10 =
+-    {
+-        //std::map
+-        // {
+-        //     {BoosterState::OFF, kBoosterOff},
+-        //     {BoosterState::ON, kBoosterOn},
+-        // }
+-    };
+-
+-    return boosterGen10;
+-}
+-
+ CpuGpuFanCurve CpuGpuFanCurve::MakeDefault()
+ {
+     //Make default fan curve. Address depends on device, and in 99% it will remain the same.

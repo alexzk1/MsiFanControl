@@ -39,11 +39,46 @@ struct AddressedValueTmpl
     }
 };
 
+struct AddressedBits
+{
+    using value_type = uint8_t;
+    std::streampos address;
+
+    //bit mask, if bit is 1 then this is valid in byte
+    uint8_t validBits;
+
+    //actual value
+    uint8_t value;
+
+    void MaskValue()
+    {
+        value &= validBits;
+    }
+
+    uint8_t ValueForWritting(uint8_t existingValue) const
+    {
+        existingValue &= ~validBits;
+        existingValue |= value;
+        return existingValue;
+    }
+
+    bool operator==(const AddressedBits& another) const
+    {
+        return std::tie(address, value, validBits) == std::tie(another.address, another.value,
+                another.validBits);
+    }
+
+    bool operator!=(const AddressedBits& another) const
+    {
+        return !(*this == another);
+    }
+};
+
 using AddressedValue1B = AddressedValueTmpl<std::uint8_t>;
 using AddressedValue2B = AddressedValueTmpl<std::uint16_t>;
 
 using AddressedValueAny =
-    std::variant<AddressedValue1B, AddressedValue2B>;
+    std::variant<AddressedValue1B, AddressedValue2B, AddressedBits>;
 
 using AddressedValueAnyList = std::vector<AddressedValueAny>;
 

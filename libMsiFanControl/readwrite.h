@@ -6,6 +6,7 @@
 #include <exception>
 #include <fstream>
 #include <ostream>
+#include <stdexcept>
 #include <type_traits>
 #include <array>
 #include <variant>
@@ -68,8 +69,8 @@ public:
         {
             std::visit([&handle, this](const auto& element)
             {
-                using stored_type = typename std::decay<decltype(element)>::type::value_type;
-                Write<stored_type>(handle.stream, element.address, element.value);
+                using stored_type = typename std::decay<decltype(element)>::type;
+                Write<stored_type>(handle.stream, element);
             }, value);
         }
     }
@@ -84,9 +85,8 @@ public:
         {
             std::visit([&stream](auto& element)
             {
-
-                using stored_type = typename std::decay<decltype(element)>::type::value_type;
-                element.value = Read<stored_type>(stream, element.address);
+                using stored_type = typename std::decay<decltype(element)>::type;
+                Read<stored_type>(stream, element);
             }, GetCommandFromContained(containedValue));
         }
     }
@@ -108,25 +108,34 @@ private:
     }
 
     template <typename T>
-    static T Read(std::ifstream& readStream, const std::streampos offset)
+    static void Read(std::ifstream& readStream, T& element)
     {
+        using value_t = decltype(element.value);
         //using intermedial array to deal with optimization: -fstrict-aliasing
-        static_assert(std::is_scalar_v<T>, "Only scalars are allowed.");
-        std::array<char, sizeof(T)> tmp;
+        static_assert(std::is_scalar_v<value_t>, "Only scalar values are allowed.");
+        std::array<char, sizeof(value_t)> tmp;
 
-        readStream.seekg(offset);
+        readStream.seekg(element.address);
         readStream.read(tmp.data(), tmp.size());
 
         //Guess i should understand this python code as big endian:
         // VALUE = int(file.read(2).hex(),16)
-        T result;
-        std::copy(tmp.rbegin(), tmp.rend(), &result);
-        return result;
+
+        std::copy(tmp.rbegin(), tmp.rend(), &element.value);
+
+        if constexpr (std::is_same_v<T, AddressedBits>)
+        {
+            element.MaskValue();
+        }
     }
 
     template <typename T>
-    void Write(std::ofstream& writeStream, const std::streampos offset, const T& value) const
+    void Write(std::ofstream& writeStream, const T& element) const
     {
+        using value_t = decltype(element.value);
+        const std::streampos offset = element.address;
+        auto value                  = element.value;
+
         //installing backup
         {
             std::int64_t off = offset;
@@ -137,8 +146,15 @@ private:
         }
         //using intermedial array to deal with optimization: -fstrict-aliasing
 
-        static_assert(std::is_scalar_v<T>, "Only scalars are allowed.");
-        std::array<char, sizeof(T)> tmp;
+        if constexpr (std::is_same_v<T, AddressedBits>)
+        {
+            AddressedValueAnyList tmp{AddressedValue1B{offset, 0}};
+            Read(tmp);
+            value = element.ValueForWritting(std::get<AddressedValue1B>(tmp.front()).value);
+        }
+
+        static_assert(std::is_scalar_v<value_t>, "Only scalar values are allowed.");
+        std::array<char, sizeof(value_t)> tmp;
 
         //Guess this is BIG endian too:
         //file.write(bytes((VALUE,)))

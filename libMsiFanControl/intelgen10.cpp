@@ -8,24 +8,6 @@ CIntelGen10::~CIntelGen10()
 {
 }
 
-CDevice::BoosterStates CIntelGen10::GetCmdBoosterStates() const
-{
-    //COOLER_BOOSTER_OFF_ON_VALUES in python example code.
-    static const AddressedValue1B kBoosterOff{0x98, 2};
-    static const AddressedValue1B kBoosterOn{0x98, 130};
-
-    static const BoosterStates boosterGen10 =
-    {
-        //std::map
-        {
-            {BoosterState::OFF, kBoosterOff},
-            {BoosterState::ON, kBoosterOn},
-        }
-    };
-
-    return boosterGen10;
-}
-
 CDevice::BehaveStates CIntelGen10::GetCmdBehaveStates() const
 {
     //AUTO_ADV_VALUES in python example code.

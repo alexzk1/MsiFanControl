@@ -102,7 +102,7 @@ protected:
     //returns temp getter, then RPM getter for CPU, then for GPU.
     virtual AddressedValueAnyList GetCmdTempRPM() const;
 
-    virtual BoosterStates GetCmdBoosterStates() const = 0;
+    virtual BoosterStates GetCmdBoosterStates() const;
     virtual BehaveStates  GetCmdBehaveStates() const = 0;
 
     void         SetBooster(CReadWrite::WriteHandle& handle, const BoosterState what) const;
