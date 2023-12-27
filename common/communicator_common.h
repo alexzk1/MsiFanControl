@@ -88,3 +88,28 @@ private:
     boost::interprocess::interprocess_mutex *mutex;
     std::size_t offset;
 };
+
+class SharedMemory
+{
+public:
+    SharedMemory() = delete;
+    SharedMemory(boost::interprocess::shared_memory_object&& shm)
+        :shm(std::move(shm)),
+         region(this->shm, boost::interprocess::read_write)
+    {
+    }
+
+    char * Ptr() const
+    {
+        return static_cast<char*>(region.get_address());
+    }
+
+    std::size_t Size() const
+    {
+        return region.get_size();
+    }
+
+private:
+    boost::interprocess::shared_memory_object shm;
+    boost::interprocess::mapped_region region;
+};

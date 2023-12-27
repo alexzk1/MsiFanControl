@@ -70,7 +70,7 @@ BoosterState CDevice::ReadBoosterState() const
     readWriteAccess.Read(cmd);
 
     const auto diff = cmd.GetOneDifference(clone);
-    Throw(diff != std::nullopt, "Something went wrong. Read should indicate changed state.");
+    Throw(diff != std::nullopt, "Something went wrong. Read should indicate BOOSTER's changed state.");
 
     //We read OFF state different, that means there is ON state in device.
     return diff->first == BoosterState::OFF ? BoosterState::ON : BoosterState::OFF;
@@ -95,7 +95,7 @@ BehaveState CDevice::ReadBehaveState() const
     readWriteAccess.Read(cmd);
 
     const auto diff = cmd.GetOneDifference(clone);
-    Throw(diff != std::nullopt, "Something went wrong. Read should indicate changed state.");
+    Throw(diff != std::nullopt, "Something went wrong. Read should indicate BEHAVE's changed state.");
 
     //Same logic as in booster, if "auto" is different, then "advanced" is set there.
     return diff->first == BehaveState::AUTO ? BehaveState::ADVANCED : BehaveState::AUTO;
@@ -116,7 +116,7 @@ void CDevice::SetBehaveState(const BehaveState what, CpuGpuFanCurve fanCurve) co
 
 FullInfoBlock CDevice::ReadFullInformation(std::size_t aTag) const
 {
-    return {aTag, ReadInfo(), ReadBoosterState(), ReadBehaveState()};
+    return {aTag, ReadInfo(), ReadBoosterState(), ReadBehaveState(), {}};
 }
 
 AddressedValueAnyList CDevice::GetCmdTempRPM() const

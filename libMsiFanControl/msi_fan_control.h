@@ -10,4 +10,4 @@ using DevicePtr = std::shared_ptr<CDevice>;
 //! @param dryRun if true, then temporary file will be created with 256 bytes size and filled by
 //!        zeroes to operate on it instead access to debugfs.
 //!
-DevicePtr CreateDeviceController(bool dryRun = false);
+DevicePtr CreateDeviceController(BackupProviderPtr backuPovider, bool dryRun = false);

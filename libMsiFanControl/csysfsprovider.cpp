@@ -32,7 +32,7 @@ public:
     }
 };
 
-CReadWrite CSysFsProvider::CreateIoObject(bool dryRun)
+std::shared_ptr<IReadWriteProvider> CSysFsProvider::CreateIoDirect(bool dryRun)
 {
     ___GLOBAL_DRY_RUN___ = dryRun;
     static const auto genDryRun = []()->std::filesystem::path
@@ -47,6 +47,12 @@ CReadWrite CSysFsProvider::CreateIoObject(bool dryRun)
         std::cerr << "Path to dry-run file: " << name << std::endl;
         return name;
     };
-    return CReadWrite(std::make_shared<ReadWriteProviderImpl>(dryRun ? genDryRun() :
-                      "/sys/kernel/debug/ec/ec0/io"));
+
+    return std::make_shared<ReadWriteProviderImpl>(dryRun ? genDryRun() :
+            "/sys/kernel/debug/ec/ec0/io");
+}
+
+CReadWrite CSysFsProvider::CreateIoObject(BackupProviderPtr backuPovider, bool dryRun)
+{
+    return CReadWrite(CreateIoDirect (dryRun), std::move(backuPovider));
 }

@@ -8,6 +8,8 @@
 #include "readwrite.h"
 #include "device_commands.h"
 
+//Rosetta stone: https://github.com/YoyPa/isw/blob/master/wiki/msi%20ec.png
+
 enum class BoosterState : uint8_t {ON, OFF};
 enum class BehaveState  : uint8_t {AUTO, ADVANCED};
 

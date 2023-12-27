@@ -8,7 +8,7 @@
 #include <stdexcept>
 #include <iostream>
 
-DevicePtr CreateDeviceController(bool dryRun)
+DevicePtr CreateDeviceController(BackupProviderPtr backuPovider, bool dryRun)
 {
     if (!cpuid_present())
     {
@@ -42,7 +42,8 @@ DevicePtr CreateDeviceController(bool dryRun)
         std::cerr << "CPU Gen detected: " << gen << std::endl << std::flush;
         if (gen > 9)
         {
-            return std::make_shared<CIntelGen10>(CSysFsProvider::CreateIoObject(dryRun));
+            return std::make_shared<CIntelGen10>(CSysFsProvider::CreateIoObject(std::move(backuPovider),
+                                                 dryRun));
         }
     }
     else
@@ -50,5 +51,6 @@ DevicePtr CreateDeviceController(bool dryRun)
         std::cerr << "Didn't find tag \"th\" into brand string. Assuming it is old model.";
     }
 
-    return std::make_shared<CIntelBeforeGen10>(CSysFsProvider::CreateIoObject(dryRun));
+    return std::make_shared<CIntelBeforeGen10>(CSysFsProvider::CreateIoObject(std::move(backuPovider),
+            dryRun));
 }
