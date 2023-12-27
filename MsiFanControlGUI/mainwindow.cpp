@@ -40,7 +40,7 @@ void MainWindow::CreateCommunicator()
             CSharedDevice comm;
             while (!(*shouldStop))
             {
-                auto info = comm.Communicate();
+                auto info = comm.Communicate({BoosterState::ON});
                 auto broken = comm.PossiblyBroken();
 
                 UpdateUiWithInfo(std::move(info), broken);

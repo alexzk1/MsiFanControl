@@ -15,6 +15,7 @@
 #include <limits>
 #include <memory>
 
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <ostream>
@@ -44,16 +45,25 @@ CSharedDevice::~CSharedDevice()
     sharedMem.reset();
 }
 
-FullInfoBlock CSharedDevice::Communicate()
+FullInfoBlock CSharedDevice::Communicate(const RequestFromUi& request)
 {
     using namespace boost::interprocess;
     FullInfoBlock info;
     {
         scoped_lock<interprocess_mutex> grd(sharedMem->Mutex());
-        auto buffer = sharedMem->Daemon2UI();
-        std::istream ss(&buffer);
-        cereal::BinaryInputArchive iarchive(ss);
-        iarchive(info);
+        {
+            auto buffer = sharedMem->Daemon2UI();
+            std::istream ss(&buffer);
+            cereal::BinaryInputArchive iarchive(ss);
+            iarchive(info);
+        }
+        {
+            auto buffer = sharedMem->UI2Daemon();
+            std::ostream ss(&buffer);
+            cereal::BinaryOutputArchive oarchive(ss);
+            oarchive(request);
+            sharedMem->UIPushedForDaemon();
+        }
     }
 
     wrongTagCntr = lastTag < info.tag || justCreated? 0 : wrongTagCntr + 1;

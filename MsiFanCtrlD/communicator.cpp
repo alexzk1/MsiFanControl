@@ -115,6 +115,7 @@ CSharedDevice::CSharedDevice()
                              GetMemoryName(), read_write, unrestricted_permissions);
     shm.truncate(kWholeSharedMemSize);
     sharedMem = std::make_shared<SharedMemoryWithMutex>(std::move(shm));
+    sharedMem->DaemonReadUI();
 }
 
 CSharedDevice::~CSharedDevice()
@@ -155,13 +156,35 @@ void CSharedDevice::Communicate()
         std::cerr << "Failure reading info: " << ex.what() << std::endl << ::std::flush;
     }
 
-    scoped_lock<interprocess_mutex> grd(sharedMem->Mutex());
+    RequestFromUi fromUI;
     {
+        scoped_lock<interprocess_mutex> grd(sharedMem->Mutex());
+
         auto buffer = sharedMem->Daemon2UI();
         std::ostream ss(&buffer);
         cereal::BinaryOutputArchive oarchive(ss);
         oarchive(info);
+
+        if (sharedMem->IsUiPushed())
+        {
+            auto buffer = sharedMem->UI2Daemon();
+            std::istream ss(&buffer);
+            try
+            {
+                cereal::BinaryInputArchive iarchive(ss);
+                iarchive(fromUI);
+            }
+            catch(std::exception& ex)
+            {
+                sharedMem->DaemonReadUI();
+                std::cerr << "Failed to read/parse  UI command: " << ex.what() << std::endl << std::flush;
+                return;
+            }
+            sharedMem->DaemonReadUI();
+        }
     }
+
+    device->SetBooster(fromUI.boosterState);
 }
 
 void CSharedDevice::RestoreOffsets(std::set<int64_t> offsetsToRestoreFromBackup) const

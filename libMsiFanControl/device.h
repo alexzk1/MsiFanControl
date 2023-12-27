@@ -10,8 +10,8 @@
 
 //Rosetta stone: https://github.com/YoyPa/isw/blob/master/wiki/msi%20ec.png
 
-enum class BoosterState : uint8_t {ON, OFF};
-enum class BehaveState  : uint8_t {AUTO, ADVANCED};
+enum class BoosterState : uint8_t {ON, OFF, NO_CHANGE};
+enum class BehaveState  : uint8_t {AUTO, ADVANCED, NO_CHANGE};
 
 struct Info
 {
@@ -59,7 +59,7 @@ struct CpuGpuFanCurve
     }
 };
 
-//! @brief this is combined information of all readers to use with IPC.
+//! @brief this is combined information from daemon to UI.
 struct FullInfoBlock
 {
     //tag is strictly incremented by daemon, used by GUI to detect disconnect or so.
@@ -74,6 +74,17 @@ struct FullInfoBlock
     void serialize( Archive & ar )
     {
         ar(tag, info, boosterState, behaveState, daemonDeviceException);
+    }
+};
+
+struct RequestFromUi
+{
+    BoosterState boosterState{BoosterState::NO_CHANGE};
+    //support for Cereal
+    template <class Archive>
+    void serialize( Archive & ar )
+    {
+        ar(boosterState);
     }
 };
 

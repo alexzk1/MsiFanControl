@@ -19,6 +19,7 @@ CDevice::BehaveStates CIntelBeforeGen10::GetCmdBehaveStates() const
         {
             {BehaveState::AUTO, kAuto},
             {BehaveState::ADVANCED, kAdvanced},
+            {BehaveState::NO_CHANGE, TagIgnore{}},
         }
     };
 

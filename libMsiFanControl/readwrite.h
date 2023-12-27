@@ -110,6 +110,10 @@ private:
     template <typename T>
     static void Read(std::ifstream& readStream, T& element)
     {
+        if constexpr (std::is_same_v<T, TagIgnore>)
+        {
+            return;
+        }
         using value_t = decltype(element.value);
         //using intermedial array to deal with optimization: -fstrict-aliasing
         static_assert(std::is_scalar_v<value_t>, "Only scalar values are allowed.");
@@ -132,6 +136,11 @@ private:
     template <typename T>
     void Write(std::ofstream& writeStream, const T& element) const
     {
+        if constexpr (std::is_same_v<T, TagIgnore>)
+        {
+            return;
+        }
+
         using value_t = decltype(element.value);
         const std::streampos offset = element.address;
         auto value                  = element.value;

@@ -155,6 +155,7 @@ CDevice::BoosterStates CDevice::GetCmdBoosterStates() const
         {
             {BoosterState::OFF, kBoosterOff},
             {BoosterState::ON, kBoosterOn},
+            {BoosterState::NO_CHANGE, TagIgnore{}},
         }
     };
 

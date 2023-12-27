@@ -74,11 +74,28 @@ struct AddressedBits
     }
 };
 
+struct TagIgnore
+{
+    using value_type = uint8_t;
+    std::streampos address{0};
+    uint8_t value{0};
+
+    bool operator==(const TagIgnore&) const
+    {
+        return true;
+    }
+
+    bool operator!=(const TagIgnore&) const
+    {
+        return false;
+    }
+};
+
 using AddressedValue1B = AddressedValueTmpl<std::uint8_t>;
 using AddressedValue2B = AddressedValueTmpl<std::uint16_t>;
 
 using AddressedValueAny =
-    std::variant<AddressedValue1B, AddressedValue2B, AddressedBits>;
+    std::variant<AddressedValue1B, AddressedValue2B, AddressedBits, TagIgnore>;
 
 using AddressedValueAnyList = std::vector<AddressedValueAny>;
 

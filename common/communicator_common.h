@@ -62,10 +62,32 @@ public:
 
     MemBuf UI2Daemon() const
     {
+        //1 byte is reserved to for signals
         const auto sz = Size();
-        return MemBuf(Ptr() + sz, sz);
+        return MemBuf(Ptr() + sz + 1, sz - 1);
+    }
+
+    void DaemonReadUI() const
+    {
+        UiCheckByte() = 0;
+    }
+
+    void UIPushedForDaemon() const
+    {
+        UiCheckByte() = 1;
+    }
+
+    bool IsUiPushed() const
+    {
+        return UiCheckByte();
     }
 private:
+
+    char& UiCheckByte() const
+    {
+        const auto sz = Size();
+        return *(Ptr() + sz);
+    }
 
     char * Ptr() const
     {
