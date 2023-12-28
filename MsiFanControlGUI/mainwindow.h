@@ -11,6 +11,7 @@
 
 #include "device.h"
 #include <QAction>
+#include <QPoint>
 
 QT_BEGIN_NAMESPACE
 namespace Ui
@@ -29,7 +30,8 @@ public:
 
 private slots:
     void CreateCommunicator();
-
+protected:
+    void closeEvent(QCloseEvent *event) override;
 private:
     enum class ConnState {GREEN, RED, YELLOW};
     void UpdateUiWithInfo(FullInfoBlock info, bool possiblyBrokenConn);
@@ -38,7 +40,7 @@ private:
     void SetDaemonConnectionStateOnGuiThread(const ConnState state);
 
     template <typename taCallable>
-    void UpdateRequestToDaemonOnGuiThread(const taCallable& callback)
+    void UpdateRequestToDaemon(const taCallable& callback)
     {
         std::lock_guard grd(requestMutex);
         if (!requestToDaemon)
@@ -52,7 +54,7 @@ private:
 
     void BlockReadSetters()
     {
-        allowedUpdate = std::chrono::steady_clock::now() + std::chrono::seconds(10);;
+        allowedUpdate = std::chrono::steady_clock::now() + std::chrono::seconds(10);
     }
 
     bool IsReadSettingBlocked()
@@ -60,11 +62,19 @@ private:
         return std::chrono::steady_clock::now() < allowedUpdate;
     }
 
+    void LaunchGameMode();
+
     Ui::MainWindow *ui;
     std::shared_ptr<std::thread> communicator;
+
+    std::shared_ptr<std::thread> gameModeThread;
 
     std::optional<RequestFromUi> requestToDaemon;
     std::mutex requestMutex;
 
     std::chrono::time_point<std::chrono::steady_clock> allowedUpdate{std::chrono::steady_clock::now()};
+
+    std::optional<FullInfoBlock> lastReadInfo;
+    std::mutex lastReadInfoMutex;
+    bool closing{false};
 };
