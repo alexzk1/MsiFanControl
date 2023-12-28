@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>438</width>
-    <height>322</height>
+    <width>532</width>
+    <height>339</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -24,7 +24,15 @@
     <normaloff>:/images/fan.png</normaloff>:/images/fan.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>527</width>
+      <height>136</height>
+     </rect>
+    </property>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <widget class="QGroupBox" name="groupBox">
@@ -153,11 +161,27 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="2">
-         <widget class="QLabel" name="outBoost">
-          <property name="text">
-           <string>0</string>
+        <item row="0" column="2" alignment="Qt::AlignVCenter">
+         <widget class="QGroupBox" name="groupBox_4">
+          <property name="title">
+           <string/>
           </property>
+          <layout class="QVBoxLayout" name="verticalLayout">
+           <item>
+            <widget class="QRadioButton" name="btnOn">
+             <property name="text">
+              <string>ON</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="btnOff">
+             <property name="text">
+              <string>OFF</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </widget>
         </item>
        </layout>
@@ -171,7 +195,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>438</width>
+     <width>532</width>
      <height>19</height>
     </rect>
    </property>

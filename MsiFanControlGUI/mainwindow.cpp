@@ -1,4 +1,6 @@
 #include <chrono>
+#include <mutex>
+#include <optional>
 #include <stdexcept>
 #include <map>
 
@@ -7,10 +9,13 @@
 
 #include "execonmainthread.h"
 #include "mainwindow.h"
+#include "qradiobutton.h"
 #include "qtimer.h"
 #include "runners.h"
 #include "communicator.h"
 #include "./ui_mainwindow.h"
+#include "gui_helpers.h"
+
 #include "delayed_buttons.h"
 
 MainWindow::MainWindow(QWidget *parent)
@@ -20,8 +25,34 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     setFixedSize(size());
 
+    connect(ui->btnOn, &QRadioButton::toggled, this, [this](bool on)
+    {
+        if (on)
+        {
+            BlockReadSetters();
+            UpdateRequestToDaemonOnGuiThread([&](RequestFromUi& r)
+            {
+                r.boosterState = BoosterState::ON;
+            });
+
+        }
+    });
+
+    connect(ui->btnOff, &QRadioButton::toggled, this, [this](bool on)
+    {
+        if (on)
+        {
+            BlockReadSetters();
+            UpdateRequestToDaemonOnGuiThread([&](RequestFromUi& r)
+            {
+                r.boosterState = BoosterState::OFF;
+            });
+        }
+    });
+
     SetDaemonConnectionStateOnGuiThread(ConnState::RED);
     QTimer::singleShot(2000, this, &MainWindow::CreateCommunicator);
+
 }
 
 MainWindow::~MainWindow()
@@ -40,13 +71,18 @@ void MainWindow::CreateCommunicator()
             CSharedDevice comm;
             while (!(*shouldStop))
             {
-                auto info = comm.Communicate({BoosterState::ON});
+                std::optional<RequestFromUi> request{std::nullopt};
+                {
+                    std::lock_guard grd(requestMutex);
+                    std::swap(requestToDaemon, request);
+                }
+                auto info = comm.Communicate(request);
                 auto broken = comm.PossiblyBroken();
 
                 UpdateUiWithInfo(std::move(info), broken);
 
                 using namespace std::chrono_literals;
-                std::this_thread::sleep_for(3s);
+                std::this_thread::sleep_for(1500ms);
             }
         }
         catch(std::exception& ex)
@@ -81,7 +117,7 @@ void MainWindow::UpdateUiWithInfo(FullInfoBlock info, bool possiblyBrokenConn)
             ui->outGpuR->setText(QString(fmtNum).arg(info.info.gpu.fanRPM));
         }
 
-        ui->outBoost->setText(info.boosterState == BoosterState::ON ? tr("On") : tr("Off"));
+        SetUiBooster(info.boosterState);
         ui->outHwProfile->setText(info.behaveState == BehaveState::AUTO ? tr("Auto") : tr("Advanced"));
 
         if (info.daemonDeviceException.empty())
@@ -107,4 +143,23 @@ void MainWindow::SetDaemonConnectionStateOnGuiThread(const ConnState state)
     };
     ui->statusbar->showMessage(states.at(state));
     setEnabled(state != ConnState::RED);
+}
+
+void MainWindow::SetUiBooster(BoosterState state)
+{
+    if (!IsReadSettingBlocked())
+    {
+        auto block = BlockGuard(ui->btnOff, ui->btnOn);
+        switch (state)
+        {
+        case BoosterState::ON:
+            ui->btnOn->setChecked(true);
+            break;
+        case BoosterState::OFF:
+            ui->btnOff->setChecked(true);
+            break;
+        default:
+            break;
+        }
+    }
 }

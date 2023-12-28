@@ -45,7 +45,7 @@ CSharedDevice::~CSharedDevice()
     sharedMem.reset();
 }
 
-FullInfoBlock CSharedDevice::Communicate(const RequestFromUi& request)
+FullInfoBlock CSharedDevice::Communicate(const std::optional<RequestFromUi>& request)
 {
     using namespace boost::interprocess;
     FullInfoBlock info;
@@ -57,11 +57,13 @@ FullInfoBlock CSharedDevice::Communicate(const RequestFromUi& request)
             cereal::BinaryInputArchive iarchive(ss);
             iarchive(info);
         }
+
+        if (std::nullopt != request)
         {
             auto buffer = sharedMem->UI2Daemon();
             std::ostream ss(&buffer);
             cereal::BinaryOutputArchive oarchive(ss);
-            oarchive(request);
+            oarchive(*request);
             sharedMem->UIPushedForDaemon();
         }
     }

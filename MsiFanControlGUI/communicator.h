@@ -38,7 +38,7 @@ public:
     CSharedDevice();
     ~CSharedDevice();
 
-    FullInfoBlock Communicate(const RequestFromUi &request);
+    FullInfoBlock Communicate(const std::optional<RequestFromUi> &request);
 
     bool PossiblyBroken() const;
 private:
