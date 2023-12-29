@@ -8,6 +8,8 @@
 #include <mutex>
 #include <tuple>
 #include <chrono>
+#include <QSystemTrayIcon>
+#include <QPointer>
 
 #include "device.h"
 #include <QAction>
@@ -64,6 +66,8 @@ private:
 
     void LaunchGameMode();
 
+    void SetImageIcon(std::optional<int> value, const QColor& color = qRgba(0, 0, 0, 0));
+
     Ui::MainWindow *ui;
     std::shared_ptr<std::thread> communicator;
 
@@ -76,5 +80,7 @@ private:
 
     std::optional<FullInfoBlock> lastReadInfo;
     std::mutex lastReadInfoMutex;
+
+    QPointer<QSystemTrayIcon> systemTray;
     bool closing{false};
 };

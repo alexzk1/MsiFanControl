@@ -1,3 +1,4 @@
+#include <optional>
 #include <stdexcept>
 #include <map>
 
@@ -8,6 +9,7 @@
 #include <QAction>
 #include <QMessageBox>
 #include <QCloseEvent>
+#include <QPainter>
 
 #include "execonmainthread.h"
 #include "mainwindow.h"
@@ -86,12 +88,14 @@ MainWindow::MainWindow(QWidget *parent)
     trayIconMenu->addAction(ui->action_Game_Mode);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(ui->actionQuit);
-    auto sysTrayIcon = new QSystemTrayIcon(this);
-    sysTrayIcon->setContextMenu(trayIconMenu);
-    sysTrayIcon->setIcon(QIcon(":/images/fan.png"));
-    sysTrayIcon->show();
 
-    connect(sysTrayIcon, &QSystemTrayIcon::activated, [this](auto reason)
+    systemTray = new QSystemTrayIcon(this);
+    systemTray->setContextMenu(trayIconMenu);
+
+    SetImageIcon(std::nullopt);
+    systemTray->show();
+
+    connect(systemTray, &QSystemTrayIcon::activated, [this](auto reason)
     {
         if(reason == QSystemTrayIcon::Trigger)
         {
@@ -133,9 +137,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::LaunchGameMode()
 {
-    static constexpr int kDegreeLimit = 72;//celsium
-    static constexpr int kCpuOnlyDegree = 94; //if cpu is such hot - boost, even if gpu is off
-    static_assert(kDegreeLimit < kCpuOnlyDegree, "Revise here.");
 
     static constexpr std::chrono::seconds kWait(20);
 
@@ -171,9 +172,7 @@ void MainWindow::LaunchGameMode()
                 info = std::move(*opt_info);
             }
 
-            const bool isHot = info.info.cpu.temperature > kCpuOnlyDegree
-                               || (info.info.cpu.temperature > kDegreeLimit
-                                   && info.info.gpu.temperature > kDegreeLimit);
+            const bool isHot = info.info.IsHot();
 
             if (isHot)
             {
@@ -268,6 +267,8 @@ void MainWindow::UpdateUiWithInfo(FullInfoBlock info, bool possiblyBrokenConn)
                                            info.daemonDeviceException));
         }
 
+        SetImageIcon(info.info.cpu.temperature, info.info.IsHot() ? Qt::red : Qt::green);
+
         std::lock_guard grd(lastReadInfoMutex);
         lastReadInfo = std::move(info);
     });
@@ -302,5 +303,32 @@ void MainWindow::SetUiBooster(BoosterState state)
         default:
             break;
         }
+    }
+}
+
+void MainWindow::SetImageIcon(std::optional<int> value, const QColor &color)
+{
+    static const QIcon icon(":/images/fan.png");
+    if (!value || isVisible())
+    {
+        systemTray->setIcon(icon);
+    }
+    else
+    {
+        QImage image(32, 32, QImage::Format_RGBA8888);
+        image.fill(qRgba(0, 0, 0, 0));
+        QPainter p;
+        if (!p.begin(&image))
+        {
+            systemTray->setIcon(icon);
+            return;
+        }
+
+        p.setPen(QPen(color));
+        p.setFont(QFont("Times", 14, QFont::Bold));
+        p.drawText(image.rect(), Qt::AlignCenter, QString("%1").arg(*value));
+        p.end();
+
+        systemTray->setIcon(QIcon(QPixmap::fromImage(image)));
     }
 }
