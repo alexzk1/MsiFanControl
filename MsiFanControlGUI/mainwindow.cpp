@@ -315,7 +315,7 @@ void MainWindow::SetImageIcon(std::optional<int> value, const QColor &color)
     }
     else
     {
-        QImage image(32, 32, QImage::Format_RGBA8888);
+        QImage image(25, 25, QImage::Format_RGBA8888);
         image.fill(qRgba(0, 0, 0, 0));
         QPainter p;
         if (!p.begin(&image))
