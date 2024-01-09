@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
-find_package(Boost 1.80 COMPONENTS system REQUIRED)
+find_package(Boost 1.80 COMPONENTS system program_options REQUIRED)
 find_package(cereal REQUIRED)
 
 set(PROJECT_SOURCES

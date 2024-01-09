@@ -24,7 +24,7 @@
 
 #include "delayed_buttons.h"
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(StartOptions options, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
@@ -112,7 +112,22 @@ MainWindow::MainWindow(QWidget *parent)
     });
 
     SetDaemonConnectionStateOnGuiThread(ConnState::RED);
-    QTimer::singleShot(2000, this, &MainWindow::CreateCommunicator);
+    QTimer::singleShot(500, this, [this, options = std::move(options)]()
+    {
+        CreateCommunicator();
+        if (options.minimized)
+        {
+            hide();
+        }
+
+        if (options.game_mode)
+        {
+            ui->action_Game_Mode->setChecked(true);
+            ui->cbGameMode->setCheckState(Qt::CheckState::Checked);
+            ui->boostGroup->setEnabled(false);
+            LaunchGameMode();
+        }
+    });
 }
 
 MainWindow::~MainWindow()

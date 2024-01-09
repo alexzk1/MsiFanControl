@@ -22,12 +22,18 @@ namespace Ui
 }
 QT_END_NAMESPACE
 
+struct StartOptions
+{
+    bool minimized{false};
+    bool game_mode{false};
+};
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
+    MainWindow(StartOptions options, QWidget *parent = nullptr);
     ~MainWindow();
 
 private slots:
