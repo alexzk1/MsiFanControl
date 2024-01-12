@@ -77,7 +77,7 @@ MainWindow::MainWindow(StartOptions options, QWidget *parent)
     //trigger action by checkbox
     connect(ui->cbGameMode, &QCheckBox::stateChanged, ui->action_Game_Mode, &QAction::triggered);
 
-    connect(ui->actionQuit, &QAction::triggered, [this]()
+    connect(ui->actionQuit, &QAction::triggered, this, [this]()
     {
         closing = true;
         show(); //event is not sent to hidden
@@ -95,7 +95,7 @@ MainWindow::MainWindow(StartOptions options, QWidget *parent)
     SetImageIcon(std::nullopt);
     systemTray->show();
 
-    connect(systemTray, &QSystemTrayIcon::activated, [this](auto reason)
+    connect(systemTray, &QSystemTrayIcon::activated, this, [this](auto reason)
     {
         if(reason == QSystemTrayIcon::Trigger)
         {
