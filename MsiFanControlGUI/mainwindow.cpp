@@ -153,7 +153,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 void MainWindow::LaunchGameMode()
 {
 
-    static constexpr std::chrono::seconds kWait(20);
+    static constexpr std::chrono::seconds kWait(10);
 
     using namespace std::chrono_literals;
 
@@ -163,6 +163,8 @@ void MainWindow::LaunchGameMode()
 
     gameModeThread = utility::startNewRunner([this](auto shouldStop)
     {
+        constexpr std::int64_t kTicksSmooth = 5;
+
         FullInfoBlock info;
         std::chrono::time_point<std::chrono::steady_clock> allowToOffAt{std::chrono::steady_clock::now()};
 
@@ -175,6 +177,7 @@ void MainWindow::LaunchGameMode()
             std::this_thread::sleep_for(1500ms);
         };
 
+        std::int64_t hotTicks = kTicksSmooth;
         while (! *(shouldStop))
         {
             std::optional<FullInfoBlock> opt_info;
@@ -198,11 +201,19 @@ void MainWindow::LaunchGameMode()
             {
                 if (isHot)
                 {
-                    setBooster(BoosterState::ON);
+                    if (--hotTicks < 0)
+                    {
+                        setBooster(BoosterState::ON);
+                    }
+                }
+                else
+                {
+                    hotTicks = kTicksSmooth;
                 }
             }
             else
             {
+                hotTicks = kTicksSmooth;
                 if (!isHot && std::chrono::steady_clock::now() > allowToOffAt)
                 {
                     setBooster(BoosterState::OFF);
