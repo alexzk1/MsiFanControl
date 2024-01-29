@@ -41,21 +41,21 @@ struct AddressedValueTmpl
 
 struct AddressedBits
 {
-    using value_type = uint8_t;
+    using value_type = std::uint8_t;
     std::streampos address;
 
     //bit mask, if bit is 1 then this is valid in byte
-    uint8_t validBits;
+    std::uint8_t validBits;
 
     //actual value
-    uint8_t value;
+    std::uint8_t value;
 
     void MaskValue()
     {
         value &= validBits;
     }
 
-    uint8_t ValueForWritting(uint8_t existingValue) const
+    uint8_t ValueForWritting(std::uint8_t existingValue) const
     {
         existingValue &= ~validBits;
         existingValue |= value;
@@ -76,9 +76,9 @@ struct AddressedBits
 
 struct TagIgnore
 {
-    using value_type = uint8_t;
+    using value_type = std::uint8_t;
     std::streampos address{0};
-    uint8_t value{0};
+    std::uint8_t value{0};
 
     bool operator==(const TagIgnore&) const
     {
