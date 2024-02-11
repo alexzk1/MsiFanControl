@@ -32,7 +32,7 @@ private:
 
     bool IsHotNow()
     {
-        static constexpr int kDegreeLimitBoth = 78;//celsium
+        static constexpr int kDegreeLimitBoth = 80;//celsium, nvidia gpu max is 93C.
         static constexpr int kCpuOnlyDegree   = 91; //if cpu is such hot - boost, even if gpu is off
         static_assert(kDegreeLimitBoth < kCpuOnlyDegree, "Revise here.");
 
