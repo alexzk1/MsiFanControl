@@ -1,8 +1,11 @@
 #pragma once
 
+#include <cstdint>
+
 #include "device.h"
 #include "running_avr.h"
 
+template <std::size_t AvrSamplesCount>
 class BoosterOnOffDecider
 {
 public:
@@ -24,8 +27,8 @@ public:
     }
 private:
     FullInfoBlock storedInfo{};
-    RunningAvr<float, 10> cpuAvrTemp;
-    RunningAvr<float, 10> gpuAvrTemp;
+    RunningAvr<float, AvrSamplesCount> cpuAvrTemp;
+    RunningAvr<float, AvrSamplesCount> gpuAvrTemp;
 
     bool IsHotNow()
     {

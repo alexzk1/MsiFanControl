@@ -170,7 +170,7 @@ void MainWindow::LaunchGameMode()
             std::this_thread::sleep_for(1500ms);
         };
 
-        BoosterOnOffDecider decider;
+        BoosterOnOffDecider<5> decider;
 
         while (! *(shouldStop))
         {
