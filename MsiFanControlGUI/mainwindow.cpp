@@ -21,6 +21,7 @@
 #include "communicator.h"
 #include "./ui_mainwindow.h"
 #include "gui_helpers.h"
+#include "booster_onoff_decider.h"
 
 #include "delayed_buttons.h"
 
@@ -152,9 +153,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::LaunchGameMode()
 {
-
-    static constexpr std::chrono::seconds kWait(10);
-
     using namespace std::chrono_literals;
 
     //If booster is OFF and both temps are above kDegreeLimit -> turn boost ON
@@ -163,11 +161,6 @@ void MainWindow::LaunchGameMode()
 
     gameModeThread = utility::startNewRunner([this](auto shouldStop)
     {
-        constexpr std::int64_t kTicksSmooth = 5;
-
-        FullInfoBlock info;
-        std::chrono::time_point<std::chrono::steady_clock> allowToOffAt{std::chrono::steady_clock::now()};
-
         const auto setBooster = [this](BoosterState state)
         {
             UpdateRequestToDaemon([&](RequestFromUi& r)
@@ -177,48 +170,19 @@ void MainWindow::LaunchGameMode()
             std::this_thread::sleep_for(1500ms);
         };
 
-        std::int64_t hotTicks = kTicksSmooth;
+        BoosterOnOffDecider decider;
+
         while (! *(shouldStop))
         {
-            std::optional<FullInfoBlock> opt_info;
+            std::optional<FullInfoBlock> optInfo;
             {
                 std::lock_guard grd(lastReadInfoMutex);
-                std::swap(opt_info, lastReadInfo);
-            }
-            if (opt_info)
-            {
-                info = std::move(*opt_info);
+                std::swap(optInfo, lastReadInfo);
             }
 
-            const bool isHot = info.info.IsHot();
+            decider.PereodicUpdate(optInfo);
+            setBooster(decider.GetStateAfterUpdate());
 
-            if (isHot)
-            {
-                allowToOffAt = std::chrono::steady_clock::now() + kWait;
-            }
-
-            if (info.boosterState == BoosterState::OFF)
-            {
-                if (isHot)
-                {
-                    if (--hotTicks < 0)
-                    {
-                        setBooster(BoosterState::ON);
-                    }
-                }
-                else
-                {
-                    hotTicks = kTicksSmooth;
-                }
-            }
-            else
-            {
-                hotTicks = kTicksSmooth;
-                if (!isHot && std::chrono::steady_clock::now() > allowToOffAt)
-                {
-                    setBooster(BoosterState::OFF);
-                }
-            }
             std::this_thread::sleep_for(500ms);
         };
     });
@@ -293,7 +257,7 @@ void MainWindow::UpdateUiWithInfo(FullInfoBlock info, bool possiblyBrokenConn)
                                            info.daemonDeviceException));
         }
 
-        SetImageIcon(info.info.cpu.temperature, info.info.IsHot() ? Qt::red : Qt::green);
+        SetImageIcon(info.info.cpu.temperature, Qt::green);
 
         std::lock_guard grd(lastReadInfoMutex);
         lastReadInfo = std::move(info);

@@ -39,17 +39,6 @@ struct CpuGpuInfo
     {
         ar(cpu, gpu);
     }
-
-    bool IsHot() const
-    {
-        static constexpr int kDegreeLimit = 72;//celsium
-        static constexpr int kCpuOnlyDegree = 91; //if cpu is such hot - boost, even if gpu is off
-        static_assert(kDegreeLimit < kCpuOnlyDegree, "Revise here.");
-
-        return  cpu.temperature > kCpuOnlyDegree
-                || (cpu.temperature > kDegreeLimit
-                    && gpu.temperature > kDegreeLimit);
-    }
 };
 
 //Lists must contain 1 byte values only.
