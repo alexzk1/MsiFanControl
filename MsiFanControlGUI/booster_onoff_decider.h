@@ -6,16 +6,13 @@
 class BoosterOnOffDecider
 {
 public:
-    void PereodicUpdate(std::optional<FullInfoBlock> optInfo)
+    BoosterState GetUpdatedState(std::optional<FullInfoBlock> newInfo)
     {
-        if (optInfo)
+        if (newInfo)
         {
-            storedInfo = std::move(*optInfo);
+            storedInfo = std::move(*newInfo);
         }
-    }
 
-    BoosterState GetStateAfterUpdate()
-    {
         const bool isHot = IsHotNow();
 
         if (storedInfo.boosterState == BoosterState::OFF)

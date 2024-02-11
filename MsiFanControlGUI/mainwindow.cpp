@@ -179,10 +179,7 @@ void MainWindow::LaunchGameMode()
                 std::lock_guard grd(lastReadInfoMutex);
                 std::swap(optInfo, lastReadInfo);
             }
-
-            decider.PereodicUpdate(optInfo);
-            setBooster(decider.GetStateAfterUpdate());
-
+            setBooster(decider.GetUpdatedState(std::move(optInfo)));
             std::this_thread::sleep_for(500ms);
         };
     });
