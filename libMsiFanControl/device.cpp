@@ -88,7 +88,7 @@ void CDevice::SetBooster(const BoosterState what) const
     SetBooster(handle, what);
 }
 
-BehaveState CDevice::ReadBehaveState() const
+BehaveWithCurve CDevice::ReadBehaveState() const
 {
     auto cmd = GetCmdBehaveStates();
     const auto clone = cmd;
@@ -98,20 +98,27 @@ BehaveState CDevice::ReadBehaveState() const
     Throw(diff != std::nullopt, "Something went wrong. Read should indicate BEHAVE's changed state.");
 
     //Same logic as in booster, if "auto" is different, then "advanced" is set there.
-    return diff->first == BehaveState::AUTO ? BehaveState::ADVANCED : BehaveState::AUTO;
+    BehaveWithCurve res;
+    res.behaveState = diff->first == BehaveState::AUTO ? BehaveState::ADVANCED :
+                      BehaveState::AUTO;
+
+    readWriteAccess.Read(res.curve.cpu);
+    readWriteAccess.Read(res.curve.gpu);
+    return res;
 }
 
-void CDevice::SetBehaveState(const BehaveState what, CpuGpuFanCurve fanCurve) const
+void CDevice::SetBehaveState(BehaveWithCurve behaveWithCurve) const
 {
-    fanCurve.Validate();
-
     auto cmd = GetCmdBehaveStates();
     auto handle = readWriteAccess.StartWritting();
 
-    SetBooster(handle, BoosterState::OFF);
-    readWriteAccess.Write(handle, fanCurve.cpu);
-    readWriteAccess.Write(handle, fanCurve.gpu);
-    readWriteAccess.Write(handle, {std::move(cmd.at(what))});
+    if (BehaveState::NO_CHANGE != behaveWithCurve.behaveState)
+    {
+        behaveWithCurve.curve.Validate();
+        readWriteAccess.Write(handle,  std::move(behaveWithCurve.curve.cpu));
+        readWriteAccess.Write(handle,  std::move(behaveWithCurve.curve.gpu));
+        readWriteAccess.Write(handle, {std::move(cmd.at(behaveWithCurve.behaveState))});
+    }
 }
 
 FullInfoBlock CDevice::ReadFullInformation(std::size_t aTag) const
@@ -162,57 +169,4 @@ CDevice::BoosterStates CDevice::GetCmdBoosterStates() const
     return booster;
 }
 
-CpuGpuFanCurve CpuGpuFanCurve::MakeDefault()
-{
-    //Make default fan curve. Address depends on device, and in 99% it will remain the same.
-    //Curve itself, looks like we have 7 speed steps, each step (index into vector) is activated at given temperature.
-    static const AddressedValueAnyList cpuCurve =
-    {
-        AddressedValue1B{0x72, 0},
-        AddressedValue1B{0x73, 40},
-        AddressedValue1B{0x74, 48},
-        AddressedValue1B{0x75, 56},
-        AddressedValue1B{0x76, 64},
-        AddressedValue1B{0x77, 72},
-        AddressedValue1B{0x78, 80},
-    };
 
-    static const AddressedValueAnyList gpuCurve =
-    {
-        AddressedValue1B{0x8A, 0},
-        AddressedValue1B{0x8B, 48},
-        AddressedValue1B{0x8C, 56},
-        AddressedValue1B{0x8D, 64},
-        AddressedValue1B{0x8E, 72},
-        AddressedValue1B{0x8F, 79},
-        AddressedValue1B{0x90, 86},
-    };
-
-    return {cpuCurve, gpuCurve};
-}
-
-void CpuGpuFanCurve::Validate() const
-{
-    static const auto validateCurve = [](const AddressedValueAnyList& src)
-    {
-        std::adjacent_find(src.begin(), src.end(), [](const auto& v1, const auto& v2)
-        {
-            if (!std::holds_alternative<AddressedValue1B>(v1) || !std::holds_alternative<AddressedValue1B>(v2))
-            {
-                throw std::invalid_argument("Curve must contain 1 byte values only!!!");
-            }
-            const auto& vb1 = std::get<AddressedValue1B>(v1);
-            const auto& vb2 = std::get<AddressedValue1B>(v2);
-
-            const bool valid = vb1.address < vb2.address && vb1.value <= vb2.value;
-            if (!valid)
-            {
-                throw std::runtime_error("Invalid fan's curve detected. It must increase or remain the same.");
-            }
-            return false;
-        });
-    };
-
-    validateCurve(cpu);
-    validateCurve(gpu);
-}

@@ -242,7 +242,8 @@ void MainWindow::UpdateUiWithInfo(FullInfoBlock info, bool possiblyBrokenConn)
         }
 
         SetUiBooster(info.boosterState);
-        ui->outHwProfile->setText(info.behaveState == BehaveState::AUTO ? tr("Auto") : tr("Advanced"));
+        ui->outHwProfile->setText(info.behaveAndCurve.behaveState == BehaveState::AUTO ? tr("Auto") :
+                                  tr("Advanced"));
 
         if (info.daemonDeviceException.empty())
         {

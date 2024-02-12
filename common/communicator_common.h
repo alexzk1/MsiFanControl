@@ -6,6 +6,7 @@
 
 #include <cstddef>
 #include <streambuf>
+#include <cstdint>
 
 inline const char*  GetMemoryName()
 {

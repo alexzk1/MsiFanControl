@@ -33,9 +33,19 @@ struct AddressedValueTmpl
 
     //support for Cereal
     template <class Archive>
-    void serialize( Archive & ar )
+    void save(Archive & ar) const
     {
-        ar(address, value);
+        //https://github.com/USCiLab/cereal/issues/684
+        int addr = address;
+        ar(addr, value);
+    }
+
+    template <class Archive>
+    void load(Archive & ar)
+    {
+        int addr;
+        ar(addr, value);
+        address = addr;
     }
 };
 
@@ -49,6 +59,23 @@ struct AddressedBits
 
     //actual value
     std::uint8_t value;
+
+    //support for Cereal
+    template <class Archive>
+    void save(Archive & ar) const
+    {
+        //https://github.com/USCiLab/cereal/issues/684
+        int addr = address;
+        ar(addr, value, validBits);
+    }
+
+    template <class Archive>
+    void load(Archive & ar)
+    {
+        int addr;
+        ar(addr, value, validBits);
+        address = addr;
+    }
 
     void MaskValue()
     {
@@ -88,6 +115,23 @@ struct TagIgnore
     bool operator!=(const TagIgnore&) const
     {
         return false;
+    }
+
+    //support for Cereal
+    template <class Archive>
+    void save(Archive & ar) const
+    {
+        //https://github.com/USCiLab/cereal/issues/684
+        int addr = address;
+        ar(addr, value);
+    }
+
+    template <class Archive>
+    void load(Archive & ar)
+    {
+        int addr;
+        ar(addr, value);
+        address = addr;
     }
 };
 
@@ -196,7 +240,7 @@ struct AddressedValueStates
 
     //support for Cereal
     template <class Archive>
-    void serialize( Archive & ar )
+    void serialize(Archive & ar, const std::uint32_t /*version*/)
     {
         ar(data);
     }
