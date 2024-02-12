@@ -51,10 +51,18 @@ struct CpuGpuFanCurve
     AddressedValueAnyList cpu{};
     AddressedValueAnyList gpu{};
 
+    //Daemon only
+    void Validate() const;
+
     static CpuGpuFanCurve MakeDefault()
     {
         //Make default fan curve. Address depends on device, and in 99% it will remain the same.
-        //Curve itself, looks like we have 7 speed steps, each step (index into vector) is activated at given temperature.
+        //Curve itself, looks like we have 7 speed steps, each step (index into vector)
+        //is activated at given temperature.
+
+        //Daemon uses those as example to check incoming addresses from the GUI.
+        //Only mentioned here are allowed for security reasons.
+
         static const AddressedValueAnyList cpuCurve =
         {
             AddressedValue1B{0x72, 0},
@@ -78,37 +86,6 @@ struct CpuGpuFanCurve
         };
 
         return {cpuCurve, gpuCurve};
-    }
-
-    void Validate() const
-    {
-        static const auto validateCurve = [](const AddressedValueAnyList& src)
-        {
-            if (src.size() < 2)
-            {
-                throw std::invalid_argument("Curve must contain at least 2 points.");
-            }
-
-            std::adjacent_find(src.begin(), src.end(), [](const auto& v1, const auto& v2)
-            {
-                if (!std::holds_alternative<AddressedValue1B>(v1) || !std::holds_alternative<AddressedValue1B>(v2))
-                {
-                    throw std::invalid_argument("Curve must contain 1 byte values only!!!");
-                }
-                const auto& vb1 = std::get<AddressedValue1B>(v1);
-                const auto& vb2 = std::get<AddressedValue1B>(v2);
-
-                const bool valid = vb1.address < vb2.address && vb1.value <= vb2.value;
-                if (!valid)
-                {
-                    throw std::runtime_error("Invalid fan's curve detected. It must increase or remain the same.");
-                }
-                return false;
-            });
-        };
-
-        validateCurve(cpu);
-        validateCurve(gpu);
     }
 
     //support for Cereal

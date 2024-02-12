@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <optional>
 #include <stdexcept>
+#include <set>
 
 bool ___GLOBAL_DRY_RUN___ = false;
 
@@ -19,6 +20,33 @@ static void Throw(bool cond, std::string text)
 #else
 #define Throw(COND, TEXT)
 #endif
+
+namespace
+{
+    using AddressedValueAllowedAddresses = std::set<std::streampos>;
+    struct AllowedAddresses
+    {
+        AddressedValueAllowedAddresses cpu;
+        AddressedValueAllowedAddresses gpu;
+    };
+
+    AllowedAddresses BuildAllowedAdressesFromDefaults()
+    {
+        static const auto makeSingle = [](const AddressedValueAnyList& src)
+        {
+            AddressedValueAllowedAddresses res;
+            std::transform(src.begin(), src.end(), std::inserter(res, res.end()),
+                           [](const auto& value)
+            {
+                const auto& vb = std::get<AddressedValue1B>(value);
+                return vb.address;
+            });
+            return res;
+        };
+        const auto curves = CpuGpuFanCurve::MakeDefault();
+        return {makeSingle(curves.cpu), makeSingle(curves.gpu)};
+    }
+}
 
 Info::Info(const AddressedValueAny &temp, const AddressedValueAny &rpm)
 {
@@ -169,4 +197,51 @@ CDevice::BoosterStates CDevice::GetCmdBoosterStates() const
     return booster;
 }
 
+void CpuGpuFanCurve::Validate() const
+{
+    static const auto validateCurve = [](const AddressedValueAnyList& src)
+    {
+        if (src.size() < 2)
+        {
+            throw std::invalid_argument("Curve must contain at least 2 points.");
+        }
 
+        std::adjacent_find(src.begin(), src.end(), [](const auto& v1, const auto& v2)
+        {
+            if (!std::holds_alternative<AddressedValue1B>(v1) || !std::holds_alternative<AddressedValue1B>(v2))
+            {
+                throw std::invalid_argument("Curve must contain 1 byte values only!!!");
+            }
+            const auto& vb1 = std::get<AddressedValue1B>(v1);
+            const auto& vb2 = std::get<AddressedValue1B>(v2);
+
+            const bool valid = vb1.address < vb2.address && vb1.value <= vb2.value;
+            if (!valid)
+            {
+                throw std::runtime_error("Invalid fan's curve detected. It must increase or remain the same.");
+            }
+            return false;
+        });
+    };
+    static const auto validateAddresses = [](const AddressedValueAnyList&          src,
+                                          const AddressedValueAllowedAddresses&    example)
+    {
+        for (const auto& value : src)
+        {
+            const auto& vb = std::get<AddressedValue1B>(value);
+            if (example.count(vb.address) == 0)
+            {
+                throw std::invalid_argument("CpuGpuFanCurve contains unknown address. Rejected for security reasons.");
+            }
+        }
+    };
+
+    validateCurve(cpu);
+    validateCurve(gpu);
+
+    //If any other address is present than we generate ourself - raise for security reasons.
+    static const auto kAddressesChecker = BuildAllowedAdressesFromDefaults();
+
+    validateAddresses(cpu, kAddressesChecker.cpu);
+    validateAddresses(gpu, kAddressesChecker.gpu);
+}
