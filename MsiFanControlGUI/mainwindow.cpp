@@ -161,15 +161,6 @@ void MainWindow::LaunchGameMode()
 
     gameModeThread = utility::startNewRunner([this](auto shouldStop)
     {
-        const auto setBooster = [this](BoosterState state)
-        {
-            UpdateRequestToDaemon([&](RequestFromUi& r)
-            {
-                r.boosterState = state;
-            });
-            std::this_thread::sleep_for(1500ms);
-        };
-
         BoosterOnOffDecider<5> decider;
 
         while (! *(shouldStop))
@@ -179,8 +170,12 @@ void MainWindow::LaunchGameMode()
                 std::lock_guard grd(lastReadInfoMutex);
                 std::swap(optInfo, lastReadInfo);
             }
-            setBooster(decider.GetUpdatedState(std::move(optInfo)));
-            std::this_thread::sleep_for(500ms);
+            const auto state = decider.GetUpdatedState(std::move(optInfo));
+            UpdateRequestToDaemon([&state](RequestFromUi& r)
+            {
+                r.boosterState = state;
+            });
+            std::this_thread::sleep_for(2000ms);
         };
     });
 }
@@ -193,6 +188,7 @@ void MainWindow::CreateCommunicator()
         try
         {
             CSharedDevice comm;
+            std::size_t brokenCounter = 0;
             while (!(*shouldStop))
             {
                 std::optional<RequestFromUi> request{std::nullopt};
@@ -201,12 +197,20 @@ void MainWindow::CreateCommunicator()
                     std::swap(requestToDaemon, request);
                 }
                 auto info = comm.Communicate(request);
-                auto broken = comm.PossiblyBroken();
 
-                UpdateUiWithInfo(std::move(info), broken);
+                if (comm.PossiblyBroken())
+                {
+                    ++brokenCounter;
+                }
+                else
+                {
+                    brokenCounter = 0;
+                }
+
+                UpdateUiWithInfo(std::move(info), brokenCounter > 3);
 
                 using namespace std::chrono_literals;
-                std::this_thread::sleep_for(1500ms);
+                std::this_thread::sleep_for(1000ms);
             }
         }
         catch(std::exception& ex)
