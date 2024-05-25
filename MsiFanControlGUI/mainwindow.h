@@ -74,6 +74,8 @@ private:
 
     void SetImageIcon(std::optional<int> value, const QColor& color = qRgba(0, 0, 0, 0));
 
+    void ReadCurvesFromDaemon(BehaveWithCurve curves);
+
     Ui::MainWindow *ui;
     std::shared_ptr<std::thread> communicator;
 
@@ -84,8 +86,8 @@ private:
 
     std::chrono::time_point<std::chrono::steady_clock> allowedUpdate{std::chrono::steady_clock::now()};
 
-    std::optional<FullInfoBlock> lastReadInfo;
-    std::mutex lastReadInfoMutex;
+    std::optional<FullInfoBlock> lastReadInfoForGameModeThread;
+    std::mutex lastReadInfoForGameModeThreadMutex;
 
     QPointer<QSystemTrayIcon> systemTray;
     bool closing{false};

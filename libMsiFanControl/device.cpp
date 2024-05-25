@@ -2,7 +2,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <optional>
 #include <stdexcept>
 #include <set>
 
@@ -55,18 +54,8 @@ Info::Info(const AddressedValueAny &temp, const AddressedValueAny &rpm)
     Throw(std::holds_alternative<AddressedValue2B>(rpm),
           "We expect 2 bytes request for the rpm.");
 
-    std::visit([this](const auto& val)
-    {
-        temperature = val.value;
-    }, temp);
-
-    std::visit([this](const auto& val)
-    {
-        if (val.value)
-        {
-            fanRPM = static_cast<std::uint16_t>(478000.0 / val.value);
-        }
-    }, rpm);
+    temperature = parseTemp(temp);
+    fanRPM = parseRPM(rpm);
 }
 
 CDevice::CDevice(CReadWrite readWrite)
@@ -206,7 +195,7 @@ void CpuGpuFanCurve::Validate() const
             throw std::invalid_argument("Curve must contain at least 2 points.");
         }
 
-        std::adjacent_find(src.begin(), src.end(), [](const auto& v1, const auto& v2)
+        (void)std::adjacent_find(src.begin(), src.end(), [](const auto& v1, const auto& v2)
         {
             if (!std::holds_alternative<AddressedValue1B>(v1) || !std::holds_alternative<AddressedValue1B>(v2))
             {

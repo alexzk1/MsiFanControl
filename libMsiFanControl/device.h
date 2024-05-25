@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <cassert>
 #include <iterator>
+#include <optional>
 #include <unordered_map>
 #include <variant>
 #include "readwrite.h"
@@ -21,6 +22,30 @@ struct Info
     std::uint16_t fanRPM{0};
     Info() = default;
     Info(const AddressedValueAny& temp, const AddressedValueAny& rpm);
+
+    //Those statics can be re-used from GUI.
+    static std::uint16_t parseTemp(const AddressedValueAny &temp)
+    {
+        assert(std::holds_alternative<AddressedValue1B>(temp)
+               && "We expect 1 byte request for the temperature.");
+        return std::visit([](const auto& val) -> std::uint16_t
+        {
+            return val.value;
+        }, temp);
+    }
+
+    static std::uint16_t parseRPM(const AddressedValueAny &rpm)
+    {
+        assert(std::holds_alternative<AddressedValue2B>(rpm) &&  "We expect 2 bytes request for the rpm.");
+        return std::visit([](const auto& val) -> std::uint16_t
+        {
+            if (val.value)
+            {
+                return 478000.0 / val.value;
+            }
+            return 0u;
+        }, rpm);
+    }
 
     //support for Cereal
     template <class Archive>
@@ -53,6 +78,16 @@ struct CpuGpuFanCurve
 
     //Daemon only
     void Validate() const;
+
+    bool operator==(const CpuGpuFanCurve& another) const
+    {
+        return std::tie(cpu, gpu) == std::tie(another.cpu, another.gpu);
+    }
+
+    bool operator!=(const CpuGpuFanCurve& another) const
+    {
+        return !(*this == another);
+    }
 
     static CpuGpuFanCurve MakeDefault()
     {
@@ -114,11 +149,29 @@ struct BehaveWithCurve
     {
     }
 
+    bool operator==(const BehaveWithCurve& another) const
+    {
+        return std::tie(behaveState, curve) == std::tie(another.behaveState, another.curve);
+    }
+
+    bool operator!=(const BehaveWithCurve& another) const
+    {
+        return !(*this == another);
+    }
+
     //support for Cereal
     template <class Archive>
     void serialize(Archive & ar, const std::uint32_t /*version*/)
     {
         ar(behaveState, curve);
+    }
+
+    static BehaveWithCurve EmptyForGUI()
+    {
+        BehaveWithCurve res;
+        res.curve.cpu.clear();
+        res.curve.gpu.clear();
+        return res;
     }
 };
 CEREAL_CLASS_VERSION(BehaveWithCurve, 1)

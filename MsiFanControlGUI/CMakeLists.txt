@@ -23,6 +23,12 @@ set(PROJECT_SOURCES
         mainwindow.ui
         communicator.cpp communicator.h
         execonmainthread.cpp execonmainthread.h
+        booster_onoff_decider.h
+        running_avr.h
+        delayed_buttons.h
+        gui_helpers.h
+        widgets/qcustomplot.cpp widgets/qcustomplot.h
+        widgets/plotwidget.h widgets/plotwidget.cpp widgets/plotwidget.ui
     )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -30,11 +36,6 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
         resources.qrc
-        delayed_buttons.h
-        gui_helpers.h
-        widgets/qcustomplot.cpp widgets/qcustomplot.h
-        booster_onoff_decider.h
-        running_avr.h
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET MsiFanControlGUI APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

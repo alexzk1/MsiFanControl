@@ -19,7 +19,7 @@
 #include "qtimer.h"
 #include "runners.h"
 #include "communicator.h"
-#include "./ui_mainwindow.h"
+#include "ui_mainwindow.h"
 #include "gui_helpers.h"
 #include "booster_onoff_decider.h"
 
@@ -167,8 +167,8 @@ void MainWindow::LaunchGameMode()
         {
             std::optional<FullInfoBlock> optInfo;
             {
-                std::lock_guard grd(lastReadInfoMutex);
-                std::swap(optInfo, lastReadInfo);
+                std::lock_guard grd(lastReadInfoForGameModeThreadMutex);
+                std::swap(optInfo, lastReadInfoForGameModeThread);
             }
             const auto state = decider.GetUpdatedState(std::move(optInfo));
             UpdateRequestToDaemon([&state](RequestFromUi& r)
@@ -260,9 +260,10 @@ void MainWindow::UpdateUiWithInfo(FullInfoBlock info, bool possiblyBrokenConn)
         }
 
         SetImageIcon(info.info.cpu.temperature, Qt::green);
+        ReadCurvesFromDaemon(std::move(info.behaveAndCurve));
 
-        std::lock_guard grd(lastReadInfoMutex);
-        lastReadInfo = std::move(info);
+        std::lock_guard grd(lastReadInfoForGameModeThreadMutex);
+        lastReadInfoForGameModeThread = std::move(info);
     });
 }
 
@@ -323,4 +324,11 @@ void MainWindow::SetImageIcon(std::optional<int> value, const QColor &color)
 
         systemTray->setIcon(QIcon(QPixmap::fromImage(image)));
     }
+}
+
+void MainWindow::ReadCurvesFromDaemon(BehaveWithCurve curves)
+{
+    //TODO: Parse BehaveState and send curve to the dedicated widget
+    //{AUTO, ADVANCED, NO_CHANGE};
+    ui->curvesWidget->SetCurves(std::move(curves.curve));
 }
