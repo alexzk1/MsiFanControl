@@ -1,6 +1,7 @@
 #include "intelbeforegen10.h"
 
-CIntelBeforeGen10::CIntelBeforeGen10(CReadWrite readWrite) : CDevice(std::move(readWrite))
+CIntelBeforeGen10::CIntelBeforeGen10(CReadWrite readWrite) : CDevice(std::move(
+                readWrite))
 {
 }
 

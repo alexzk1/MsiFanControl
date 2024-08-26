@@ -8,7 +8,7 @@
 #include <streambuf>
 #include <cstdint>
 
-inline const char*  GetMemoryName()
+inline const char* GetMemoryName()
 {
     static const char* const ptr = "MSICoolersSharedControlMem9";
     return ptr;
@@ -41,13 +41,13 @@ public:
         :shm(std::move(shm)),
          region(this->shm, boost::interprocess::read_write)
     {
-        void *addr       = region.get_address();
+        void* addr = region.get_address();
         mutex = new (addr) boost::interprocess::interprocess_mutex;
 
         constexpr std::size_t a = 64;
         constexpr auto x = sizeof(boost::interprocess::interprocess_mutex);
 
-        const auto r =  x % a;
+        const auto r = x % a;
         offset = r ? x + (a - r) : x;
     }
 
@@ -90,14 +90,14 @@ private:
         return *(Ptr() + sz);
     }
 
-    char * Ptr() const
+    char* Ptr() const
     {
         return static_cast<char*>(region.get_address()) + offset;
     }
 
     std::size_t Size() const
     {
-        std::size_t sz = (region.get_size() - offset)  / 2;
+        std::size_t sz = (region.get_size() - offset) / 2;
         if (sz % 2)
         {
             --sz;
@@ -108,7 +108,7 @@ private:
     boost::interprocess::shared_memory_object shm;
     boost::interprocess::mapped_region region;
 
-    boost::interprocess::interprocess_mutex *mutex;
+    boost::interprocess::interprocess_mutex* mutex;
     std::size_t offset;
 };
 
@@ -122,7 +122,7 @@ public:
     {
     }
 
-    char * Ptr() const
+    char* Ptr() const
     {
         return static_cast<char*>(region.get_address());
     }

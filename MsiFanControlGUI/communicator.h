@@ -9,13 +9,11 @@
 #include "communicator_common.h"
 
 //This is GUI side communicator
-namespace boost
-{
-    namespace interprocess
-    {
-        class shared_memory_object;
-        class named_mutex;
-    }
+namespace boost {
+namespace interprocess {
+class shared_memory_object;
+class named_mutex;
+}
 }
 
 struct CleanSharedMemory

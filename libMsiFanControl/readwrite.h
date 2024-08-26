@@ -46,7 +46,7 @@ public:
             {
                 backupProvider->RestoreOffsets(std::move(backupOffsets));
             }
-            catch(std::exception& ex)
+            catch (std::exception& ex)
             {
                 std::cerr << "Exception on calling backup from ~CReadWrite(): " << ex.what()
                           << std::endl << std::flush;
@@ -92,17 +92,19 @@ public:
     }
 
 private:
-    ReadWriteProviderPtr           ioProvider;
-    BackupProviderPtr              backupProvider;
+    ReadWriteProviderPtr ioProvider;
+    BackupProviderPtr backupProvider;
     mutable std::set<std::int64_t> backupOffsets;
 
-    static AddressedValueAny& GetCommandFromContained(AddressedValueAnyList::value_type& elem)
+    static AddressedValueAny& GetCommandFromContained(AddressedValueAnyList::value_type&
+                                                      elem)
     {
         return elem;
     }
 
     template<typename TheState>
-    static AddressedValueAny& GetCommandFromContained(std::pair<TheState, AddressedValueAny> &elem)
+    static AddressedValueAny& GetCommandFromContained(
+        std::pair<TheState, AddressedValueAny> &elem)
     {
         return elem.second;
     }
@@ -110,7 +112,7 @@ private:
     template <typename T>
     static void Read(std::ifstream& readStream, T& element)
     {
-        if constexpr (std::is_same_v<T, TagIgnore>)
+        if constexpr(std::is_same_v<T, TagIgnore>)
         {
             return;
         }
@@ -127,7 +129,7 @@ private:
 
         std::copy(tmp.rbegin(), tmp.rend(), &element.value);
 
-        if constexpr (std::is_same_v<T, AddressedBits>)
+        if constexpr(std::is_same_v<T, AddressedBits>)
         {
             element.MaskValue();
         }
@@ -136,14 +138,14 @@ private:
     template <typename T>
     void Write(std::ofstream& writeStream, const T& element) const
     {
-        if constexpr (std::is_same_v<T, TagIgnore>)
+        if constexpr(std::is_same_v<T, TagIgnore>)
         {
             return;
         }
 
         using value_t = decltype(element.value);
         const std::streampos offset = element.address;
-        auto value                  = element.value;
+        auto value = element.value;
 
         //installing backup
         {
@@ -155,7 +157,7 @@ private:
         }
         //using intermedial array to deal with optimization: -fstrict-aliasing
 
-        if constexpr (std::is_same_v<T, AddressedBits>)
+        if constexpr(std::is_same_v<T, AddressedBits>)
         {
             AddressedValueAnyList tmp{AddressedValue1B{offset, 0}};
             Read(tmp);

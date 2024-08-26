@@ -16,9 +16,8 @@
 #include <QPoint>
 
 QT_BEGIN_NAMESPACE
-namespace Ui
-{
-    class MainWindow;
+namespace Ui {
+class MainWindow;
 }
 QT_END_NAMESPACE
 
@@ -33,13 +32,13 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    MainWindow(StartOptions options, QWidget *parent = nullptr);
+    MainWindow(StartOptions options, QWidget* parent = nullptr);
     ~MainWindow();
 
 private slots:
     void CreateCommunicator();
 protected:
-    void closeEvent(QCloseEvent *event) override;
+    void closeEvent(QCloseEvent* event) override;
 private:
     enum class ConnState {GREEN, RED, YELLOW};
     void UpdateUiWithInfo(FullInfoBlock info, bool possiblyBrokenConn);
@@ -76,7 +75,7 @@ private:
 
     void ReadCurvesFromDaemon(BehaveWithCurve curves);
 
-    Ui::MainWindow *ui;
+    Ui::MainWindow* ui;
     std::shared_ptr<std::thread> communicator;
 
     std::shared_ptr<std::thread> gameModeThread;

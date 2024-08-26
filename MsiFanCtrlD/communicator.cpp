@@ -51,7 +51,7 @@ struct RelaxKernel
             std::ofstream out(file, std::ios_base::trunc);
             out << "0";
         }
-        catch(std::exception& ex)
+        catch (std::exception& ex)
         {
             std::cout << "Failed to relax kernel. GUI may not connect: " << ex.what()
                       << std::endl << std::flush;
@@ -69,7 +69,7 @@ struct RelaxKernel
             std::ofstream out(file, std::ios_base::trunc);
             out << old_value;
         }
-        catch(std::exception& ex)
+        catch (std::exception& ex)
         {
             std::cout << "Failed restore security on files. Reboot to restore: " << ex.what()
                       << std::endl << std::flush;
@@ -108,7 +108,7 @@ CSharedDevice::CSharedDevice()
     using namespace boost::interprocess;
 
     RelaxKernel relax;
-    permissions  unrestricted_permissions;
+    permissions unrestricted_permissions;
     unrestricted_permissions.set_unrestricted();
 
     shared_memory_object shm(open_or_create,
@@ -124,20 +124,20 @@ CSharedDevice::~CSharedDevice()
     {
         device.reset();
     }
-    catch(...) {}
+    catch (...) {}
 
     try
     {
         sharedMem.reset();
     }
-    catch(...) {}
+    catch (...) {}
 
     //must be destroyed after device
     try
     {
         sharedBackup.reset();
     }
-    catch(...) {}
+    catch (...) {}
 }
 
 void CSharedDevice::Communicate()
@@ -150,7 +150,7 @@ void CSharedDevice::Communicate()
     {
         info = device->ReadFullInformation(++tag);
     }
-    catch(std::exception& ex)
+    catch (std::exception& ex)
     {
         info.daemonDeviceException = ex.what();
         std::cerr << "Failure reading info: " << ex.what() << std::endl << ::std::flush;
@@ -174,10 +174,11 @@ void CSharedDevice::Communicate()
                 cereal::BinaryInputArchive iarchive(ss);
                 iarchive(fromUI);
             }
-            catch(std::exception& ex)
+            catch (std::exception& ex)
             {
                 sharedMem->DaemonReadUI();
-                std::cerr << "Failed to read/parse  UI command: " << ex.what() << std::endl << std::flush;
+                std::cerr << "Failed to read/parse  UI command: " << ex.what() << std::endl <<
+                          std::flush;
                 return;
             }
             sharedMem->DaemonReadUI();
@@ -187,7 +188,8 @@ void CSharedDevice::Communicate()
     device->SetBooster(fromUI.boosterState);
 }
 
-void CSharedDevice::RestoreOffsets(std::set<int64_t> offsetsToRestoreFromBackup) const
+void CSharedDevice::RestoreOffsets(std::set<int64_t> offsetsToRestoreFromBackup)
+const
 {
     //This will be called when destructor does device.reset()
     if (sharedBackup)
@@ -204,16 +206,18 @@ void CSharedDevice::RestoreOffsets(std::set<int64_t> offsetsToRestoreFromBackup)
                     stream.seekp(offset);
                     stream.write(sharedBackup->Ptr() + offset, 1);
                 }
-                catch(std::exception& ex)
+                catch (std::exception& ex)
                 {
-                    std::cerr << "Failed to restore backup on offset " << offset << "(decimal): " << ex.what()
+                    std::cerr << "Failed to restore backup on offset " << offset << "(decimal): " <<
+                              ex.what()
                               <<std::endl << std::flush;
                 }
             }
         }
-        catch(std::exception& ex)
+        catch (std::exception& ex)
         {
-            std::cerr << "Failed IO during restoring backup. Backup was not restored: " << ex.what()
+            std::cerr << "Failed IO during restoring backup. Backup was not restored: " <<
+                      ex.what()
                       << std::endl << std::flush;
         }
     }
@@ -240,7 +244,7 @@ void CSharedDevice::MakeBackupBlock()
             const auto io = CSysFsProvider::CreateIoDirect(kDryRun);
             io->ReadStream().read(sharedBackup->Ptr(), sharedBackup->Size());
         }
-        catch(std::exception& ex)
+        catch (std::exception& ex)
         {
             std::cerr << "Creating IO failed for backup. Backup was disabled: " << ex.what()
                       << std::endl << std::flush;
@@ -252,7 +256,7 @@ void CSharedDevice::MakeBackupBlock()
 
         return;
     }
-    catch(...)
+    catch (...)
     {
         //This is expected fail, means this is 2nd+ run after reboot and backup exists already.
     }

@@ -7,14 +7,12 @@
 
 //This is daemon side communicator.
 
-namespace boost
-{
-    namespace interprocess
-    {
-        class shared_memory_object;
-        class named_mutex;
-        class mapped_region;
-    }
+namespace boost {
+namespace interprocess {
+class shared_memory_object;
+class named_mutex;
+class mapped_region;
+}
 }
 class CDevice;
 

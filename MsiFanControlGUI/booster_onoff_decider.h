@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cstdint>
-
 #include "device.h"
 #include "running_avr.h"
 
@@ -33,14 +31,15 @@ private:
     bool IsHotNow()
     {
         static constexpr int kDegreeLimitBoth = 80;//celsium, nvidia gpu max is 93C.
-        static constexpr int kCpuOnlyDegree   = 91; //if cpu is such hot - boost, even if gpu is off
+        static constexpr int kCpuOnlyDegree =
+            91; //if cpu is such hot - boost, even if gpu is off
         static_assert(kDegreeLimitBoth < kCpuOnlyDegree, "Revise here.");
 
         const auto avrCpu = cpuAvrTemp.GetCurrent(storedInfo.info.cpu.temperature);
         const auto avrGpu = gpuAvrTemp.GetCurrent(storedInfo.info.gpu.temperature);
 
-        return  (avrCpu && *avrCpu > kCpuOnlyDegree)
-                || (avrCpu && avrGpu && avrCpu > kDegreeLimitBoth
-                    && avrGpu > kDegreeLimitBoth);
+        return (avrCpu && *avrCpu > kCpuOnlyDegree)
+               || (avrCpu && avrGpu && avrCpu > kDegreeLimitBoth
+                   && avrGpu > kDegreeLimitBoth);
     }
 };

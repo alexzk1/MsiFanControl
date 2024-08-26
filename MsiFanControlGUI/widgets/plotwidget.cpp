@@ -4,40 +4,40 @@
 #include "plotwidget.h"
 #include "ui_plotwidget.h"
 
-namespace
+namespace {
+constexpr std::size_t kFirstSpeedIndexOnGraph = 1;
+
+//Given X from the graph converts to array's index.
+std::size_t GraphXToArrayIndex(const std::size_t aGraphIndex)
 {
-    constexpr std::size_t kFirstSpeedIndexOnGraph = 1;
-
-    //Given X from the graph converts to array's index.
-    std::size_t GraphXToArrayIndex(const std::size_t aGraphIndex)
-    {
-        return aGraphIndex - kFirstSpeedIndexOnGraph;
-    }
-
-    //There are N levels of RPM, without exact values (like speed in the car), N is slower than N+1.
-    //Number at this level defines temperature when it must be enabled.
-    void ShowIndexedTempOnGraph(const AddressedValueAnyList& aCurve, const QPointer<QCPGraph>& aGraph)
-    {
-        if (aGraph)
-        {
-            QVector<double> tempPerRpm;
-            tempPerRpm.reserve(aCurve.size());
-            std::transform(aCurve.begin(), aCurve.end(), std::back_inserter(tempPerRpm),
-                           [](const auto& aVarinat) -> double
-            {
-                return Info::parseTemp(aVarinat);
-            });
-
-            QVector<double> rpms;
-            rpms.resize(tempPerRpm.size());
-            std::iota(rpms.begin(), rpms.end(), static_cast<double>(kFirstSpeedIndexOnGraph));
-
-            aGraph->setData(rpms, tempPerRpm, true);
-        }
-    }
+    return aGraphIndex - kFirstSpeedIndexOnGraph;
 }
 
-plotwidget::plotwidget(QWidget *parent)
+//There are N levels of RPM, without exact values (like speed in the car), N is slower than N+1.
+//Number at this level defines temperature when it must be enabled.
+void ShowIndexedTempOnGraph(const AddressedValueAnyList& aCurve,
+                            const QPointer<QCPGraph>& aGraph)
+{
+    if (aGraph)
+    {
+        QVector<double> tempPerRpm;
+        tempPerRpm.reserve(aCurve.size());
+        std::transform(aCurve.begin(), aCurve.end(), std::back_inserter(tempPerRpm),
+                       [](const auto& aVarinat) -> double
+        {
+            return Info::parseTemp(aVarinat);
+        });
+
+        QVector<double> rpms;
+        rpms.resize(tempPerRpm.size());
+        std::iota(rpms.begin(), rpms.end(), static_cast<double>(kFirstSpeedIndexOnGraph));
+
+        aGraph->setData(rpms, tempPerRpm, true);
+    }
+}
+}
+
+plotwidget::plotwidget(QWidget* parent)
     : QWidget(parent)
     , ui(new Ui::plotwidget)
 {

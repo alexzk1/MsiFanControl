@@ -22,7 +22,8 @@ using ReadWriteProviderPtr = std::shared_ptr<IReadWriteProvider>;
 class IBackupProvider
 {
 public:
-    virtual void RestoreOffsets(std::set<std::int64_t> offsetsToRestoreFromBackup) const = 0;
+    virtual void RestoreOffsets(std::set<std::int64_t> offsetsToRestoreFromBackup) const
+        = 0;
     virtual ~IBackupProvider() = default;
 };
 

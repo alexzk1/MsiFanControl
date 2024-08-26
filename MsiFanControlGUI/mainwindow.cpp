@@ -25,7 +25,7 @@
 
 #include "delayed_buttons.h"
 
-MainWindow::MainWindow(StartOptions options, QWidget *parent)
+MainWindow::MainWindow(StartOptions options, QWidget* parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
@@ -71,12 +71,14 @@ MainWindow::MainWindow(StartOptions options, QWidget *parent)
 
         //sync checkbox to the action
         auto block = BlockGuard(ui->cbGameMode, ui->action_Game_Mode);
-        ui->cbGameMode->setCheckState(checked ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
+        ui->cbGameMode->setCheckState(checked ? Qt::CheckState::Checked :
+                                      Qt::CheckState::Unchecked);
         ui->action_Game_Mode->setChecked(checked);
     });
 
     //trigger action by checkbox
-    connect(ui->cbGameMode, &QCheckBox::stateChanged, ui->action_Game_Mode, &QAction::triggered);
+    connect(ui->cbGameMode, &QCheckBox::stateChanged, ui->action_Game_Mode,
+            &QAction::triggered);
 
     connect(ui->actionQuit, &QAction::triggered, this, [this]()
     {
@@ -98,9 +100,9 @@ MainWindow::MainWindow(StartOptions options, QWidget *parent)
 
     connect(systemTray, &QSystemTrayIcon::activated, this, [this](auto reason)
     {
-        if(reason == QSystemTrayIcon::Trigger)
+        if (reason == QSystemTrayIcon::Trigger)
         {
-            if(isVisible())
+            if (isVisible())
             {
                 hide();
             }
@@ -138,9 +140,9 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::closeEvent(QCloseEvent *event)
+void MainWindow::closeEvent(QCloseEvent* event)
 {
-    if(closing)
+    if (closing)
     {
         event->accept();
     }
@@ -213,9 +215,10 @@ void MainWindow::CreateCommunicator()
                 std::this_thread::sleep_for(1000ms);
             }
         }
-        catch(std::exception& ex)
+        catch (std::exception& ex)
         {
-            std::cerr << "Exception in communication with daemon, retry soon: " << ex.what() << std::endl;
+            std::cerr << "Exception in communication with daemon, retry soon: " << ex.what() <<
+                      std::endl;
             //Re-try again from the main thread later.
             ExecOnMainThread::get().exec([this]()
             {
@@ -246,12 +249,14 @@ void MainWindow::UpdateUiWithInfo(FullInfoBlock info, bool possiblyBrokenConn)
         }
 
         SetUiBooster(info.boosterState);
-        ui->outHwProfile->setText(info.behaveAndCurve.behaveState == BehaveState::AUTO ? tr("Auto") :
+        ui->outHwProfile->setText(info.behaveAndCurve.behaveState == BehaveState::AUTO ?
+                                  tr("Auto") :
                                   tr("Advanced"));
 
         if (info.daemonDeviceException.empty())
         {
-            SetDaemonConnectionStateOnGuiThread(possiblyBrokenConn ? ConnState::YELLOW : ConnState::GREEN);
+            SetDaemonConnectionStateOnGuiThread(possiblyBrokenConn ? ConnState::YELLOW :
+                                                ConnState::GREEN);
         }
         else
         {
@@ -299,7 +304,7 @@ void MainWindow::SetUiBooster(BoosterState state)
     }
 }
 
-void MainWindow::SetImageIcon(std::optional<int> value, const QColor &color)
+void MainWindow::SetImageIcon(std::optional<int> value, const QColor& color)
 {
     static const QIcon icon(":/images/fan.png");
     if (!value || isVisible())
@@ -319,7 +324,7 @@ void MainWindow::SetImageIcon(std::optional<int> value, const QColor &color)
 
         p.setPen(QPen(color));
         p.setFont(QFont("Times", 14, QFont::Bold));
-        p.drawText(image.rect(), Qt::AlignCenter, QString("%1").arg(*value));
+        p.drawText(image.rect(), Qt::AlignCenter, QString("%1°").arg(*value));
         p.end();
 
         systemTray->setIcon(QIcon(QPixmap::fromImage(image)));

@@ -9,10 +9,10 @@ using SimpleVoidFunction = std::function<void()>;
 class ExecOnMainThread : public QObject
 {
     Q_OBJECT
-    explicit ExecOnMainThread(QObject *parent = nullptr);
+    explicit ExecOnMainThread(QObject* parent = nullptr);
 public:
     void exec(SimpleVoidFunction func) const;
-    static const ExecOnMainThread &get();
+    static const ExecOnMainThread& get();
 signals:
     void needExec(SimpleVoidFunction lambda) const;
 private slots:

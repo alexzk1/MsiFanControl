@@ -14,7 +14,7 @@
 //Rosetta stone: https://github.com/YoyPa/isw/blob/master/wiki/msi%20ec.png
 
 enum class BoosterState : uint8_t {ON, OFF, NO_CHANGE};
-enum class BehaveState  : uint8_t {AUTO, ADVANCED, NO_CHANGE};
+enum class BehaveState : uint8_t {AUTO, ADVANCED, NO_CHANGE};
 
 struct Info
 {
@@ -24,7 +24,7 @@ struct Info
     Info(const AddressedValueAny& temp, const AddressedValueAny& rpm);
 
     //Those statics can be re-used from GUI.
-    static std::uint16_t parseTemp(const AddressedValueAny &temp)
+    static std::uint16_t parseTemp(const AddressedValueAny& temp)
     {
         assert(std::holds_alternative<AddressedValue1B>(temp)
                && "We expect 1 byte request for the temperature.");
@@ -34,9 +34,10 @@ struct Info
         }, temp);
     }
 
-    static std::uint16_t parseRPM(const AddressedValueAny &rpm)
+    static std::uint16_t parseRPM(const AddressedValueAny& rpm)
     {
-        assert(std::holds_alternative<AddressedValue2B>(rpm) &&  "We expect 2 bytes request for the rpm.");
+        assert(std::holds_alternative<AddressedValue2B>(rpm)
+               && "We expect 2 bytes request for the rpm.");
         return std::visit([](const auto& val) -> std::uint16_t
         {
             if (val.value)
@@ -49,7 +50,7 @@ struct Info
 
     //support for Cereal
     template <class Archive>
-    void serialize(Archive & ar, const std::uint32_t /*version*/)
+    void serialize(Archive& ar, const std::uint32_t /*version*/)
     {
         ar(temperature, fanRPM);
     }
@@ -63,7 +64,7 @@ struct CpuGpuInfo
 
     //support for Cereal
     template <class Archive>
-    void serialize(Archive & ar, const std::uint32_t /*version*/)
+    void serialize(Archive& ar, const std::uint32_t /*version*/)
     {
         ar(cpu, gpu);
     }
@@ -125,7 +126,7 @@ struct CpuGpuFanCurve
 
     //support for Cereal
     template <class Archive>
-    void serialize(Archive & ar, const std::uint32_t /*version*/ )
+    void serialize(Archive& ar, const std::uint32_t /*version*/)
     {
         ar(cpu, gpu);
     }
@@ -134,7 +135,7 @@ CEREAL_CLASS_VERSION(CpuGpuFanCurve, 1)
 
 struct BehaveWithCurve
 {
-    BehaveState    behaveState;
+    BehaveState behaveState;
     CpuGpuFanCurve curve;
 
     BehaveWithCurve() :
@@ -161,7 +162,7 @@ struct BehaveWithCurve
 
     //support for Cereal
     template <class Archive>
-    void serialize(Archive & ar, const std::uint32_t /*version*/)
+    void serialize(Archive& ar, const std::uint32_t /*version*/)
     {
         ar(behaveState, curve);
     }
@@ -180,16 +181,16 @@ CEREAL_CLASS_VERSION(BehaveWithCurve, 1)
 struct FullInfoBlock
 {
     //tag is strictly incremented by daemon, used by GUI to detect disconnect or so.
-    std::size_t  tag{0};
-    CpuGpuInfo   info;
+    std::size_t tag{0};
+    CpuGpuInfo info;
     BoosterState boosterState;
     BehaveWithCurve behaveAndCurve;
 
-    std::string  daemonDeviceException;
+    std::string daemonDeviceException;
 
     //support for Cereal
     template <class Archive>
-    void serialize(Archive & ar, const std::uint32_t /*version*/)
+    void serialize(Archive& ar, const std::uint32_t /*version*/)
     {
         ar(tag, info, boosterState, behaveAndCurve, daemonDeviceException);
     }
@@ -203,7 +204,7 @@ struct RequestFromUi
 
     //support for Cereal
     template <class Archive>
-    void serialize(Archive & ar, const std::uint32_t /*version*/)
+    void serialize(Archive& ar, const std::uint32_t /*version*/)
     {
         ar(boosterState, behaveAndCurve);
     }
@@ -217,27 +218,28 @@ public:
     explicit CDevice(CReadWrite readWrite);
     virtual ~CDevice();
 
-    CpuGpuInfo   ReadInfo() const;
+    CpuGpuInfo ReadInfo() const;
 
     BoosterState ReadBoosterState() const;
-    void         SetBooster(const BoosterState what) const;
+    void SetBooster(const BoosterState what) const;
 
-    BehaveWithCurve  ReadBehaveState() const;
-    void             SetBehaveState(BehaveWithCurve behaveWithCurve) const;
+    BehaveWithCurve ReadBehaveState() const;
+    void SetBehaveState(BehaveWithCurve behaveWithCurve) const;
 
     FullInfoBlock ReadFullInformation(std::size_t aTag) const;
 protected:
     using BoosterStates = AddressedValueStates<BoosterState>;
-    using BehaveStates  = AddressedValueStates<BehaveState>;
+    using BehaveStates = AddressedValueStates<BehaveState>;
 
     //Override methods below to provide access for different devices.
     //returns temp getter, then RPM getter for CPU, then for GPU.
     virtual AddressedValueAnyList GetCmdTempRPM() const;
 
     virtual BoosterStates GetCmdBoosterStates() const;
-    virtual BehaveStates  GetCmdBehaveStates() const = 0;
+    virtual BehaveStates GetCmdBehaveStates() const = 0;
 
-    void         SetBooster(CReadWrite::WriteHandle& handle, const BoosterState what) const;
+    void SetBooster(CReadWrite::WriteHandle& handle,
+                            const BoosterState what) const;
 private:
     CReadWrite readWriteAccess;
 };

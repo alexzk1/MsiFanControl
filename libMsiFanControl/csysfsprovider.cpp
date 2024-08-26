@@ -16,14 +16,15 @@ class ReadWriteProviderImpl : public IReadWriteProvider
 private:
     std::filesystem::path fileName;
 public:
-    ReadWriteProviderImpl(std::filesystem::path fileName):
+    explicit ReadWriteProviderImpl(std::filesystem::path fileName):
         fileName(std::move(fileName))
     {
 
     }
     std::ofstream WriteStream() const final
     {
-        return std::ofstream(fileName, std::ios_base::out | std::ios_base::binary | std::ios_base::app);
+        return std::ofstream(fileName,
+                             std::ios_base::out | std::ios_base::binary | std::ios_base::app);
     }
 
     std::ifstream ReadStream() const final
@@ -49,10 +50,11 @@ std::shared_ptr<IReadWriteProvider> CSysFsProvider::CreateIoDirect(bool dryRun)
     };
 
     return std::make_shared<ReadWriteProviderImpl>(dryRun ? genDryRun() :
-            "/sys/kernel/debug/ec/ec0/io");
+                                                   "/sys/kernel/debug/ec/ec0/io");
 }
 
-CReadWrite CSysFsProvider::CreateIoObject(BackupProviderPtr backuPovider, bool dryRun)
+CReadWrite CSysFsProvider::CreateIoObject(BackupProviderPtr backuPovider,
+                                          bool dryRun)
 {
-    return CReadWrite(CreateIoDirect (dryRun), std::move(backuPovider));
+    return CReadWrite(CreateIoDirect(dryRun), std::move(backuPovider));
 }

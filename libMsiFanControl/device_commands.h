@@ -33,7 +33,7 @@ struct AddressedValueTmpl
 
     //support for Cereal
     template <class Archive>
-    void save(Archive & ar) const
+    void save(Archive& ar) const
     {
         //https://github.com/USCiLab/cereal/issues/684
         int addr = address;
@@ -41,7 +41,7 @@ struct AddressedValueTmpl
     }
 
     template <class Archive>
-    void load(Archive & ar)
+    void load(Archive& ar)
     {
         int addr;
         ar(addr, value);
@@ -62,7 +62,7 @@ struct AddressedBits
 
     //support for Cereal
     template <class Archive>
-    void save(Archive & ar) const
+    void save(Archive& ar) const
     {
         //https://github.com/USCiLab/cereal/issues/684
         int addr = address;
@@ -70,7 +70,7 @@ struct AddressedBits
     }
 
     template <class Archive>
-    void load(Archive & ar)
+    void load(Archive& ar)
     {
         int addr;
         ar(addr, value, validBits);
@@ -91,8 +91,9 @@ struct AddressedBits
 
     bool operator==(const AddressedBits& another) const
     {
-        return std::tie(address, value, validBits) == std::tie(another.address, another.value,
-                another.validBits);
+        return std::tie(address, value, validBits) == std::tie(another.address,
+                                                               another.value,
+                                                               another.validBits);
     }
 
     bool operator!=(const AddressedBits& another) const
@@ -119,7 +120,7 @@ struct TagIgnore
 
     //support for Cereal
     template <class Archive>
-    void save(Archive & ar) const
+    void save(Archive& ar) const
     {
         //https://github.com/USCiLab/cereal/issues/684
         int addr = address;
@@ -127,7 +128,7 @@ struct TagIgnore
     }
 
     template <class Archive>
-    void load(Archive & ar)
+    void load(Archive& ar)
     {
         int addr;
         ar(addr, value);
@@ -175,7 +176,8 @@ struct AddressedValueStates
             }
         }
 
-        return 1 == difference.size() ? std::make_optional(*data.find(difference.front())) : std::nullopt;
+        return 1 == difference.size() ? std::make_optional(*data.find(
+                                                               difference.front())) : std::nullopt;
     }
 
     AddressedValueAny& at(const State key)
@@ -240,7 +242,7 @@ struct AddressedValueStates
 
     //support for Cereal
     template <class Archive>
-    void serialize(Archive & ar, const std::uint32_t /*version*/)
+    void serialize(Archive& ar, const std::uint32_t /*version*/)
     {
         ar(data);
     }

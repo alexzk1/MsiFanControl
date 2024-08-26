@@ -6,9 +6,8 @@
 #include "device.h"
 #include "qcustomplot.h"
 
-namespace Ui
-{
-    class plotwidget;
+namespace Ui {
+class plotwidget;
 }
 
 class plotwidget : public QWidget
@@ -16,12 +15,12 @@ class plotwidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit plotwidget(QWidget *parent = nullptr);
+    explicit plotwidget(QWidget* parent = nullptr);
     ~plotwidget();
 
     void SetCurves(CpuGpuFanCurve aLastCurves);
 private:
-    Ui::plotwidget *ui;
+    Ui::plotwidget* ui;
     CpuGpuFanCurve lastIndexedTempCurves;
 
     QPointer<QCPGraph> iCpuGraph;

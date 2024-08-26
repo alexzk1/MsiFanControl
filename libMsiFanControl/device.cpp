@@ -20,34 +20,33 @@ static void Throw(bool cond, std::string text)
 #define Throw(COND, TEXT)
 #endif
 
-namespace
+namespace {
+using AddressedValueAllowedAddresses = std::set<std::streampos>;
+struct AllowedAddresses
 {
-    using AddressedValueAllowedAddresses = std::set<std::streampos>;
-    struct AllowedAddresses
-    {
-        AddressedValueAllowedAddresses cpu;
-        AddressedValueAllowedAddresses gpu;
-    };
+    AddressedValueAllowedAddresses cpu;
+    AddressedValueAllowedAddresses gpu;
+};
 
-    AllowedAddresses BuildAllowedAdressesFromDefaults()
+AllowedAddresses BuildAllowedAdressesFromDefaults()
+{
+    static const auto makeSingle = [](const AddressedValueAnyList& src)
     {
-        static const auto makeSingle = [](const AddressedValueAnyList& src)
+        AddressedValueAllowedAddresses res;
+        std::transform(src.begin(), src.end(), std::inserter(res, res.end()),
+                       [](const auto& value)
         {
-            AddressedValueAllowedAddresses res;
-            std::transform(src.begin(), src.end(), std::inserter(res, res.end()),
-                           [](const auto& value)
-            {
-                const auto& vb = std::get<AddressedValue1B>(value);
-                return vb.address;
-            });
-            return res;
-        };
-        const auto curves = CpuGpuFanCurve::MakeDefault();
-        return {makeSingle(curves.cpu), makeSingle(curves.gpu)};
-    }
+            const auto& vb = std::get<AddressedValue1B>(value);
+            return vb.address;
+        });
+        return res;
+    };
+    const auto curves = CpuGpuFanCurve::MakeDefault();
+    return {makeSingle(curves.cpu), makeSingle(curves.gpu)};
+}
 }
 
-Info::Info(const AddressedValueAny &temp, const AddressedValueAny &rpm)
+Info::Info(const AddressedValueAny& temp, const AddressedValueAny& rpm)
 {
     Throw(std::holds_alternative<AddressedValue1B>(temp),
           "We expect 1 byte request for the temperature.");
@@ -82,20 +81,22 @@ CpuGpuInfo CDevice::ReadInfo() const
 
 BoosterState CDevice::ReadBoosterState() const
 {
-    auto cmd   = GetCmdBoosterStates();
+    auto cmd = GetCmdBoosterStates();
     const auto clone = cmd;
     readWriteAccess.Read(cmd);
 
     const auto diff = cmd.GetOneDifference(clone);
-    Throw(diff != std::nullopt, "Something went wrong. Read should indicate BOOSTER's changed state.");
+    Throw(diff != std::nullopt,
+          "Something went wrong. Read should indicate BOOSTER's changed state.");
 
     //We read OFF state different, that means there is ON state in device.
     return diff->first == BoosterState::OFF ? BoosterState::ON : BoosterState::OFF;
 }
 
-void CDevice::SetBooster(CReadWrite::WriteHandle &handle, const BoosterState what) const
+void CDevice::SetBooster(CReadWrite::WriteHandle& handle,
+                         const BoosterState what) const
 {
-    auto cmd   = GetCmdBoosterStates();
+    auto cmd = GetCmdBoosterStates();
     readWriteAccess.Write(handle, {std::move(cmd.at(what))});
 }
 
@@ -112,7 +113,8 @@ BehaveWithCurve CDevice::ReadBehaveState() const
     readWriteAccess.Read(cmd);
 
     const auto diff = cmd.GetOneDifference(clone);
-    Throw(diff != std::nullopt, "Something went wrong. Read should indicate BEHAVE's changed state.");
+    Throw(diff != std::nullopt,
+          "Something went wrong. Read should indicate BEHAVE's changed state.");
 
     //Same logic as in booster, if "auto" is different, then "advanced" is set there.
     BehaveWithCurve res;
@@ -132,8 +134,8 @@ void CDevice::SetBehaveState(BehaveWithCurve behaveWithCurve) const
     if (BehaveState::NO_CHANGE != behaveWithCurve.behaveState)
     {
         behaveWithCurve.curve.Validate();
-        readWriteAccess.Write(handle,  std::move(behaveWithCurve.curve.cpu));
-        readWriteAccess.Write(handle,  std::move(behaveWithCurve.curve.gpu));
+        readWriteAccess.Write(handle, std::move(behaveWithCurve.curve.cpu));
+        readWriteAccess.Write(handle, std::move(behaveWithCurve.curve.gpu));
         readWriteAccess.Write(handle, {std::move(cmd.at(behaveWithCurve.behaveState))});
     }
 }
@@ -197,7 +199,8 @@ void CpuGpuFanCurve::Validate() const
 
         (void)std::adjacent_find(src.begin(), src.end(), [](const auto& v1, const auto& v2)
         {
-            if (!std::holds_alternative<AddressedValue1B>(v1) || !std::holds_alternative<AddressedValue1B>(v2))
+            if (!std::holds_alternative<AddressedValue1B>(v1)
+                    || !std::holds_alternative<AddressedValue1B>(v2))
             {
                 throw std::invalid_argument("Curve must contain 1 byte values only!!!");
             }
@@ -212,8 +215,8 @@ void CpuGpuFanCurve::Validate() const
             return false;
         });
     };
-    static const auto validateAddresses = [](const AddressedValueAnyList&          src,
-                                          const AddressedValueAllowedAddresses&    example)
+    static const auto validateAddresses = [](const AddressedValueAnyList& src,
+                                             const AddressedValueAllowedAddresses& example)
     {
         for (const auto& value : src)
         {
