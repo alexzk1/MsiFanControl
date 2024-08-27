@@ -21,8 +21,8 @@ add_library(MsiFanControl STATIC
   intelbeforegen10.h intelbeforegen10.cpp
 
   msi_fan_control.h msi_fan_control.cpp
-
 )
 
 target_compile_definitions(MsiFanControl PRIVATE LIBMSIFANCONTROL_LIBRARY)
+target_include_directories(MsiFanControl PUBLIC ${CMAKE_CURRENT_LIST_DIR}/../common)
 target_link_libraries(MsiFanControl ${CPUID})

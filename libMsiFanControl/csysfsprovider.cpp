@@ -1,4 +1,5 @@
 #include "csysfsprovider.h"
+#include "readwrite.h"
 #include "readwrite_provider.h"
 
 #include <algorithm>
@@ -8,8 +9,10 @@
 #include <iostream>
 #include <memory>
 #include <array>
+#include <utility>
 
-extern bool ___GLOBAL_DRY_RUN___;
+//NOLINTNEXTLINE
+extern bool GLOBAL_DRY_RUN;
 
 class ReadWriteProviderImpl : public IReadWriteProvider
 {
@@ -21,21 +24,24 @@ public:
     {
 
     }
+
+    [[nodiscard]]
     std::ofstream WriteStream() const final
     {
-        return std::ofstream(fileName,
-                             std::ios_base::out | std::ios_base::binary | std::ios_base::app);
+        return {fileName,
+                std::ios_base::out | std::ios_base::binary | std::ios_base::app};
     }
 
+    [[nodiscard]]
     std::ifstream ReadStream() const final
     {
-        return std::ifstream(fileName, std::ios_base::in | std::ios_base::binary);
+        return {fileName, std::ios_base::in | std::ios_base::binary};
     }
 };
 
 std::shared_ptr<IReadWriteProvider> CSysFsProvider::CreateIoDirect(bool dryRun)
 {
-    ___GLOBAL_DRY_RUN___ = dryRun;
+    GLOBAL_DRY_RUN = dryRun;
     static const auto genDryRun = []()->std::filesystem::path
     {
         auto name = std::filesystem::temp_directory_path();
@@ -56,5 +62,5 @@ std::shared_ptr<IReadWriteProvider> CSysFsProvider::CreateIoDirect(bool dryRun)
 CReadWrite CSysFsProvider::CreateIoObject(BackupProviderPtr backuPovider,
                                           bool dryRun)
 {
-    return CReadWrite(CreateIoDirect(dryRun), std::move(backuPovider));
+    return {CreateIoDirect(dryRun), std::move(backuPovider)};
 }

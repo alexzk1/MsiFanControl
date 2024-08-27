@@ -3,23 +3,33 @@
 #include <memory>
 #include <set>
 #include <cstdint>
+
 #include "communicator_common.h"
+#include "cm_ctors.h"
 
 //This is daemon side communicator.
 
-namespace boost {
-namespace interprocess {
+namespace boost::interprocess {
 class shared_memory_object;
 class named_mutex;
 class mapped_region;
 }
-}
+
 class CDevice;
 
 class CSharedDevice
 {
+public:
+    CSharedDevice();
+    NO_COPYMOVE(CSharedDevice);
+    ~CSharedDevice();
+
+    void Communicate();
+
+private:
     struct CleanSharedMemory
     {
+        NO_COPYMOVE(CleanSharedMemory);
         CleanSharedMemory()
         {
             Clean();
@@ -36,15 +46,8 @@ class CSharedDevice
             shared_memory_object::remove(GetMemoryName());
         }
     };
-public:
-    CSharedDevice();
-    ~CSharedDevice();
-
-    void Communicate();
-
-private:
     friend struct BackupExecutorImpl;
-    void RestoreOffsets(std::set<int64_t> offsetsToRestoreFromBackup) const;
+    void RestoreOffsets(const std::set<int64_t> &offsetsToRestoreFromBackup) const;
     void MakeBackupBlock();
 
     CleanSharedMemory memoryCleaner;

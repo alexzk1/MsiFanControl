@@ -1,16 +1,22 @@
 #include "runners.h"
 #include "communicator.h"
 
+#include <cstdlib>
+#include <bits/chrono.h>
 #include <cerrno>
-#include <chrono>
 #include <iostream>
 #include <ostream>
-#include <stdexcept>
-#include<exception>
-#include <signal.h>
+#include <exception>
+#include <string>
 #include <systemd/sd-daemon.h>
 #include <thread>
 
+//NOLINTNEXTLINE
+#include <signal.h>
+#include <unistd.h>
+#include <bits/types/sigset_t.h>
+
+//NOLINTNEXTLINE
 void threadBody(const utility::runnerint_t shouldStop)
 {
     try
@@ -28,8 +34,9 @@ void threadBody(const utility::runnerint_t shouldStop)
         auto l_resultStatus = errno;
         std::cerr << "Communication error: " << l_exception.what() << std::endl <<
                   std::flush;
+        //NOLINTNEXTLINE
         sd_notifyf(0, "STATUS=Failed: %s\n ERRNO=%i", l_exception.what(), l_resultStatus);
-        std::exit(l_resultStatus);
+        kill(getpid(), SIGTERM);
     }
 }
 
@@ -44,16 +51,16 @@ int main(int argc, const char** argv)
         sigset_t l_waitedSignals;
         sigemptyset(&l_waitedSignals);
         sigaddset(&l_waitedSignals, SIGTERM);
+        //NOLINTNEXTLINE
         sigprocmask(SIG_BLOCK, &l_waitedSignals, nullptr);
 
         auto thread = utility::startNewRunner(threadBody);
 
         sd_notify(0, "READY=1");
         std::cerr << std::string("MSI fans control daemon has successfully started up.") <<
-                  std::endl <<
-                  std::flush;
+                  std::endl << std::flush;
 
-        int l_signal;
+        int l_signal = 0;
         sigwait(&l_waitedSignals, &l_signal);
         sd_notify(0, "STOPPING=1");
 
@@ -61,17 +68,15 @@ int main(int argc, const char** argv)
         thread.reset();
         sd_notify(0, "STATUS=STOPPED");
         std::cerr << std::string("MSI fans control has been successfully shut down.") <<
-                  std::endl <<
-                  std::flush;
+                  std::endl << std::flush;
 
         l_resultStatus = 0;
     }
     catch (std::exception& l_exception)
     {
+        //NOLINTNEXTLINE
         sd_notifyf(0, "STATUS=Failed to start up: %s\n ERRNO=%i", l_exception.what(),
                    l_resultStatus);
-        return l_resultStatus;
     }
-
     return l_resultStatus;
 }

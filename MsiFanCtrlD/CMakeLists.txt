@@ -18,7 +18,7 @@ add_executable(MsiFanCtrlD
 )
 
 include_directories(${Boost_INCLUDE_DIRS})
-target_include_directories(MsiFanCtrlD PRIVATE ../libMsiFanControl)
-target_include_directories(MsiFanCtrlD PRIVATE ../common)
+target_include_directories(MsiFanCtrlD PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../libMsiFanControl)
+target_include_directories(MsiFanCtrlD PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../common)
 target_link_libraries(MsiFanCtrlD PRIVATE MsiFanControl ${CPUID} systemd pthread ${Boost_LIBRARIES} ${cereal_LIBRARIES})
 

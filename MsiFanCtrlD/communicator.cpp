@@ -1,5 +1,4 @@
-#include <algorithm>
-#include <boost/interprocess/creation_tags.hpp>
+
 #include <cereal/types/array.hpp>
 #include <cereal/types/vector.hpp>
 #include <cereal/types/map.hpp>
@@ -7,24 +6,32 @@
 #include <cereal/types/string.hpp>
 #include <cereal/archives/binary.hpp>
 
-#include <boost/interprocess/sync/named_mutex.hpp>
+#include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/interprocess/permissions.hpp>
+#include <boost/interprocess/detail/os_file_functions.hpp>
+#include <boost/interprocess/sync/interprocess_mutex.hpp>
 
 #include <cstddef>
+#include <cstdint>
 #include <exception>
 #include <filesystem>
 #include <fstream>
 #include <ios>
+#include <iostream>
 #include <memory>
-
-#include <stdexcept>
+#include <set>
 #include <string>
 #include <ostream>
+#include <utility>
 
+#include "communicator_common.h"
+#include "device.h"
 #include "msi_fan_control.h"
 #include "communicator.h"
 #include "csysfsprovider.h"
+#include "cm_ctors.h"
+#include "readwrite_provider.h"
 
 //This is daemon side communicator.
 
@@ -38,9 +45,13 @@ static_assert(kWholeSharedMemSize % 2 == 0, "Wrong size.");
 //Kernel does not allow to set 0x666 on shared memory.
 struct RelaxKernel
 {
+    //NOLINTNEXTLINE
     std::filesystem::path file;
+    //NOLINTNEXTLINE
     std::string old_value;
-    RelaxKernel(std::filesystem::path aFile) : file(std::move(aFile))
+
+    NO_COPYMOVE(RelaxKernel);
+    explicit RelaxKernel(std::filesystem::path aFile) : file(std::move(aFile))
     {
         try
         {
@@ -80,22 +91,24 @@ struct RelaxKernel
 //Making this separated class because we need to pass shared_ptr.
 struct BackupExecutorImpl final : public IBackupProvider
 {
+    //NOLINTNEXTLINE
+    CSharedDevice* owner{nullptr};
+
     ~BackupExecutorImpl() override = default;
     BackupExecutorImpl() = delete;
+    NO_COPYMOVE(BackupExecutorImpl);
     explicit BackupExecutorImpl(CSharedDevice* owner)
         :owner(owner)
     {
     }
 
-    void RestoreOffsets(std::set<int64_t> offsetsToRestoreFromBackup) const final
+    void RestoreOffsets(const std::set<int64_t>& offsetsToRestoreFromBackup) const final
     {
         if (owner)
         {
-            owner->RestoreOffsets(std::move(offsetsToRestoreFromBackup));
+            owner->RestoreOffsets(offsetsToRestoreFromBackup);
         }
     }
-
-    CSharedDevice* owner{nullptr};
 };
 
 CSharedDevice::CSharedDevice()
@@ -107,7 +120,7 @@ CSharedDevice::CSharedDevice()
     device = CreateDeviceController(std::make_shared<BackupExecutorImpl>(this), kDryRun);
     using namespace boost::interprocess;
 
-    RelaxKernel relax;
+    const RelaxKernel relax;
     permissions unrestricted_permissions;
     unrestricted_permissions.set_unrestricted();
 
@@ -124,12 +137,14 @@ CSharedDevice::~CSharedDevice()
     {
         device.reset();
     }
+    //NOLINTNEXTLINE
     catch (...) {}
 
     try
     {
         sharedMem.reset();
     }
+    //NOLINTNEXTLINE
     catch (...) {}
 
     //must be destroyed after device
@@ -137,6 +152,7 @@ CSharedDevice::~CSharedDevice()
     {
         sharedBackup.reset();
     }
+    //NOLINTNEXTLINE
     catch (...) {}
 }
 
@@ -158,7 +174,7 @@ void CSharedDevice::Communicate()
 
     RequestFromUi fromUI;
     {
-        scoped_lock<interprocess_mutex> grd(sharedMem->Mutex());
+        const scoped_lock<interprocess_mutex> grd(sharedMem->Mutex());
 
         auto buffer = sharedMem->Daemon2UI();
         std::ostream ss(&buffer);
@@ -188,8 +204,8 @@ void CSharedDevice::Communicate()
     device->SetBooster(fromUI.boosterState);
 }
 
-void CSharedDevice::RestoreOffsets(std::set<int64_t> offsetsToRestoreFromBackup)
-const
+void CSharedDevice::RestoreOffsets(const std::set<int64_t>&
+                                   offsetsToRestoreFromBackup) const
 {
     //This will be called when destructor does device.reset()
     if (sharedBackup)
@@ -204,6 +220,7 @@ const
                 try
                 {
                     stream.seekp(offset);
+                    //NOLINTNEXTLINE
                     stream.write(sharedBackup->Ptr() + offset, 1);
                 }
                 catch (std::exception& ex)
@@ -242,7 +259,8 @@ void CSharedDevice::MakeBackupBlock()
             //copy ACPI file to shared memory which we just allocated. It should persist between runs
             //and keep 1st run copy, i.e. original data.
             const auto io = CSysFsProvider::CreateIoDirect(kDryRun);
-            io->ReadStream().read(sharedBackup->Ptr(), sharedBackup->Size());
+            io->ReadStream().read(sharedBackup->Ptr(),
+                                  static_cast<std::int64_t>(sharedBackup->Size()));
         }
         catch (std::exception& ex)
         {
@@ -256,6 +274,7 @@ void CSharedDevice::MakeBackupBlock()
 
         return;
     }
+    //NOLINTNEXTLINE
     catch (...)
     {
         //This is expected fail, means this is 2nd+ run after reboot and backup exists already.

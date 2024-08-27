@@ -1,13 +1,16 @@
 #pragma once
 
 #include "device.h"
+#include "readwrite.h"
+#include "cm_ctors.h"
 
 class CIntelBeforeGen10 : public CDevice
 {
 public:
     explicit CIntelBeforeGen10(CReadWrite readWrite);
-    ~CIntelBeforeGen10();
+    NO_COPYMOVE(CIntelBeforeGen10);
+    ~CIntelBeforeGen10() override;
 
 protected:
-    BehaveStates GetCmdBehaveStates() const;
+    BehaveStates GetCmdBehaveStates() const override;
 };

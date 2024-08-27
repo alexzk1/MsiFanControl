@@ -1,12 +1,15 @@
 #include "intelgen10.h"
+#include "device_commands.h"
+#include "readwrite.h"
+#include "device.h"
 
-CIntelGen10::CIntelGen10(CReadWrite readWrite) : CDevice(std::move(readWrite))
+#include <utility>
+
+CIntelGen10::CIntelGen10(CReadWrite readWrite) :
+    CDevice(std::move(readWrite))
 {
 }
-
-CIntelGen10::~CIntelGen10()
-{
-}
+CIntelGen10::~CIntelGen10() = default;
 
 CDevice::BehaveStates CIntelGen10::GetCmdBehaveStates() const
 {

@@ -2,14 +2,17 @@
 
 #include <cereal/cereal.hpp>
 
+#include <cstddef>
 #include <cstdint>
 #include <cassert>
-#include <iterator>
-#include <optional>
-#include <unordered_map>
+#include <string>
+#include <tuple>
+#include <utility>
 #include <variant>
+
 #include "readwrite.h"
 #include "device_commands.h"
+#include "cm_ctors.h"
 
 //Rosetta stone: https://github.com/YoyPa/isw/blob/master/wiki/msi%20ec.png
 
@@ -18,9 +21,13 @@ enum class BehaveState : uint8_t {AUTO, ADVANCED, NO_CHANGE};
 
 struct Info
 {
+    //NOLINTNEXTLINE
     std::uint16_t temperature{0};
+    //NOLINTNEXTLINE
     std::uint16_t fanRPM{0};
+
     Info() = default;
+    //NOLINTNEXTLINE
     Info(const AddressedValueAny& temp, const AddressedValueAny& rpm);
 
     //Those statics can be re-used from GUI.
@@ -74,7 +81,9 @@ CEREAL_CLASS_VERSION(CpuGpuInfo, 1)
 //Lists must contain 1 byte values only.
 struct CpuGpuFanCurve
 {
+    //NOLINTNEXTLINE
     AddressedValueAnyList cpu{};
+    //NOLINTNEXTLINE
     AddressedValueAnyList gpu{};
 
     //Daemon only
@@ -135,7 +144,9 @@ CEREAL_CLASS_VERSION(CpuGpuFanCurve, 1)
 
 struct BehaveWithCurve
 {
+    //NOLINTNEXTLINE
     BehaveState behaveState;
+    //NOLINTNEXTLINE
     CpuGpuFanCurve curve;
 
     BehaveWithCurve() :
@@ -215,6 +226,8 @@ class CDevice
 {
 public:
     CDevice() = delete;
+    NO_COPYMOVE(CDevice);
+
     explicit CDevice(CReadWrite readWrite);
     virtual ~CDevice();
 
@@ -224,7 +237,7 @@ public:
     void SetBooster(const BoosterState what) const;
 
     BehaveWithCurve ReadBehaveState() const;
-    void SetBehaveState(BehaveWithCurve behaveWithCurve) const;
+    void SetBehaveState(const BehaveWithCurve& behaveWithCurve) const;
 
     FullInfoBlock ReadFullInformation(std::size_t aTag) const;
 protected:
@@ -239,7 +252,7 @@ protected:
     virtual BehaveStates GetCmdBehaveStates() const = 0;
 
     void SetBooster(CReadWrite::WriteHandle& handle,
-                            const BoosterState what) const;
+                    const BoosterState what) const;
 private:
     CReadWrite readWriteAccess;
 };

@@ -5,38 +5,32 @@
 #include <cstdint>
 #include <exception>
 #include <fstream>
+#include <iosfwd>
 #include <ostream>
-#include <stdexcept>
+#include <set>
 #include <type_traits>
 #include <array>
+#include <utility>
 #include <variant>
 #include <iostream>
 #include <vector>
-#include <type_traits>
+
 #include "readwrite_provider.h"
 #include "device_commands.h"
+#include "cm_ctors.h"
 
 class CReadWrite
 {
 public:
-    class WriteHandle
-    {
-    public:
-        ~WriteHandle() = default;
-        WriteHandle() = delete;
-    private:
-        friend class CReadWrite;
-        explicit WriteHandle(std::ofstream&& stream):stream(std::move(stream))
-        {}
-        std::ofstream stream;
-    };
-public:
+    class WriteHandle;
+
     CReadWrite(ReadWriteProviderPtr ioProvider, BackupProviderPtr backupProvider)
         : ioProvider(std::move(ioProvider)),
           backupProvider(std::move(backupProvider))
     {
     }
     CReadWrite() = delete;
+    MOVEONLY_ALLOWED(CReadWrite);
 
     ~CReadWrite()
     {
@@ -44,7 +38,7 @@ public:
         {
             try
             {
-                backupProvider->RestoreOffsets(std::move(backupOffsets));
+                backupProvider->RestoreOffsets(backupOffsets);
             }
             catch (std::exception& ex)
             {
@@ -69,7 +63,7 @@ public:
         {
             std::visit([&handle, this](const auto& element)
             {
-                using stored_type = typename std::decay<decltype(element)>::type;
+                using stored_type = std::decay_t<decltype(element)>;
                 Write<stored_type>(handle.stream, element);
             }, value);
         }
@@ -85,11 +79,24 @@ public:
         {
             std::visit([&stream](auto& element)
             {
-                using stored_type = typename std::decay<decltype(element)>::type;
+                using stored_type = std::decay_t<decltype(element)>;
                 Read<stored_type>(stream, element);
             }, GetCommandFromContained(containedValue));
         }
     }
+
+    class WriteHandle
+    {
+    public:
+        ~WriteHandle() = default;
+        WriteHandle() = delete;
+        MOVEONLY_ALLOWED(WriteHandle);
+    private:
+        friend class CReadWrite;
+        explicit WriteHandle(std::ofstream&& stream):stream(std::move(stream))
+        {}
+        std::ofstream stream;
+    };
 
 private:
     ReadWriteProviderPtr ioProvider;
@@ -119,7 +126,7 @@ private:
         using value_t = decltype(element.value);
         //using intermedial array to deal with optimization: -fstrict-aliasing
         static_assert(std::is_scalar_v<value_t>, "Only scalar values are allowed.");
-        std::array<char, sizeof(value_t)> tmp;
+        std::array<char, sizeof(value_t)> tmp{};
 
         readStream.seekg(element.address);
         readStream.read(tmp.data(), tmp.size());
@@ -165,7 +172,7 @@ private:
         }
 
         static_assert(std::is_scalar_v<value_t>, "Only scalar values are allowed.");
-        std::array<char, sizeof(value_t)> tmp;
+        std::array<char, sizeof(value_t)> tmp{};
 
         //Guess this is BIG endian too:
         //file.write(bytes((VALUE,)))
@@ -174,3 +181,5 @@ private:
         writeStream.write(tmp.data(), tmp.size());
     }
 };
+
+TEST_MOVE_NOEX(CReadWrite);

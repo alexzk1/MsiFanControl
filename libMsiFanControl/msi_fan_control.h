@@ -2,6 +2,7 @@
 
 #include <memory>
 #include "device.h"
+#include "readwrite_provider.h"
 
 using DevicePtr = std::shared_ptr<CDevice>;
 

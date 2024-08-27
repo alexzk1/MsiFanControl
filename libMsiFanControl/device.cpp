@@ -1,17 +1,28 @@
-#include "device.h"
 #include <algorithm>
+#include <array>
 #include <cstddef>
-#include <cstdint>
+#include <iosfwd>
+#include <iterator>
+#include <optional>
 #include <stdexcept>
+#include <string>
 #include <set>
+#include <utility>
+#include <variant>
 
-bool ___GLOBAL_DRY_RUN___ = false;
+#include "device.h"
+#include "device_commands.h"
+#include "readwrite.h"
 
+//NOLINTNEXTLINE
+bool GLOBAL_DRY_RUN = false;
+
+namespace {
 //Cannot use assert! Because it does not call destructors and shared memory remains allocated in daemon.
 #ifndef NDEBUG
-static void Throw(bool cond, std::string text)
+void Throw(bool cond, const std::string& text)
 {
-    if (!cond && !___GLOBAL_DRY_RUN___)
+    if (!cond && !GLOBAL_DRY_RUN)
     {
         throw std::runtime_error(text);
     }
@@ -20,7 +31,6 @@ static void Throw(bool cond, std::string text)
 #define Throw(COND, TEXT)
 #endif
 
-namespace {
 using AddressedValueAllowedAddresses = std::set<std::streampos>;
 struct AllowedAddresses
 {
@@ -44,28 +54,20 @@ AllowedAddresses BuildAllowedAdressesFromDefaults()
     const auto curves = CpuGpuFanCurve::MakeDefault();
     return {makeSingle(curves.cpu), makeSingle(curves.gpu)};
 }
-}
+} // namespace
 
-Info::Info(const AddressedValueAny& temp, const AddressedValueAny& rpm)
+//NOLINTNEXTLINE
+Info::Info(const AddressedValueAny& temp, const AddressedValueAny& rpm) :
+    temperature(parseTemp(temp)),
+    fanRPM(parseRPM(rpm))
 {
-    Throw(std::holds_alternative<AddressedValue1B>(temp),
-          "We expect 1 byte request for the temperature.");
-    Throw(std::holds_alternative<AddressedValue2B>(rpm),
-          "We expect 2 bytes request for the rpm.");
-
-    temperature = parseTemp(temp);
-    fanRPM = parseRPM(rpm);
 }
 
 CDevice::CDevice(CReadWrite readWrite)
     : readWriteAccess(std::move(readWrite))
 {
 }
-
-CDevice::~CDevice()
-{
-
-}
+CDevice::~CDevice() = default;
 
 CpuGpuInfo CDevice::ReadInfo() const
 {
@@ -73,10 +75,10 @@ CpuGpuInfo CDevice::ReadInfo() const
     Throw(cmd.size() == 4,
           "We expect 4 commands: temp getter, then RPM getter for CPU, then for GPU.");
     readWriteAccess.Read(cmd);
-    Info cpu(cmd.at(0), cmd.at(1));
-    Info gpu(cmd.at(2), cmd.at(3));
+    const Info cpu(cmd.at(0), cmd.at(1));
+    const Info gpu(cmd.at(2), cmd.at(3));
 
-    return {std::move(cpu), std::move(gpu)};
+    return {cpu, gpu};
 }
 
 BoosterState CDevice::ReadBoosterState() const
@@ -90,14 +92,15 @@ BoosterState CDevice::ReadBoosterState() const
           "Something went wrong. Read should indicate BOOSTER's changed state.");
 
     //We read OFF state different, that means there is ON state in device.
-    return diff->first == BoosterState::OFF ? BoosterState::ON : BoosterState::OFF;
+    return !diff || diff->first == BoosterState::OFF ? BoosterState::ON :
+           BoosterState::OFF;
 }
 
 void CDevice::SetBooster(CReadWrite::WriteHandle& handle,
                          const BoosterState what) const
 {
     auto cmd = GetCmdBoosterStates();
-    readWriteAccess.Write(handle, {std::move(cmd.at(what))});
+    readWriteAccess.Write(handle, {cmd.at(what)});
 }
 
 void CDevice::SetBooster(const BoosterState what) const
@@ -118,7 +121,7 @@ BehaveWithCurve CDevice::ReadBehaveState() const
 
     //Same logic as in booster, if "auto" is different, then "advanced" is set there.
     BehaveWithCurve res;
-    res.behaveState = diff->first == BehaveState::AUTO ? BehaveState::ADVANCED :
+    res.behaveState = diff && diff->first == BehaveState::AUTO ? BehaveState::ADVANCED :
                       BehaveState::AUTO;
 
     readWriteAccess.Read(res.curve.cpu);
@@ -126,7 +129,7 @@ BehaveWithCurve CDevice::ReadBehaveState() const
     return res;
 }
 
-void CDevice::SetBehaveState(BehaveWithCurve behaveWithCurve) const
+void CDevice::SetBehaveState(const BehaveWithCurve& behaveWithCurve) const
 {
     auto cmd = GetCmdBehaveStates();
     auto handle = readWriteAccess.StartWritting();
@@ -134,9 +137,9 @@ void CDevice::SetBehaveState(BehaveWithCurve behaveWithCurve) const
     if (BehaveState::NO_CHANGE != behaveWithCurve.behaveState)
     {
         behaveWithCurve.curve.Validate();
-        readWriteAccess.Write(handle, std::move(behaveWithCurve.curve.cpu));
-        readWriteAccess.Write(handle, std::move(behaveWithCurve.curve.gpu));
-        readWriteAccess.Write(handle, {std::move(cmd.at(behaveWithCurve.behaveState))});
+        readWriteAccess.Write(handle, behaveWithCurve.curve.cpu);
+        readWriteAccess.Write(handle, behaveWithCurve.curve.gpu);
+        readWriteAccess.Write(handle, {cmd.at(behaveWithCurve.behaveState)});
     }
 }
 
@@ -148,13 +151,13 @@ FullInfoBlock CDevice::ReadFullInformation(std::size_t aTag) const
 AddressedValueAnyList CDevice::GetCmdTempRPM() const
 {
     //CPU_GPU_TEMP_ADDRESS, CPU_GPU_RPM_ADDRESS in python sample code.
-    static const AddressedValueAny cpuGetters[] =
+    static const std::array<AddressedValueAny, 2> cpuGetters =
     {
         AddressedValue1B{0x68, 0}, //temperature
         AddressedValue2B{0xC8, 0}, //rpm
     };
 
-    static const AddressedValueAny gpuGetters[] =
+    static const std::array<AddressedValueAny, 2> gpuGetters =
     {
         AddressedValue1B{0x80, 0}, //temperature
         AddressedValue2B{0xCA, 0}, //rpm

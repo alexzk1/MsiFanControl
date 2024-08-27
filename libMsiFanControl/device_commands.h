@@ -1,10 +1,8 @@
 #pragma once
 
-#include <algorithm>
-#include <cstddef>
 #include <cstdint>
 #include <ios>
-#include <iterator>
+#include <iosfwd>
 #include <type_traits>
 #include <variant>
 #include <vector>
@@ -18,7 +16,9 @@ struct AddressedValueTmpl
     using value_type = ValueType;
     static_assert(std::is_scalar_v<ValueType>, "Only scalars are allowed.");
 
+    //NOLINTNEXTLINE
     std::streampos address;
+    //NOLINTNEXTLINE
     ValueType value;
 
     bool operator==(const AddressedValueTmpl& another) const
@@ -43,7 +43,7 @@ struct AddressedValueTmpl
     template <class Archive>
     void load(Archive& ar)
     {
-        int addr;
+        int addr = -1;
         ar(addr, value);
         address = addr;
     }
@@ -52,12 +52,15 @@ struct AddressedValueTmpl
 struct AddressedBits
 {
     using value_type = std::uint8_t;
+    //NOLINTNEXTLINE
     std::streampos address;
 
     //bit mask, if bit is 1 then this is valid in byte
+    //NOLINTNEXTLINE
     std::uint8_t validBits;
 
     //actual value
+    //NOLINTNEXTLINE
     std::uint8_t value;
 
     //support for Cereal
@@ -65,14 +68,14 @@ struct AddressedBits
     void save(Archive& ar) const
     {
         //https://github.com/USCiLab/cereal/issues/684
-        int addr = address;
+        std::int64_t addr = address;
         ar(addr, value, validBits);
     }
 
     template <class Archive>
     void load(Archive& ar)
     {
-        int addr;
+        std::int64_t addr = -1;
         ar(addr, value, validBits);
         address = addr;
     }
@@ -82,6 +85,7 @@ struct AddressedBits
         value &= validBits;
     }
 
+    [[nodiscard]]
     uint8_t ValueForWritting(std::uint8_t existingValue) const
     {
         existingValue &= ~validBits;
@@ -105,7 +109,9 @@ struct AddressedBits
 struct TagIgnore
 {
     using value_type = std::uint8_t;
+    //NOLINTNEXTLINE
     std::streampos address{0};
+    //NOLINTNEXTLINE
     std::uint8_t value{0};
 
     bool operator==(const TagIgnore&) const
@@ -123,14 +129,14 @@ struct TagIgnore
     void save(Archive& ar) const
     {
         //https://github.com/USCiLab/cereal/issues/684
-        int addr = address;
+        std::int64_t addr = address;
         ar(addr, value);
     }
 
     template <class Archive>
     void load(Archive& ar)
     {
-        int addr;
+        std::int64_t addr = -1;
         ar(addr, value);
         address = addr;
     }
@@ -247,5 +253,6 @@ struct AddressedValueStates
         ar(data);
     }
 
+    //NOLINTNEXTLINE
     DataType data;
 };

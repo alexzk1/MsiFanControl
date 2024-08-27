@@ -1,6 +1,8 @@
 #pragma once
 
 #include "readwrite.h"
+#include "readwrite_provider.h"
+
 #include <memory>
 
 class CSysFsProvider

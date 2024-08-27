@@ -5,14 +5,20 @@
 #include <memory>
 #include <set>
 
+#include "cm_ctors.h"
 //! @brief provides IO access to the system data which should be changed.
 class IReadWriteProvider
 {
 public:
-    virtual std::ofstream WriteStream() const = 0;
-    virtual std::ifstream ReadStream() const = 0;
-
+    DEFAULT_COPYMOVE(IReadWriteProvider);
+    IReadWriteProvider() = default;
     virtual ~IReadWriteProvider() = default;
+
+    [[nodiscard]]
+    virtual std::ofstream WriteStream() const = 0;
+
+    [[nodiscard]]
+    virtual std::ifstream ReadStream() const = 0;
 };
 
 using ReadWriteProviderPtr = std::shared_ptr<IReadWriteProvider>;
@@ -22,9 +28,12 @@ using ReadWriteProviderPtr = std::shared_ptr<IReadWriteProvider>;
 class IBackupProvider
 {
 public:
-    virtual void RestoreOffsets(std::set<std::int64_t> offsetsToRestoreFromBackup) const
-        = 0;
+    DEFAULT_COPYMOVE(IBackupProvider);
+    IBackupProvider() = default;
     virtual ~IBackupProvider() = default;
+
+    virtual void RestoreOffsets(const std::set<std::int64_t>&
+                                offsetsToRestoreFromBackup)const = 0;
 };
 
 using BackupProviderPtr = std::shared_ptr<IBackupProvider>;

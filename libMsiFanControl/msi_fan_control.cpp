@@ -2,11 +2,14 @@
 #include "msi_fan_control.h"
 #include "intelbeforegen10.h"
 #include "intelgen10.h"
+#include "readwrite_provider.h"
 
-#include <cstddef>
 #include <libcpuid/libcpuid.h>
+#include <memory>
 #include <stdexcept>
 #include <iostream>
+#include <string>
+#include <utility>
 
 DevicePtr CreateDeviceController(BackupProviderPtr backuPovider, bool dryRun)
 {
@@ -14,8 +17,8 @@ DevicePtr CreateDeviceController(BackupProviderPtr backuPovider, bool dryRun)
     {
         throw std::runtime_error("Unrecognized CPU. We cannot proceed.");
     }
-    cpu_raw_data_t raw;
-    cpu_id_t data;
+    cpu_raw_data_t raw{};
+    cpu_id_t data{};
 
     if (cpuid_get_raw_data(&raw) < 0)
     {
@@ -31,7 +34,8 @@ DevicePtr CreateDeviceController(BackupProviderPtr backuPovider, bool dryRun)
         throw std::runtime_error(err);
     }
 
-    const std::string brand = std::string(data.brand_str);
+    const std::string brand = std::string(static_cast<const char* const>
+                                          (data.brand_str));
     if (data.vendor != cpu_vendor_t::VENDOR_INTEL)
     {
         throw std::runtime_error("We support only Intel CPUs into MSI laptops. Detected CPU: "
