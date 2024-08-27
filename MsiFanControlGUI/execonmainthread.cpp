@@ -1,5 +1,10 @@
 #include "execonmainthread.h"
 
+#include <QObject>
+#include <qnamespace.h>
+#include <qtmetamacros.h>
+#include <utility>
+
 //object must be constructed inside main thread, best to do in main
 ExecOnMainThread::ExecOnMainThread(QObject* parent) : QObject(parent)
 {
@@ -8,18 +13,18 @@ ExecOnMainThread::ExecOnMainThread(QObject* parent) : QObject(parent)
             Qt::QueuedConnection);
 }
 
-void ExecOnMainThread::exec(SimpleVoidFunction func) const
+void ExecOnMainThread::exec(SimpleVoidFunction func)
 {
     emit needExec(std::move(func));
 }
 
-const ExecOnMainThread& ExecOnMainThread::get()
+ExecOnMainThread& ExecOnMainThread::get()
 {
-    const static ExecOnMainThread tmp;
+    static ExecOnMainThread tmp;
     return tmp;
 }
 
-void ExecOnMainThread::doExex(SimpleVoidFunction lambda)
+void ExecOnMainThread::doExex(const SimpleVoidFunction& lambda)
 {
     lambda();
 }

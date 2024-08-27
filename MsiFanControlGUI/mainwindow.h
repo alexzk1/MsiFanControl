@@ -6,7 +6,6 @@
 #include <optional>
 #include <thread>
 #include <mutex>
-#include <tuple>
 #include <chrono>
 #include <QSystemTrayIcon>
 #include <QPointer>

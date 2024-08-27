@@ -1,9 +1,9 @@
 #pragma once
 
 #include <array>
-#include <algorithm>
-#include <cstdint>
+#include <cstddef>
 #include <optional>
+#include <numeric>
 
 template <typename T, std::size_t Counts>
 class RunningAvr

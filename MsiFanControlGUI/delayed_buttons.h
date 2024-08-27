@@ -2,6 +2,7 @@
 
 #include <QPushButton>
 #include <QTimer>
+#include <QObject>
 
 //If this object is attached to the button it delays clicks.
 

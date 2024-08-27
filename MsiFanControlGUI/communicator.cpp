@@ -5,23 +5,22 @@
 #include <cereal/types/string.hpp>
 #include <cereal/archives/binary.hpp>
 
+#include <boost/interprocess/creation_tags.hpp>
+#include <boost/interprocess/detail/os_file_functions.hpp>
 #include <boost/interprocess/shared_memory_object.hpp>
-#include <boost/interprocess/mapped_region.hpp>
-#include <boost/interprocess/sync/named_mutex.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
+#include <boost/interprocess/sync/interprocess_mutex.hpp>
 
-#include <cstddef>
-#include <exception>
-#include <limits>
+#include <istream>
 #include <memory>
-
 #include <optional>
 #include <stdexcept>
-#include <string>
 #include <ostream>
+#include <utility>
 
 #include "communicator.h"
 #include "communicator_common.h"
+#include "device.h"
 
 //This is GUI side communicator
 
@@ -50,7 +49,7 @@ FullInfoBlock CSharedDevice::Communicate(const std::optional<RequestFromUi>& req
     using namespace boost::interprocess;
     FullInfoBlock info;
     {
-        scoped_lock<interprocess_mutex> grd(sharedMem->Mutex());
+        const scoped_lock<interprocess_mutex> grd(sharedMem->Mutex());
         {
             auto buffer = sharedMem->Daemon2UI();
             std::istream ss(&buffer);

@@ -3,6 +3,8 @@
 #include <QObject>
 #include <tuple>
 
+#include "cm_ctors.h"
+
 template <typename ...Ptrs>
 auto BlockGuard(Ptrs ...args)
 {
@@ -11,7 +13,8 @@ auto BlockGuard(Ptrs ...args)
     private:
         std::tuple<Ptrs...> pointers;
     public:
-        SignalBlocker(Ptrs ...args)
+        NO_COPYMOVE(SignalBlocker);
+        explicit SignalBlocker(Ptrs ...args)
             :pointers(args...)
         {
         }

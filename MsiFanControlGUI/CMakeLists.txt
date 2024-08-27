@@ -55,9 +55,10 @@ else()
     endif()
 endif()
 
-target_include_directories(MsiFanControlGUI PRIVATE ../libMsiFanControl)
-target_include_directories(MsiFanControlGUI PRIVATE ../common)
-target_include_directories(MsiFanControlGUI PRIVATE ./widgets)
+target_include_directories(MsiFanControlGUI PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}/../common
+    ${CMAKE_CURRENT_LIST_DIR}/../libMsiFanControl
+    ${CMAKE_CURRENT_LIST_DIR}/widgets)
 
 target_link_libraries(MsiFanControlGUI PRIVATE Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::PrintSupport

@@ -1,6 +1,14 @@
+#include <bits/chrono.h>
+#include <cstddef>
+#include <exception>
+#include <iostream>
+#include <mutex>
 #include <optional>
-#include <stdexcept>
 #include <map>
+#include <qmainwindow.h>
+#include <qrgb.h>
+#include <thread>
+#include <utility>
 
 #include <QTimer>
 #include <QString>
@@ -10,24 +18,30 @@
 #include <QMessageBox>
 #include <QCloseEvent>
 #include <QPainter>
+#include <QIcon>
+#include <QImage>
+#include <QPixmap>
 
+#include "device.h"
 #include "execonmainthread.h"
-#include "mainwindow.h"
+
 #include "qcheckbox.h"
 #include "qnamespace.h"
 #include "qradiobutton.h"
 #include "qtimer.h"
 #include "runners.h"
 #include "communicator.h"
-#include "ui_mainwindow.h"
 #include "gui_helpers.h"
 #include "booster_onoff_decider.h"
 
+#include "mainwindow.h"
+#include "ui_mainwindow.h"
 #include "delayed_buttons.h"
 
 MainWindow::MainWindow(StartOptions options, QWidget* parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
+    , ui(new Ui::MainWindow),
+      systemTray(new QSystemTrayIcon(this))
 {
     ui->setupUi(this);
     setFixedSize(size());
@@ -87,13 +101,14 @@ MainWindow::MainWindow(StartOptions options, QWidget* parent)
         close();
     });
 
-    auto trayIconMenu = new QMenu(this);
-    trayIconMenu->addAction(ui->action_Game_Mode);
-    trayIconMenu->addSeparator();
-    trayIconMenu->addAction(ui->actionQuit);
-
-    systemTray = new QSystemTrayIcon(this);
-    systemTray->setContextMenu(trayIconMenu);
+    {
+        //NOLINTNEXTLINE
+        auto trayIconMenu = new QMenu(this);
+        trayIconMenu->addAction(ui->action_Game_Mode);
+        trayIconMenu->addSeparator();
+        trayIconMenu->addAction(ui->actionQuit);
+        systemTray->setContextMenu(trayIconMenu);
+    }
 
     SetImageIcon(std::nullopt);
     systemTray->show();
@@ -115,7 +130,7 @@ MainWindow::MainWindow(StartOptions options, QWidget* parent)
     });
 
     SetDaemonConnectionStateOnGuiThread(ConnState::RED);
-    QTimer::singleShot(500, this, [this, options = std::move(options)]()
+    QTimer::singleShot(500, this, [this, options]()
     {
         CreateCommunicator();
         if (options.minimized)
@@ -169,7 +184,7 @@ void MainWindow::LaunchGameMode()
         {
             std::optional<FullInfoBlock> optInfo;
             {
-                std::lock_guard grd(lastReadInfoForGameModeThreadMutex);
+                const std::lock_guard grd(lastReadInfoForGameModeThreadMutex);
                 std::swap(optInfo, lastReadInfoForGameModeThread);
             }
             const auto state = decider.GetUpdatedState(std::move(optInfo));
@@ -186,7 +201,7 @@ void MainWindow::CreateCommunicator()
 {
     communicator = utility::startNewRunner([this](const auto shouldStop)
     {
-        CleanSharedMemory cleaner;
+        const CleanSharedMemory cleaner;
         try
         {
             CSharedDevice comm;
@@ -195,7 +210,7 @@ void MainWindow::CreateCommunicator()
             {
                 std::optional<RequestFromUi> request{std::nullopt};
                 {
-                    std::lock_guard grd(requestMutex);
+                    const std::lock_guard grd(requestMutex);
                     std::swap(requestToDaemon, request);
                 }
                 auto info = comm.Communicate(request);
@@ -217,8 +232,8 @@ void MainWindow::CreateCommunicator()
         }
         catch (std::exception& ex)
         {
-            std::cerr << "Exception in communication with daemon, retry soon: " << ex.what() <<
-                      std::endl;
+            std::cerr << "Exception in communication with daemon, retry soon: "
+                      << ex.what() << std::endl;
             //Re-try again from the main thread later.
             ExecOnMainThread::get().exec([this]()
             {
@@ -231,7 +246,8 @@ void MainWindow::CreateCommunicator()
 
 void MainWindow::UpdateUiWithInfo(FullInfoBlock info, bool possiblyBrokenConn)
 {
-    ExecOnMainThread::get().exec([this, info = std::move(info), possiblyBrokenConn]()
+    ExecOnMainThread::get().exec([this, info = std::move(info),
+                                  possiblyBrokenConn]() mutable
     {
         static const QString fmtNum("%1");
         ui->outCpuT->setText(QString(fmtNum).arg(info.info.cpu.temperature));
@@ -267,7 +283,7 @@ void MainWindow::UpdateUiWithInfo(FullInfoBlock info, bool possiblyBrokenConn)
         SetImageIcon(info.info.cpu.temperature, Qt::green);
         ReadCurvesFromDaemon(std::move(info.behaveAndCurve));
 
-        std::lock_guard grd(lastReadInfoForGameModeThreadMutex);
+        const std::lock_guard grd(lastReadInfoForGameModeThreadMutex);
         lastReadInfoForGameModeThread = std::move(info);
     });
 }

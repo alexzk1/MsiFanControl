@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <functional>
+#include <qtmetamacros.h>
 
 using SimpleVoidFunction = std::function<void()>;
 
@@ -11,12 +12,12 @@ class ExecOnMainThread : public QObject
     Q_OBJECT
     explicit ExecOnMainThread(QObject* parent = nullptr);
 public:
-    void exec(SimpleVoidFunction func) const;
-    static const ExecOnMainThread& get();
+    void exec(SimpleVoidFunction func);
+    static ExecOnMainThread& get();
 signals:
-    void needExec(SimpleVoidFunction lambda) const;
+    void needExec(SimpleVoidFunction lambda);
 private slots:
-    void doExex(SimpleVoidFunction lambda);
+    void doExex(const SimpleVoidFunction& lambda);
 };
 
 #endif // EXECONMAINTHREAD_H

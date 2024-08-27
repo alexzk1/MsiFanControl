@@ -1,5 +1,5 @@
 #include <algorithm>
-#include <cstdint>
+#include <cstddef>
 
 #include "plotwidget.h"
 #include "ui_plotwidget.h"

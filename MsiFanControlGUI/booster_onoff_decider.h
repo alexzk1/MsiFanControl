@@ -3,6 +3,10 @@
 #include "device.h"
 #include "running_avr.h"
 
+#include <cstddef>
+#include <optional>
+#include <utility>
+
 template <std::size_t AvrSamplesCount>
 class BoosterOnOffDecider
 {
