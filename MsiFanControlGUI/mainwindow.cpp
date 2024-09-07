@@ -230,7 +230,11 @@ void MainWindow::CreateCommunicator()
                     {50, 13},
                     {60, 10},
                     {65, 7},
-                    {70, 2},
+                    {70, 4},
+                    {75, 3},
+                    {80, 2},
+                    //I think we should not add divider 1 at the end ever.
+                    //And 0 is prohibited, but there is no validation of it.
                 };
 
                 //If ping failed, request updates as fast as possible.
