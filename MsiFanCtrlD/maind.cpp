@@ -1,8 +1,8 @@
 #include "runners.h"
 #include "communicator.h"
+#include "device.h"
 
 #include <cstdlib>
-#include <bits/chrono.h>
 #include <cerrno>
 #include <iostream>
 #include <ostream>
@@ -26,7 +26,7 @@ void threadBody(const utility::runnerint_t shouldStop)
         {
             sharedDevice.Communicate();
             using namespace std::chrono_literals;
-            std::this_thread::sleep_for(1s);
+            std::this_thread::sleep_for(kMinimumServiceDelay);
         }
     }
     catch (std::exception& l_exception)

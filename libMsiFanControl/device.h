@@ -5,6 +5,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <cassert>
+#include <chrono>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -15,9 +17,11 @@
 #include "cm_ctors.h"
 
 //Rosetta stone: https://github.com/YoyPa/isw/blob/master/wiki/msi%20ec.png
+enum class BoosterState : std::uint8_t {ON, OFF, NO_CHANGE};
+enum class BehaveState : std::uint8_t {AUTO, ADVANCED, NO_CHANGE};
 
-enum class BoosterState : uint8_t {ON, OFF, NO_CHANGE};
-enum class BehaveState : uint8_t {AUTO, ADVANCED, NO_CHANGE};
+using namespace std::chrono_literals;
+constexpr inline auto kMinimumServiceDelay = 500ms;
 
 struct Info
 {
@@ -191,6 +195,8 @@ CEREAL_CLASS_VERSION(BehaveWithCurve, 1)
 //! @brief this is combined information from daemon to UI.
 struct FullInfoBlock
 {
+    static inline constexpr std::size_t signature = 0xABBACDDCDEFEEF01u;
+
     //tag is strictly incremented by daemon, used by GUI to detect disconnect or so.
     std::size_t tag{0};
     CpuGpuInfo info;
@@ -201,15 +207,32 @@ struct FullInfoBlock
 
     //support for Cereal
     template <class Archive>
-    void serialize(Archive& ar, const std::uint32_t /*version*/)
+    void save(Archive& ar, const std::uint32_t /*version*/) const
     {
-        ar(tag, info, boosterState, behaveAndCurve, daemonDeviceException);
+        ar(signature, tag, info, boosterState, behaveAndCurve, daemonDeviceException);
+    }
+
+    template <class Archive>
+    void load(Archive& ar, const std::uint32_t /*version*/)
+    {
+        std::size_t signatureRead = 0u;
+        ar(signatureRead, tag, info, boosterState, behaveAndCurve, daemonDeviceException);
+        if (signatureRead != signature)
+        {
+            throw std::runtime_error("Wrong signature detected on reading FullInfoBlock.");
+        }
     }
 };
 CEREAL_CLASS_VERSION(FullInfoBlock, 1)
 
 struct RequestFromUi
 {
+    //PING_DAEMON - daemon just updates tag field, other data are last read values.
+    //READ_FRESH_DATA - daemon does actual read of the data like current temperatures and updates last read data.
+    //WRITE_DATA - daemon writes data present in this request and updates last read data by following reading.
+    enum class RequestType : std::uint8_t {PING_DAEMON, READ_FRESH_DATA, WRITE_DATA};
+
+    RequestType request;
     BoosterState boosterState{BoosterState::NO_CHANGE};
     BehaveWithCurve behaveAndCurve{};
 
@@ -217,7 +240,7 @@ struct RequestFromUi
     template <class Archive>
     void serialize(Archive& ar, const std::uint32_t /*version*/)
     {
-        ar(boosterState, behaveAndCurve);
+        ar(boosterState, behaveAndCurve, request);
     }
 };
 CEREAL_CLASS_VERSION(RequestFromUi, 1)

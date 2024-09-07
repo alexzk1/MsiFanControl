@@ -7,6 +7,7 @@
 #include <map>
 #include <qmainwindow.h>
 #include <qrgb.h>
+#include <stdexcept>
 #include <thread>
 #include <utility>
 
@@ -22,7 +23,6 @@
 #include <QImage>
 #include <QPixmap>
 
-#include "device.h"
 #include "execonmainthread.h"
 
 #include "qcheckbox.h"
@@ -178,7 +178,7 @@ void MainWindow::LaunchGameMode()
 
     gameModeThread = utility::startNewRunner([this](auto shouldStop)
     {
-        BoosterOnOffDecider<5> decider;
+        BoosterOnOffDecider<3> decider;
 
         while (! *(shouldStop))
         {
@@ -188,46 +188,77 @@ void MainWindow::LaunchGameMode()
                 std::swap(optInfo, lastReadInfoForGameModeThread);
             }
             const auto state = decider.GetUpdatedState(std::move(optInfo));
-            UpdateRequestToDaemon([&state](RequestFromUi& r)
+            if (state != BoosterState::NO_CHANGE)
             {
-                r.boosterState = state;
-            });
-            std::this_thread::sleep_for(2000ms);
+                UpdateRequestToDaemon([&state](RequestFromUi& r)
+                {
+                    r.boosterState = state;
+                });
+            }
+            std::this_thread::sleep_for(kMinimumServiceDelay + 500ms);
         };
     });
 }
 
 void MainWindow::CreateCommunicator()
 {
-    communicator = utility::startNewRunner([this](const auto shouldStop)
+    // We're trying to read data is less as possible because each read triggers IRQ9 which
+    // leads to more power consumption eventually.
+    static constexpr std::uint16_t kTempToUseFastDivider = 70;
+    static constexpr std::size_t kSlowDivider = 17;
+    static constexpr std::size_t kFastDivider = 2;
+
+    communicator = utility::startNewRunner([this](const auto shouldStop) mutable
     {
-        const CleanSharedMemory cleaner;
+        std::size_t refreshDivider = kSlowDivider;
         try
         {
-            CSharedDevice comm;
-            std::size_t brokenCounter = 0;
-            while (!(*shouldStop))
+            CSharedDevice comm(shouldStop);
+            bool pingOk = true;
+            for (std::size_t loopsCounter = 0; !(*shouldStop); ++loopsCounter)
             {
                 std::optional<RequestFromUi> request{std::nullopt};
                 {
                     const std::lock_guard grd(requestMutex);
                     std::swap(requestToDaemon, request);
                 }
-                auto info = comm.Communicate(request);
 
-                if (comm.PossiblyBroken())
+                if (!request)
                 {
-                    ++brokenCounter;
+                    if (loopsCounter % refreshDivider == 0)
+                    {
+                        pingOk = comm.RefreshData();
+                    }
+                    else
+                    {
+                        if (loopsCounter % 3 == 0)
+                        {
+                            if (!comm.PingDaemon())
+                            {
+                                throw std::runtime_error("Possibly daemon was stopped.");
+                            }
+                        }
+                    }
                 }
                 else
                 {
-                    brokenCounter = 0;
+                    if (request->boosterState != BoosterState::NO_CHANGE)
+                    {
+                        pingOk = comm.SetBooster(request->boosterState);
+                    }
                 }
 
-                UpdateUiWithInfo(std::move(info), brokenCounter > 3);
+                refreshDivider = !pingOk
+                                 || comm.LastKnownInfo().info.cpu.temperature > kTempToUseFastDivider
+                                 ? kFastDivider : kSlowDivider;
 
+                UpdateUiWithInfo(comm.LastKnownInfo(), !pingOk);
+                if (*shouldStop)
+                {
+                    break;
+                }
                 using namespace std::chrono_literals;
-                std::this_thread::sleep_for(1000ms);
+                std::this_thread::sleep_for(1s);
             }
         }
         catch (std::exception& ex)
@@ -295,7 +326,7 @@ void MainWindow::SetDaemonConnectionStateOnGuiThread(const ConnState state)
     {
         {ConnState::GREEN, tr("Daemon is OK.")},
         {ConnState::YELLOW, tr("Daemon is not responding...")},
-        {ConnState::RED, tr("No connection to the daemon, retrying each 5s.")},
+        {ConnState::RED, tr("No connection to the daemon, retrying...")},
     };
     ui->statusbar->showMessage(states.at(state));
     setEnabled(state != ConnState::RED);

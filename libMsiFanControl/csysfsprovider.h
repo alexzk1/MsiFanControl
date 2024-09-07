@@ -5,6 +5,7 @@
 
 #include <memory>
 
+//! @note It requires acpi/irq working to access BIOS.
 class CSysFsProvider
 {
 public:

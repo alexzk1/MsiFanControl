@@ -6,6 +6,7 @@
 
 #include "communicator_common.h"
 #include "cm_ctors.h"
+#include "device.h"
 
 //This is daemon side communicator.
 
@@ -48,9 +49,10 @@ private:
     };
     friend struct BackupExecutorImpl;
     void RestoreOffsets(const std::set<int64_t> &offsetsToRestoreFromBackup) const;
-    void MakeBackupBlock();
+    bool MakeBackupBlock();
 
     CleanSharedMemory memoryCleaner;
+    FullInfoBlock lastReadInfo;
     std::shared_ptr<CDevice> device;
     std::shared_ptr<SharedMemoryWithMutex> sharedMem;
 

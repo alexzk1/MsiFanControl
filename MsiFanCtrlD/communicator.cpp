@@ -12,6 +12,7 @@
 #include <boost/interprocess/detail/os_file_functions.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
@@ -26,7 +27,6 @@
 #include <utility>
 
 #include "communicator_common.h"
-#include "device.h"
 #include "msi_fan_control.h"
 #include "communicator.h"
 #include "csysfsprovider.h"
@@ -35,10 +35,7 @@
 
 //This is daemon side communicator.
 
-static constexpr bool kDryRun = false;
-
-static_assert(kWholeSharedMemSize % 2 == 0, "Wrong size.");
-
+namespace {
 //Ok, idea is, on 1st half of the memory we will put cereal serialized current state like temperature / rpm.
 //From the 2nd half we will read contol if any.
 
@@ -88,6 +85,11 @@ struct RelaxKernel
     }
 };
 
+constexpr bool kDryRun = false;
+static_assert(kWholeSharedMemSize % 2 == 0, "Wrong size.");
+
+}
+
 //Making this separated class because we need to pass shared_ptr.
 struct BackupExecutorImpl final : public IBackupProvider
 {
@@ -112,10 +114,11 @@ struct BackupExecutorImpl final : public IBackupProvider
 };
 
 CSharedDevice::CSharedDevice()
-    : memoryCleaner()
+    : memoryCleaner(),
+      lastReadInfo()
 {
     //Must be 1st to create.
-    MakeBackupBlock();
+    const bool isFirstRun = MakeBackupBlock();
 
     device = CreateDeviceController(std::make_shared<BackupExecutorImpl>(this), kDryRun);
     using namespace boost::interprocess;
@@ -159,49 +162,60 @@ CSharedDevice::~CSharedDevice()
 void CSharedDevice::Communicate()
 {
     using namespace boost::interprocess;
-    static std::size_t tag = 0;
-
-    FullInfoBlock info;
-    try
-    {
-        info = device->ReadFullInformation(++tag);
-    }
-    catch (std::exception& ex)
-    {
-        info.daemonDeviceException = ex.what();
-        std::cerr << "Failure reading info: " << ex.what() << std::endl << ::std::flush;
-    }
-
     RequestFromUi fromUI;
     {
         const scoped_lock<interprocess_mutex> grd(sharedMem->Mutex());
-
-        auto buffer = sharedMem->Daemon2UI();
-        std::ostream ss(&buffer);
-        cereal::BinaryOutputArchive oarchive(ss);
-        oarchive(info);
-
-        if (sharedMem->IsUiPushed())
+        if (!sharedMem->IsUiPushed())
         {
-            auto buffer = sharedMem->UI2Daemon();
-            std::istream ss(&buffer);
-            try
-            {
-                cereal::BinaryInputArchive iarchive(ss);
-                iarchive(fromUI);
-            }
-            catch (std::exception& ex)
-            {
-                sharedMem->DaemonReadUI();
-                std::cerr << "Failed to read/parse  UI command: " << ex.what() << std::endl <<
-                          std::flush;
-                return;
-            }
+            return;
+        }
+
+        auto readUiBuffer = sharedMem->UI2Daemon();
+        std::istream ss(&readUiBuffer);
+        try
+        {
+            cereal::BinaryInputArchive iarchive(ss);
+            iarchive(fromUI);
+        }
+        catch (std::exception& ex)
+        {
             sharedMem->DaemonReadUI();
+            std::cerr << "Failed to read/parse  UI command: " << ex.what() << std::endl <<
+                      std::flush;
+            return;
         }
     }
 
-    device->SetBooster(fromUI.boosterState);
+    //We have some request from UI so we must respond with at least incremented tag.
+    ++lastReadInfo.tag;
+
+    if (fromUI.request != RequestFromUi::RequestType::PING_DAEMON)
+    {
+        if (fromUI.request == RequestFromUi::RequestType::WRITE_DATA)
+        {
+            //Write data sent by UI.
+            device->SetBooster(fromUI.boosterState);
+        }
+
+        //Read fresh data from BIOS
+        try
+        {
+            lastReadInfo = device->ReadFullInformation(lastReadInfo.tag);
+        }
+        catch (std::exception& ex)
+        {
+            lastReadInfo.daemonDeviceException = ex.what();
+            std::cerr << "Failure reading info: " << ex.what() << std::endl << ::std::flush;
+        }
+    }
+
+    const scoped_lock<interprocess_mutex> grd(sharedMem->Mutex());
+    auto daemonWritebuffer = sharedMem->Daemon2UI();
+    std::ostream ss(&daemonWritebuffer);
+    cereal::BinaryOutputArchive oarchive(ss);
+    oarchive(lastReadInfo);
+
+    sharedMem->DaemonReadUI();
 }
 
 void CSharedDevice::RestoreOffsets(const std::set<int64_t>&
@@ -240,7 +254,7 @@ void CSharedDevice::RestoreOffsets(const std::set<int64_t>&
     }
 }
 
-void CSharedDevice::MakeBackupBlock()
+bool CSharedDevice::MakeBackupBlock()
 {
     //This block is created ONLY on 1st run after reboot. If daemon is restarted, memory remains "leaked" until reboot.
     //It keeps original ACPI data, not modified.
@@ -269,10 +283,9 @@ void CSharedDevice::MakeBackupBlock()
 
             sharedBackup.reset();
             shared_memory_object::remove(kBackupName);
-            return;
+            return false;
         }
-
-        return;
+        return true;
     }
     //NOLINTNEXTLINE
     catch (...)
@@ -282,4 +295,5 @@ void CSharedDevice::MakeBackupBlock()
 
     auto shm = shared_memory_object(open_only, kBackupName, read_write);
     sharedBackup = std::make_shared<SharedMemory>(std::move(shm));
+    return false;
 }
