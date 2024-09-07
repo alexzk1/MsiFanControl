@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <bits/chrono.h>
 #include <cstddef>
 #include <exception>
@@ -22,6 +23,7 @@
 #include <QIcon>
 #include <QImage>
 #include <QPixmap>
+#include <vector>
 
 #include "execonmainthread.h"
 
@@ -202,19 +204,54 @@ void MainWindow::LaunchGameMode()
 
 void MainWindow::CreateCommunicator()
 {
-    // We're trying to read data is less as possible because each read triggers IRQ9 which
-    // leads to more power consumption eventually.
-    static constexpr std::uint16_t kTempToUseFastDivider = 70;
-    static constexpr std::size_t kSlowDivider = 17;
-    static constexpr std::size_t kFastDivider = 2;
-
     communicator = utility::startNewRunner([this](const auto shouldStop) mutable
     {
-        std::size_t refreshDivider = kSlowDivider;
         try
         {
             CSharedDevice comm(shouldStop);
             bool pingOk = true;
+
+            // We're trying to read data is less as possible because each read triggers IRQ9 which
+            // leads to more power consumption eventually. However, when CPU is hot, it means it is loaded,
+            // so IRQ-9 will not add too much and we can call check more often.
+            // So what we do here is dynamic range - higher the temp - more often we do
+            // update from the daemon.
+            const auto selectRefreshPeriod = [&comm, &pingOk]()
+            {
+                //This must be ordered by the temp.
+                using temp_div_pair = std::pair<std::uint16_t, std::size_t>;
+                static const std::vector<temp_div_pair> tempDivPairs =
+                {
+                    {0, 1}, //it was no reads yet, avoid delays.
+                    {39, 35}, // no user around ?
+                    {42, 23},
+                    {45, 17},
+                    {47, 15},
+                    {50, 13},
+                    {60, 10},
+                    {65, 7},
+                    {70, 2},
+                };
+
+                //If ping failed, request updates as fast as possible.
+                if (!pingOk)
+                {
+                    return tempDivPairs.back().second;
+                }
+
+                const auto it = std::lower_bound(tempDivPairs.begin(), tempDivPairs.end(),
+                                                 comm.LastKnownInfo().info.cpu.temperature,
+                                                 [](const temp_div_pair& pair, std::uint16_t temp)
+                {
+                    return pair.first < temp;
+                });
+                if (it == tempDivPairs.end())
+                {
+                    return tempDivPairs.back().second;
+                };
+                return it->second;
+            };
+
             for (std::size_t loopsCounter = 0; !(*shouldStop); ++loopsCounter)
             {
                 std::optional<RequestFromUi> request{std::nullopt};
@@ -225,7 +262,7 @@ void MainWindow::CreateCommunicator()
 
                 if (!request)
                 {
-                    if (loopsCounter % refreshDivider == 0)
+                    if (loopsCounter % selectRefreshPeriod() == 0)
                     {
                         pingOk = comm.RefreshData();
                     }
@@ -247,10 +284,6 @@ void MainWindow::CreateCommunicator()
                         pingOk = comm.SetBooster(request->boosterState);
                     }
                 }
-
-                refreshDivider = !pingOk
-                                 || comm.LastKnownInfo().info.cpu.temperature > kTempToUseFastDivider
-                                 ? kFastDivider : kSlowDivider;
 
                 UpdateUiWithInfo(comm.LastKnownInfo(), !pingOk);
                 if (*shouldStop)
