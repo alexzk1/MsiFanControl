@@ -212,6 +212,7 @@ void MainWindow::CreateCommunicator()
             bool pingOk = true;
             const ReadsPeriodDetector refreshPeriodDetector(pingOk, comm);
 
+            bool hadUserAction = false;
             for (std::size_t loopsCounter = 0; !(*shouldStop); ++loopsCounter)
             {
                 std::optional<RequestFromUi> request{std::nullopt};
@@ -222,7 +223,7 @@ void MainWindow::CreateCommunicator()
 
                 if (!request)
                 {
-                    if (loopsCounter % refreshPeriodDetector() == 0)
+                    if (hadUserAction || loopsCounter % refreshPeriodDetector() == 0)
                     {
                         pingOk = comm.RefreshData();
                     }
@@ -236,12 +237,17 @@ void MainWindow::CreateCommunicator()
                             }
                         }
                     }
+                    hadUserAction = false;
                 }
                 else
                 {
                     if (request->boosterState != BoosterState::NO_CHANGE)
                     {
-                        pingOk = comm.SetBooster(request->boosterState);
+                        pingOk = hadUserAction = comm.SetBooster(request->boosterState);
+                    }
+                    else
+                    {
+                        hadUserAction = false;
                     }
                 }
 
@@ -251,7 +257,7 @@ void MainWindow::CreateCommunicator()
                     break;
                 }
                 using namespace std::chrono_literals;
-                std::this_thread::sleep_for(1s);
+                std::this_thread::sleep_for(hadUserAction ? 250ms : 1s);
             }
         }
         catch (std::exception& ex)
