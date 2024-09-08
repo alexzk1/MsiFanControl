@@ -5,6 +5,10 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
+#include <initializer_list>
+#include <iostream>
+#include <ostream>
 #include <vector>
 
 //! @brief Supplies how often we should read real values from the BIOS.
@@ -26,6 +30,7 @@ public:
     {
         //This must be ordered by the temp.
         static const std::vector<TTempPeriodRecord> tempPeriodRecords =
+            Validate(
         {
             {0, 1}, //it was no reads yet, avoid delays.
             {39, 35}, // no user around ?
@@ -39,8 +44,7 @@ public:
             {75, 3},
             {80, 2},
             //I think we should not add divider 1 at the end ever.
-            //And 0 is prohibited, but there is no validation of it.
-        };
+        });
 
         //If ping failed, request updates as fast as possible.
         if (!isPingOk)
@@ -64,6 +68,38 @@ private:
         std::uint16_t cpuTemp;
         std::size_t loopPeriod;
     };
+
+    static std::vector<TTempPeriodRecord> Validate(
+        std::initializer_list<TTempPeriodRecord> records)
+    {
+        auto it = std::adjacent_find(records.begin(), records.end(), [](const auto& left,
+                                     const auto& right)
+        {
+            return right.cpuTemp < left.cpuTemp;
+        });
+
+        if (it != records.end())
+        {
+            std::cerr <<
+                      "Temp-Period records must be ordered by the temperature field. Please check the source code."
+                      << std::endl << std::flush;
+            std::abort();
+        }
+
+        it = std::find_if(records.begin(), records.end(), [](const auto& val)
+        {
+            return 0u == val.loopPeriod;
+        });
+
+        if (it != records.end())
+        {
+            std::cerr << "Temp-Period cannot have zero-period. Please check the source code." <<
+                      std::endl << std::flush;
+            std::abort();
+        }
+
+        return records;
+    }
 
     const bool& isPingOk;
     const CSharedDevice& sharedDevice;
