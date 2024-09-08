@@ -27,6 +27,7 @@
 #include <utility>
 
 #include "communicator_common.h"
+#include "device.h"
 #include "msi_fan_control.h"
 #include "communicator.h"
 #include "csysfsprovider.h"
@@ -88,7 +89,7 @@ struct RelaxKernel
 constexpr bool kDryRun = false;
 static_assert(kWholeSharedMemSize % 2 == 0, "Wrong size.");
 
-}
+}  // namespace
 
 //Making this separated class because we need to pass shared_ptr.
 struct BackupExecutorImpl final : public IBackupProvider
@@ -118,7 +119,7 @@ CSharedDevice::CSharedDevice()
       lastReadInfo()
 {
     //Must be 1st to create.
-    const bool isFirstRun = MakeBackupBlock();
+    MakeBackupBlock();
 
     device = CreateDeviceController(std::make_shared<BackupExecutorImpl>(this), kDryRun);
     using namespace boost::interprocess;
