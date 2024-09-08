@@ -45,7 +45,7 @@ public:
         //If ping failed, request updates as fast as possible.
         if (!isPingOk)
         {
-            return tempPeriodRecords.back().loopPeriod;
+            return tempPeriodRecords.front().loopPeriod;
         }
 
         const auto it = std::lower_bound(tempPeriodRecords.begin(), tempPeriodRecords.end(),
@@ -54,11 +54,9 @@ public:
         {
             return record.cpuTemp < current_temp;
         });
-        if (it == tempPeriodRecords.end())
-        {
-            return tempPeriodRecords.back().loopPeriod;
-        };
-        return it->loopPeriod;
+
+        return it == tempPeriodRecords.end() ? tempPeriodRecords.back().loopPeriod :
+               it->loopPeriod;
     }
 private:
     struct TTempPeriodRecord
