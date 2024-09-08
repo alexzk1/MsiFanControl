@@ -23,10 +23,10 @@
 #include <QIcon>
 #include <QImage>
 #include <QPixmap>
-#include <vector>
 
 #include "execonmainthread.h"
 
+#include "reads_period_detector.h"
 #include "qcheckbox.h"
 #include "qnamespace.h"
 #include "qradiobutton.h"
@@ -210,51 +210,7 @@ void MainWindow::CreateCommunicator()
         {
             CSharedDevice comm(shouldStop);
             bool pingOk = true;
-
-            // We're trying to read data is less as possible because each read triggers IRQ9 which
-            // leads to more power consumption eventually. However, when CPU is hot, it means it is loaded,
-            // so IRQ-9 will not add too much and we can call check more often.
-            // So what we do here is dynamic range - higher the temp - more often we do
-            // update from the daemon.
-            const auto selectRefreshPeriod = [&comm, &pingOk]()
-            {
-                //This must be ordered by the temp.
-                using temp_div_pair = std::pair<std::uint16_t, std::size_t>;
-                static const std::vector<temp_div_pair> tempDivPairs =
-                {
-                    {0, 1}, //it was no reads yet, avoid delays.
-                    {39, 35}, // no user around ?
-                    {42, 23},
-                    {45, 17},
-                    {47, 15},
-                    {50, 13},
-                    {60, 10},
-                    {65, 7},
-                    {70, 4},
-                    {75, 3},
-                    {80, 2},
-                    //I think we should not add divider 1 at the end ever.
-                    //And 0 is prohibited, but there is no validation of it.
-                };
-
-                //If ping failed, request updates as fast as possible.
-                if (!pingOk)
-                {
-                    return tempDivPairs.back().second;
-                }
-
-                const auto it = std::lower_bound(tempDivPairs.begin(), tempDivPairs.end(),
-                                                 comm.LastKnownInfo().info.cpu.temperature,
-                                                 [](const temp_div_pair& pair, std::uint16_t temp)
-                {
-                    return pair.first < temp;
-                });
-                if (it == tempDivPairs.end())
-                {
-                    return tempDivPairs.back().second;
-                };
-                return it->second;
-            };
+            const ReadsPeriodDetector refreshPeriodDetector(pingOk, comm);
 
             for (std::size_t loopsCounter = 0; !(*shouldStop); ++loopsCounter)
             {
@@ -266,7 +222,7 @@ void MainWindow::CreateCommunicator()
 
                 if (!request)
                 {
-                    if (loopsCounter % selectRefreshPeriod() == 0)
+                    if (loopsCounter % refreshPeriodDetector() == 0)
                     {
                         pingOk = comm.RefreshData();
                     }
