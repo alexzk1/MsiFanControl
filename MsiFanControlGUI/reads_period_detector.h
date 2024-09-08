@@ -49,7 +49,7 @@ public:
         //If ping failed, request updates as fast as possible.
         if (!isPingOk)
         {
-            return tempPeriodRecords.front().loopPeriod;
+            return 1u;
         }
 
         const auto it = std::lower_bound(tempPeriodRecords.begin(), tempPeriodRecords.end(),
