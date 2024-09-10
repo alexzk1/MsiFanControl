@@ -1,14 +1,23 @@
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <optional>
 #include <numeric>
+#include <type_traits>
 
 template <typename T, std::size_t Counts>
 class RunningAvr
 {
 public:
+    static_assert(std::is_arithmetic_v<T>, "Only arithmetic types are supported.");
+
+    RunningAvr()
+    {
+        std::fill(lastValues.begin(), lastValues.end(), static_cast<T>(0));
+    }
+
     std::optional<T> GetCurrent(T newValue)
     {
         lastValues[nextIndex % lastValues.size()] = newValue;
