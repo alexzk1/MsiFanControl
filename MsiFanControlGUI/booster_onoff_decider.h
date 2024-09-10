@@ -5,6 +5,7 @@
 
 #include <cstddef>
 #include <optional>
+#include <type_traits>
 #include <utility>
 
 template <std::size_t AvrSamplesCount>
@@ -32,6 +33,14 @@ private:
     RunningAvr<float, AvrSamplesCount> cpuAvrTemp;
     RunningAvr<float, AvrSamplesCount> gpuAvrTemp;
 
+    template <typename taLeft, typename taRight>
+    static bool greater(const std::optional<taLeft>& left, taRight right)
+    {
+        static_assert(std::is_arithmetic_v<taRight> && std::is_arithmetic_v<taLeft>,
+                      "Only arithemetic types are supported.");
+        return left.has_value() && *left > right;
+    }
+
     bool IsHotNow()
     {
         static constexpr int kDegreeLimitBoth = 80;//celsium, nvidia gpu max is 93C.
@@ -42,8 +51,8 @@ private:
         const auto avrCpu = cpuAvrTemp.GetCurrent(storedInfo.info.cpu.temperature);
         const auto avrGpu = gpuAvrTemp.GetCurrent(storedInfo.info.gpu.temperature);
 
-        return (avrCpu && *avrCpu > kCpuOnlyDegree)
-               || (avrCpu && avrGpu && avrCpu > kDegreeLimitBoth
-                   && avrGpu > kDegreeLimitBoth);
+        return greater(avrCpu, kCpuOnlyDegree)
+               || (greater(avrCpu, kDegreeLimitBoth)
+                   && greater(avrGpu, kDegreeLimitBoth));
     }
 };
