@@ -12,7 +12,9 @@
 
 #include "device.h"
 #include "device_commands.h"
+#include "command_detector.h"
 #include "readwrite.h"
+#include "lambda_visitors.h"
 
 //NOLINTNEXTLINE
 bool GLOBAL_DRY_RUN = false;
@@ -150,26 +152,43 @@ FullInfoBlock CDevice::ReadFullInformation(std::size_t aTag) const
 
 AddressedValueAnyList CDevice::GetCmdTempRPM() const
 {
+    static ProperCommandDetector cpuRpmDetector(
+    {
+        AddressedValue2B{0xC8, 0},
+        AddressedValue2B{0xCC, 0},
+    });
+
+    cpuRpmDetector.DetectProperAtOnce([this](auto& commandsList)
+    {
+        Throw(commandsList.size() == 2, "Something went wrong. cpuRpmDetector.size() == 2.");
+        //Order above is important here for the check
+        AddressedValueAnyList clone = commandsList;
+        readWriteAccess.Read(clone);
+        auto toErase = std::prev(commandsList.end());
+
+        if (std::get<AddressedValue2B>(clone.at(1)).value > 0)
+        {
+            toErase = commandsList.begin();
+        }
+        else
+        {
+            const auto c9 = std::get<AddressedValue2B>(clone.at(0)).value;
+            if (c9 > 0 && c9 < 50)
+            {
+                toErase = commandsList.begin();
+            }
+        }
+        commandsList.erase(toErase);
+    });
+
     //CPU_GPU_TEMP_ADDRESS, CPU_GPU_RPM_ADDRESS in python sample code.
-    static const std::array<AddressedValueAny, 2> cpuGetters =
+    return
     {
-        AddressedValue1B{0x68, 0}, //temperature
-        AddressedValue2B{0xC8, 0}, //rpm
+        //cpu: temperature, rpm
+        AddressedValue1B{0x68, 0}, cpuRpmDetector,
+        //gpu: temperature, rpm
+        AddressedValue1B{0x80, 0}, AddressedValue2B{0xCA, 0},
     };
-
-    static const std::array<AddressedValueAny, 2> gpuGetters =
-    {
-        AddressedValue1B{0x80, 0}, //temperature
-        AddressedValue2B{0xCA, 0}, //rpm
-    };
-
-    static const AddressedValueAnyList combined =
-    {
-        cpuGetters[0], cpuGetters[1],
-        gpuGetters[0], gpuGetters[1],
-    };
-
-    return combined;
 }
 
 CDevice::BoosterStates CDevice::GetCmdBoosterStates() const

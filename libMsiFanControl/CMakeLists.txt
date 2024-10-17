@@ -12,6 +12,7 @@ cmake_print_variables(CPUID)
 
 add_library(MsiFanControl STATIC
   device_commands.h
+  command_detector.h
   readwrite.h
   readwrite_provider.h
   csysfsprovider.h csysfsprovider.cpp

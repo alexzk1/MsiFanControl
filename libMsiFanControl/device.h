@@ -17,6 +17,9 @@
 #include "cm_ctors.h"
 
 //Rosetta stone: https://github.com/YoyPa/isw/blob/master/wiki/msi%20ec.png
+// More information:
+// https://github.com/dmitry-s93/MControlCenter/blob/main/src/operate.cpp
+
 enum class BoosterState : std::uint8_t {ON, OFF, NO_CHANGE};
 enum class BehaveState : std::uint8_t {AUTO, ADVANCED, NO_CHANGE};
 
