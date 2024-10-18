@@ -5,8 +5,17 @@ Linux solution to control fans on MSI laptops.
 More to read:
 
 https://github.com/YoyPa/isw/blob/master/wiki/msi%20ec.png
-
 (and the whole repo there)
+
+https://github.com/BeardOverflow/msi-ec
+
+https://github.com/dmitry-s93/MControlCenter
+
+# Why this one ?
+
+"Selling point" is - GUI aplication part controls fan's boost by algorithm which gives perfect gaming experience. Also quering ACPI for details like temperatures is done in smart way, so it does not distrub CPU too much. It gets down to 34 C if left alone, while other apps will keep it at 40-50 C.
+
+Everthing else (present into other solutions) does not look too much important for me.
 
 # How to run
 
@@ -21,6 +30,10 @@ Run GUI application, tick checkbox "Game Mode Automatic Boost Control", minimize
 # Dependencies
 
 You will need installed system wide: g++ (latest), cmake, boost 1.8+, cereal (C++ headers only serialization library), libcpuid, qt5 widgets (for GUI).
+
+Optionally you may try to install https://github.com/BeardOverflow/msi-ec
+
+msi-ec allows to control battery maximum charge (and many other things outside scope of this program).
 
 # Warning
 Use at your own risk, no liability for me. This program is based on researchings of the other peoples (see the links). It must be used ONLY on MSI laptops with Intel CPUs. Daemon will try to check if proper CPU and laptop are used.

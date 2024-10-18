@@ -89,7 +89,7 @@ struct RelaxKernel
 constexpr bool kDryRun = false;
 static_assert(kWholeSharedMemSize % 2 == 0, "Wrong size.");
 
-}  // namespace
+} // namespace
 
 //Making this separated class because we need to pass shared_ptr.
 struct BackupExecutorImpl final : public IBackupProvider
@@ -196,6 +196,7 @@ void CSharedDevice::Communicate()
         {
             //Write data sent by UI.
             device->SetBooster(fromUI.boosterState);
+            device->SetBattery(fromUI.battery);
         }
 
         //Read fresh data from BIOS

@@ -6,11 +6,13 @@
 #include <mutex>
 #include <optional>
 #include <map>
+#include <qbuttongroup.h>
 #include <qmainwindow.h>
 #include <qrgb.h>
 #include <stdexcept>
 #include <thread>
 #include <utility>
+#include <filesystem>
 
 #include <QTimer>
 #include <QString>
@@ -43,10 +45,51 @@
 MainWindow::MainWindow(StartOptions options, QWidget* parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow),
-      systemTray(new QSystemTrayIcon(this))
+      systemTray(new QSystemTrayIcon(this)),
+      batButtons(new QButtonGroup(this))
 {
     ui->setupUi(this);
     setFixedSize(size());
+
+    batButtons->addButton(ui->rbBatBalance);
+    batButtons->addButton(ui->rbBatMax);
+    batButtons->addButton(ui->rbBatMin);
+    UncheckAllBatteryButtons();
+    batButtons->setExclusive(true);
+
+    if (!std::filesystem::exists("/sys/class/power_supply/BAT1/charge_control_start_threshold"))
+    {
+        ui->groupBat->setVisible(false);
+        std::cerr <<
+                  "Driver which could control the charging is not loaded.\n"
+                  "Check: https://github.com/BeardOverflow/msi-ec"
+                  << std::endl;
+    }
+
+    connect(batButtons, QOverload<QAbstractButton *, bool>::of(
+                &QButtonGroup::buttonToggled),
+            [this](QAbstractButton *button, bool checked)
+    {
+        BlockReadSetters();
+        UpdateRequestToDaemon([&](RequestFromUi& r)
+        {
+            if (checked)
+            {
+                if (button == ui->rbBatBalance)
+                {
+                    r.battery.maxLevel = BatteryLevels::Balanced;
+                }
+                if (button == ui->rbBatMax)
+                {
+                    r.battery.maxLevel = BatteryLevels::BestForMobility;
+                }
+                if (button == ui->rbBatMin)
+                {
+                    r.battery.maxLevel = BatteryLevels::BestForBattery;
+                }
+            }
+        });
+    });
 
     connect(ui->btnOn, &QRadioButton::toggled, this, [this](bool on)
     {
@@ -57,7 +100,6 @@ MainWindow::MainWindow(StartOptions options, QWidget* parent)
             {
                 r.boosterState = BoosterState::ON;
             });
-
         }
     });
 
@@ -241,13 +283,10 @@ void MainWindow::CreateCommunicator()
                 }
                 else
                 {
-                    if (request->boosterState != BoosterState::NO_CHANGE)
+                    if ((hadUserAction = request->HasUserAction()))
                     {
-                        pingOk = hadUserAction = comm.SetBooster(request->boosterState);
-                    }
-                    else
-                    {
-                        hadUserAction = false;
+                        pingOk = comm.SetBooster(request->boosterState);
+                        pingOk = comm.SetBattery(request->battery) || pingOk;
                     }
                 }
 
@@ -295,6 +334,8 @@ void MainWindow::UpdateUiWithInfo(FullInfoBlock info, bool possiblyBrokenConn)
         }
 
         SetUiBooster(info.boosterState);
+        SetUiBattery(info.battery);
+
         ui->outHwProfile->setText(info.behaveAndCurve.behaveState == BehaveState::AUTO ?
                                   tr("Auto") :
                                   tr("Advanced"));
@@ -346,6 +387,39 @@ void MainWindow::SetUiBooster(BoosterState state)
             break;
         default:
             break;
+        }
+    }
+}
+
+void MainWindow::SetUiBattery(const Battery &battery)
+{
+    const auto block = BlockGuard(ui->rbBatBalance, ui->rbBatMax, ui->rbBatMin);
+    switch (battery.maxLevel)
+    {
+    case BatteryLevels::BestForBattery:
+        ui->rbBatMin->setChecked(true);
+        break;
+    case BatteryLevels::Balanced:
+        ui->rbBatBalance->setChecked(true);
+        break;
+    case BatteryLevels::BestForMobility:
+        ui->rbBatMax->setChecked(true);
+        break;
+    case BatteryLevels::NotKnown:
+        UncheckAllBatteryButtons();
+        break;
+    };
+}
+
+void MainWindow::UncheckAllBatteryButtons()
+{
+    if (batButtons)
+    {
+        if (batButtons->checkedButton())
+        {
+            batButtons->setExclusive(false);
+            batButtons->checkedButton()->setChecked(false);
+            batButtons->setExclusive(true);
         }
     }
 }

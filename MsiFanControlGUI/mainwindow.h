@@ -4,11 +4,13 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <qpointer.h>
 #include <thread>
 #include <mutex>
 #include <chrono>
 #include <QSystemTrayIcon>
 #include <QPointer>
+#include <QButtonGroup>
 
 #include "device.h"
 #include <QAction>
@@ -48,7 +50,7 @@ private:
     template <typename taCallable>
     void UpdateRequestToDaemon(const taCallable& callback)
     {
-        std::lock_guard grd(requestMutex);
+        const std::lock_guard grd(requestMutex);
         if (!requestToDaemon)
         {
             requestToDaemon = RequestFromUi{};
@@ -57,6 +59,8 @@ private:
     }
 
     void SetUiBooster(BoosterState state);
+    void SetUiBattery(const Battery& battery);
+    void UncheckAllBatteryButtons();
 
     void BlockReadSetters()
     {
@@ -88,5 +92,6 @@ private:
     std::mutex lastReadInfoForGameModeThreadMutex;
 
     QPointer<QSystemTrayIcon> systemTray;
+    QPointer<QButtonGroup> batButtons;
     bool closing{false};
 };

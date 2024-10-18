@@ -19,6 +19,7 @@
 //Rosetta stone: https://github.com/YoyPa/isw/blob/master/wiki/msi%20ec.png
 // More information:
 // https://github.com/dmitry-s93/MControlCenter/blob/main/src/operate.cpp
+//https://github.com/BeardOverflow/msi-ec/blob/main/msi-ec.c#L2613
 
 enum class BoosterState : std::uint8_t {ON, OFF, NO_CHANGE};
 enum class BehaveState : std::uint8_t {AUTO, ADVANCED, NO_CHANGE};
@@ -195,6 +196,21 @@ struct BehaveWithCurve
 };
 CEREAL_CLASS_VERSION(BehaveWithCurve, 1)
 
+enum class BatteryLevels : std::uint8_t {BestForBattery, Balanced, BestForMobility, NotKnown};
+struct Battery
+{
+    BatteryLevels maxLevel;
+    AddressedValue1B _debugRead;
+
+    //support for Cereal
+    template <class Archive>
+    void serialize(Archive& ar, const std::uint32_t /*version*/)
+    {
+        ar(maxLevel, _debugRead);
+    }
+};
+CEREAL_CLASS_VERSION(Battery, 1)
+
 //! @brief this is combined information from daemon to UI.
 struct FullInfoBlock
 {
@@ -205,28 +221,37 @@ struct FullInfoBlock
     CpuGpuInfo info;
     BoosterState boosterState;
     BehaveWithCurve behaveAndCurve;
+    Battery battery;
 
     std::string daemonDeviceException;
 
     //support for Cereal
     template <class Archive>
-    void save(Archive& ar, const std::uint32_t /*version*/) const
+    void save(Archive& ar, const std::uint32_t version) const
     {
         ar(signature, tag, info, boosterState, behaveAndCurve, daemonDeviceException);
+        if (version > 1)
+        {
+            ar(battery);
+        }
     }
 
     template <class Archive>
-    void load(Archive& ar, const std::uint32_t /*version*/)
+    void load(Archive& ar, const std::uint32_t version)
     {
         std::size_t signatureRead = 0u;
         ar(signatureRead, tag, info, boosterState, behaveAndCurve, daemonDeviceException);
+        if (version > 1)
+        {
+            ar(battery);
+        }
         if (signatureRead != signature)
         {
             throw std::runtime_error("Wrong signature detected on reading FullInfoBlock.");
         }
     }
 };
-CEREAL_CLASS_VERSION(FullInfoBlock, 1)
+CEREAL_CLASS_VERSION(FullInfoBlock, 2)
 
 struct RequestFromUi
 {
@@ -238,15 +263,26 @@ struct RequestFromUi
     RequestType request;
     BoosterState boosterState{BoosterState::NO_CHANGE};
     BehaveWithCurve behaveAndCurve{};
+    Battery battery{BatteryLevels::NotKnown};
 
     //support for Cereal
     template <class Archive>
-    void serialize(Archive& ar, const std::uint32_t /*version*/)
+    void serialize(Archive& ar, const std::uint32_t version)
     {
         ar(boosterState, behaveAndCurve, request);
+        if (version > 1)
+        {
+            ar(battery);
+        }
+    }
+
+    bool HasUserAction() const
+    {
+        return boosterState != BoosterState::NO_CHANGE ||
+               battery.maxLevel != BatteryLevels::NotKnown;
     }
 };
-CEREAL_CLASS_VERSION(RequestFromUi, 1)
+CEREAL_CLASS_VERSION(RequestFromUi, 2)
 
 class CDevice
 {
@@ -265,6 +301,9 @@ public:
     BehaveWithCurve ReadBehaveState() const;
     void SetBehaveState(const BehaveWithCurve& behaveWithCurve) const;
 
+    Battery ReadBattery() const;
+    void SetBattery(const Battery& battery) const;
+
     FullInfoBlock ReadFullInformation(std::size_t aTag) const;
 protected:
     using BoosterStates = AddressedValueStates<BoosterState>;
@@ -276,6 +315,7 @@ protected:
 
     virtual BoosterStates GetCmdBoosterStates() const;
     virtual BehaveStates GetCmdBehaveStates() const = 0;
+    virtual AddressedValue1B GetBatteryThreshold() const;
 
     void SetBooster(CReadWrite::WriteHandle& handle,
                     const BoosterState what) const;

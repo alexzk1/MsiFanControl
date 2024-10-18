@@ -1,5 +1,5 @@
 #include <algorithm>
-#include <array>
+#include <map>
 #include <cstddef>
 #include <iosfwd>
 #include <iterator>
@@ -9,6 +9,7 @@
 #include <set>
 #include <utility>
 #include <variant>
+#include <iostream>
 
 #include "device.h"
 #include "device_commands.h"
@@ -145,9 +146,62 @@ void CDevice::SetBehaveState(const BehaveWithCurve& behaveWithCurve) const
     }
 }
 
+Battery CDevice::ReadBattery() const
+{
+    auto cmd = GetBatteryThreshold();
+    readWriteAccess.ReadOne(cmd);
+    Battery result{BatteryLevels::NotKnown, cmd};
+
+    if (cmd.value >= 0x80 && cmd.value <= 0xE4)
+    {
+        if (cmd.value == 0x80 + 60)
+        {
+            result.maxLevel = BatteryLevels::BestForBattery;
+        }
+        if (cmd.value == 0x80 + 80)
+        {
+            result.maxLevel = BatteryLevels::Balanced;
+        }
+        if (cmd.value > 0x80 + 80)
+        {
+            result.maxLevel = BatteryLevels::BestForMobility;
+        }
+    }
+    return result;
+}
+/*
+    if (streq(buf, "max"))
+        result = ec_write(conf.charge_control.address,
+                  conf.charge_control.range_max);
+
+    else if (streq(buf, "medium")) // up to 80%
+        result = ec_write(conf.charge_control.address,
+                  conf.charge_control.offset_end + 80);
+
+    else if (streq(buf, "min")) // up to 60%
+        result = ec_write(conf.charge_control.address,
+                  conf.charge_control.offset_end + 60);
+*/
+void CDevice::SetBattery(const Battery &battery) const
+{
+    static const std::map<BatteryLevels, std::uint8_t> enum2value =
+    {
+        {BatteryLevels::BestForMobility, 0xE4},
+        {BatteryLevels::Balanced, 0x80 + 80},
+        {BatteryLevels::BestForBattery, 0x80 + 60},
+    };
+    if (battery.maxLevel != BatteryLevels::NotKnown)
+    {
+        auto cmd = GetBatteryThreshold();
+        cmd.value = enum2value.at(battery.maxLevel);
+        auto handle = readWriteAccess.StartWritting();
+        readWriteAccess.Write(handle, {cmd});
+    }
+}
+
 FullInfoBlock CDevice::ReadFullInformation(std::size_t aTag) const
 {
-    return {aTag, ReadInfo(), ReadBoosterState(), ReadBehaveState(), {}};
+    return {aTag, ReadInfo(), ReadBoosterState(), ReadBehaveState(), ReadBattery(), {}};
 }
 
 AddressedValueAnyList CDevice::GetCmdTempRPM() const
@@ -172,6 +226,7 @@ AddressedValueAnyList CDevice::GetCmdTempRPM() const
         }
         else
         {
+            //Sample code I took it from checks 1 byte though ... should I (& 0xFF) here ?
             const auto c9 = std::get<AddressedValue2B>(clone.at(0)).value;
             if (c9 > 0 && c9 < 50)
             {
@@ -208,6 +263,43 @@ CDevice::BoosterStates CDevice::GetCmdBoosterStates() const
     };
 
     return booster;
+}
+
+AddressedValue1B CDevice::GetBatteryThreshold() const
+{
+    static ProperCommandDetector addressDetector(
+    {
+        AddressedValue1B{0xEF, 0},
+        AddressedValue1B{0xD7, 0},
+    });
+
+    //Trying to detect 1 of the addresses.
+    addressDetector.DetectProperAtOnce([this](auto& commandsList)
+    {
+        Throw(commandsList.size() == 2, "Something went wrong. cpuRpmDetector.size() == 2.");
+        //Order above is important here for the check
+        AddressedValueAnyList clone = commandsList;
+        readWriteAccess.Read(clone);
+
+        const auto& vEF = std::get<AddressedValue1B>(clone.at(0)).value;
+        const auto& vD7 = std::get<AddressedValue1B>(clone.at(1)).value;
+        if (vEF < 0x80 || vEF > 0xE4)
+        {
+            commandsList.erase(commandsList.begin());
+        }
+        if (vD7 < 0x80 || vD7 > 0xE4)
+        {
+            commandsList.erase(std::prev(commandsList.end()));
+        }
+
+        // FIXME: We may have excepton on lambda exit if both addresses failed the check.
+        // And everything will not work than.
+        if (commandsList.size() == 1)
+        {
+            readWriteAccess.CancelBackupOn(commandsList.front());
+        }
+    });
+    return std::get<AddressedValue1B>(addressDetector.get());
 }
 
 void CpuGpuFanCurve::Validate() const

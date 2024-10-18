@@ -85,6 +85,37 @@ public:
         }
     }
 
+    template <typename taElement>
+    void ReadOne(taElement& toFill) const
+    {
+        auto stream = ioProvider->ReadStream();
+        Read(stream, toFill);
+    }
+
+    /// @brief Cancel backup on listed objects, which means changes at those addresses
+    /// will not be restored on daemon closing.
+    void CancelBackupOn(const AddressedValueAnyList& aList) const
+    {
+        for (const auto& value : aList)
+        {
+            CancelBackupOn(value);
+        }
+    }
+
+    /// @brief Cancel backup on object, which means changes at those addresses
+    /// will not be restored on daemon closing.
+    void CancelBackupOn(const AddressedValueAny& value) const
+    {
+        std::visit([this](const auto& element)
+        {
+            ForEachByte(element, [this](const auto offset)
+            {
+                ignoreBackupOffsets.insert(offset);
+                backupOffsets.erase(offset);
+            });
+        }, value);
+    }
+
     class WriteHandle
     {
     public:
@@ -102,6 +133,7 @@ private:
     ReadWriteProviderPtr ioProvider;
     BackupProviderPtr backupProvider;
     mutable std::set<std::int64_t> backupOffsets;
+    mutable std::set<std::int64_t> ignoreBackupOffsets;
 
     static AddressedValueAny& GetCommandFromContained(AddressedValueAnyList::value_type&
                                                       elem)
@@ -142,30 +174,42 @@ private:
         }
     }
 
-    template <typename T>
-    void Write(std::ofstream& writeStream, const T& element) const
+    /// Calls callabale passing to each address (offset) used to store element.value.
+    template <typename taElementType, typename taCallable>
+    void ForEachByte(const taElementType& element, const taCallable& func) const
     {
-        if constexpr(std::is_same_v<T, TagIgnore>)
+        using value_t = decltype(element.value);
+        const auto offset = static_cast<std::int64_t>(element.address);
+        for (std::size_t i = 0; i < sizeof(value_t); ++i)
+        {
+            func(offset + static_cast<std::int64_t>(i));
+        }
+    }
+
+    template <typename taElementType>
+    void Write(std::ofstream& writeStream, const taElementType& element) const
+    {
+        if constexpr(std::is_same_v<taElementType, TagIgnore>)
         {
             return;
         }
+
+        //installing backup
+        ForEachByte(element, [this](const auto offset)
+        {
+            if (ignoreBackupOffsets.count(offset) == 0)
+            {
+                backupOffsets.insert(offset);
+            }
+        });
 
         using value_t = decltype(element.value);
         const std::streampos offset = element.address;
         auto value = element.value;
 
-        //installing backup
+        if constexpr(std::is_same_v<taElementType, AddressedBits>)
         {
-            std::int64_t off = offset;
-            for (std::size_t i = 0; i < sizeof(T); ++i)
-            {
-                backupOffsets.insert(off++);
-            }
-        }
-        //using intermedial array to deal with optimization: -fstrict-aliasing
-
-        if constexpr(std::is_same_v<T, AddressedBits>)
-        {
+            //using intermedial array to deal with optimization: -fstrict-aliasing
             AddressedValueAnyList tmp{AddressedValue1B{offset, 0}};
             Read(tmp);
             value = element.ValueForWritting(std::get<AddressedValue1B>(tmp.front()).value);

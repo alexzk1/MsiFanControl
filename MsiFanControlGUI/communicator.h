@@ -55,6 +55,7 @@ public:
     //! @note Call is blocking for at least 2 * kMinimumServiceDelay.
     //! @returns true if daemon responds properly.
     bool SetBooster(BoosterState newState);
+    bool SetBattery(Battery newState);
 
     //! @brief This triggers BIOS reading and IRQ-9 than updates LastKnownInfo() local copy.
     //! Try to avoid too often usage of it.
