@@ -1,6 +1,5 @@
 #pragma once
 
-#include "device.h"
 #include "device_commands.h"
 
 #include <algorithm>

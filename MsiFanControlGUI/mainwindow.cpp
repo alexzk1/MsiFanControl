@@ -2,7 +2,7 @@
 
 #include "booster_onoff_decider.h"
 #include "communicator.h"
-#include "delayed_buttons.h"
+#include "device.h"
 #include "execonmainthread.h"
 #include "gui_helpers.h"
 #include "qcheckbox.h"
@@ -20,6 +20,7 @@
 #include <QImage>
 #include <QMenu>
 #include <QMessageBox>
+#include <QOverload>
 #include <QPainter>
 #include <QPixmap>
 #include <QString>
@@ -127,7 +128,8 @@ MainWindow::MainWindow(StartOptions options, QWidget *parent) :
     });
 
     // trigger action by checkbox
-    connect(ui->cbGameMode, &QCheckBox::stateChanged, ui->action_Game_Mode, &QAction::triggered);
+    connect(ui->cbGameMode, &QCheckBox::checkStateChanged, ui->action_Game_Mode,
+            &QAction::triggered);
 
     connect(ui->actionQuit, &QAction::triggered, this, [this]() {
         closing = true;
@@ -208,7 +210,7 @@ void MainWindow::LaunchGameMode()
     // While is HOT update timestamp.
     // If it is NOT hot, wait timestamp + kWait then turn boost off
 
-    gameModeThread = utility::startNewRunner([this](auto shouldStop) {
+    gameModeThread = utility::startNewRunner([this](const auto &shouldStop) {
         BoosterOnOffDecider<3> decider;
 
         while (!*(shouldStop))
@@ -232,7 +234,7 @@ void MainWindow::LaunchGameMode()
 
 void MainWindow::CreateCommunicator()
 {
-    communicator = utility::startNewRunner([this](const auto shouldStop) mutable {
+    communicator = utility::startNewRunner([this](const auto &shouldStop) mutable {
         try
         {
             CSharedDevice comm(shouldStop);
@@ -268,7 +270,8 @@ void MainWindow::CreateCommunicator()
                 }
                 else
                 {
-                    if ((hadUserAction = request->HasUserAction()))
+                    hadUserAction = request->HasUserAction();
+                    if (hadUserAction)
                     {
                         pingOk = comm.SetBooster(request->boosterState);
                         pingOk = comm.SetBattery(request->battery) || pingOk;

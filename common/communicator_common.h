@@ -5,7 +5,6 @@
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 
 #include <cstddef>
-#include <cstdint>
 #include <streambuf>
 
 inline const char *GetMemoryName()

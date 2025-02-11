@@ -1,5 +1,6 @@
 #pragma once
 
+#include "cm_ctors.h"
 #include "device.h"
 
 #include <QAction>
@@ -9,9 +10,15 @@
 #include <QPointer>
 #include <QSystemTrayIcon>
 
+#include <qcolor.h>
 #include <qpointer.h>
+#include <qrgb.h>
+#include <qtconfigmacros.h>
+#include <qtmetamacros.h>
+#include <qwidget.h>
 
 #include <chrono>
+#include <cstdint>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -29,13 +36,14 @@ struct StartOptions
     bool game_mode{false};
 };
 
-class MainWindow : public QMainWindow
+class MainWindow final : public QMainWindow
 {
     Q_OBJECT
 
   public:
-    MainWindow(StartOptions options, QWidget *parent = nullptr);
-    ~MainWindow();
+    NO_COPYMOVE(MainWindow);
+    explicit MainWindow(StartOptions options, QWidget *parent = nullptr);
+    ~MainWindow() final;
 
   private slots:
     void CreateCommunicator();
@@ -44,7 +52,7 @@ class MainWindow : public QMainWindow
     void closeEvent(QCloseEvent *event) override;
 
   private:
-    enum class ConnState {
+    enum class ConnState : std::uint8_t {
         GREEN,
         RED,
         YELLOW

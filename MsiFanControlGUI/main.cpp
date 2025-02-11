@@ -1,9 +1,9 @@
 #include "execonmainthread.h"
 #include "mainwindow.h"
 
-#include <QApplication>
-
 #include <boost/program_options.hpp>
+
+#include <QApplication>
 
 #include <iostream>
 

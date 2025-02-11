@@ -2,41 +2,49 @@
 BasedOnStyle: LLVM  # Используем LLVM как базовый стиль и переопределяем нужные параметры
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex:           '<(SFML|boost|GL|X11|)\/([A-Za-z0-9.\/-_])+>'
+  - Regex:           '<boost\/[A-Za-z0-9.\/-_]+>'
+    CaseSensitive: true
+    Priority:        8
+  - Regex:           '<cereal\/[A-Za-z0-9.\/-_]+>'
+    CaseSensitive: true
+    Priority:        9
+
+  - Regex:           '<(SFML|GL|X11)\/[A-Za-z0-9.\/-_]+>'
     CaseSensitive: true
     Priority:        10
 
 #Qt support
-  - Regex:           '"(ui_[a-z0-9]+\.h)"'
+  - Regex:           '"ui_[a-z0-9]+\.h"'
     CaseSensitive: true
     Priority:        14
-  - Regex:           '<(qt|Qt|QT)\/([A-Za-z0-9.\/-_])+>'
-    CaseSensitive: true
+  - Regex:           '<qt\/([a-z0-9.\/-_])+>'
+    CaseSensitive: false
+
     Priority:        15
-  - Regex:           '<(Q[A-Z]([A-Za-z0-9.\/-_])+)>'
+  - Regex:           '<Q[A-Z][A-Za-z0-9.\/-_]+>'
     CaseSensitive: true
     Priority:        16
-  - Regex:           '<(q[a-z0-9]+\.h)>'
+  - Regex:           '<q[a-z0-9]+\.h>'
     CaseSensitive: true
     Priority:        17
 
 #Google tests
-  - Regex:           '<(gtest|gmock)\/([A-Za-z0-9.\/-_])+>'
+  - Regex:           '<(gtest|gmock)\/[A-Za-z0-9.\/-_]+>'
     CaseSensitive: true
     Priority:        90
   # Headers in <> without extension (stdlib).
-  - Regex:           '<([A-Za-z0-9\Q/-_\E])+>'
+  - Regex:           '<[A-Za-z0-9\Q/-_\E]+>'
     Priority:        80
   # System headers coming there too.
-  - Regex:           '<(bits)\/([A-Za-z0-9.\/-_])+>'
+  - Regex:           '<bits\/[A-Za-z0-9.\/-_]+>'
     CaseSensitive: true
     Priority:        80
 
  # Headers in "" with extension.
-  - Regex:           '"([A-Za-z0-9.\Q/-_\E])+"'
+  - Regex:           '"[A-Za-z0-9.\Q/-_\E]+"'
     Priority:        5
  # Headers in <> with extension.
-  - Regex:           '<([A-Za-z0-9.\Q/-_\E])+>'
+  - Regex:           '<[A-Za-z0-9.\Q/-_\E]+>'
     Priority:        20
 
 # Опционально, если вы хотите явно указать Allman стилизацию

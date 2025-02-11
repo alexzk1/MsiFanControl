@@ -5,8 +5,6 @@
 #include "device.h"
 #include "runners.h"
 
-#include <cstddef>
-#include <limits>
 #include <memory>
 
 // This is GUI side communicator
@@ -35,7 +33,7 @@ struct CleanSharedMemory
 class CSharedDevice
 {
   public:
-    CSharedDevice(utility::runnerint_t should_stop);
+    explicit CSharedDevice(utility::runnerint_t should_stop);
     NO_COPYMOVE(CSharedDevice);
     ~CSharedDevice();
 
@@ -69,6 +67,7 @@ class CSharedDevice
     [[nodiscard]]
     bool UpdateInfoFromDaemon();
 
+    [[nodiscard]]
     bool WaitDaemonRead() const;
 
     utility::runnerint_t should_stop;

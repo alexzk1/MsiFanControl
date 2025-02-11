@@ -2,13 +2,12 @@
 
 #include "command_detector.h"
 #include "device_commands.h"
-#include "lambda_visitors.h"
 #include "readwrite.h"
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <iosfwd>
-#include <iostream>
 #include <iterator>
 #include <map>
 #include <optional>
