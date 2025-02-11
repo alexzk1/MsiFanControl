@@ -1,52 +1,53 @@
-#include <algorithm>
-#include <bits/chrono.h>
-#include <cstddef>
-#include <exception>
-#include <iostream>
-#include <mutex>
-#include <optional>
-#include <map>
-#include <qbuttongroup.h>
-#include <qmainwindow.h>
-#include <qrgb.h>
-#include <stdexcept>
-#include <thread>
-#include <utility>
-#include <filesystem>
+#include "mainwindow.h"
 
-#include <QTimer>
-#include <QString>
-#include <QSystemTrayIcon>
-#include <QMenu>
-#include <QAction>
-#include <QMessageBox>
-#include <QCloseEvent>
-#include <QPainter>
-#include <QIcon>
-#include <QImage>
-#include <QPixmap>
-
+#include "booster_onoff_decider.h"
+#include "communicator.h"
+#include "delayed_buttons.h"
 #include "execonmainthread.h"
-
-#include "reads_period_detector.h"
+#include "gui_helpers.h"
 #include "qcheckbox.h"
 #include "qnamespace.h"
 #include "qradiobutton.h"
 #include "qtimer.h"
+#include "reads_period_detector.h"
 #include "runners.h"
-#include "communicator.h"
-#include "gui_helpers.h"
-#include "booster_onoff_decider.h"
 
-#include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "delayed_buttons.h"
 
-MainWindow::MainWindow(StartOptions options, QWidget* parent)
-    : QMainWindow(parent)
-    , ui(new Ui::MainWindow),
-      systemTray(new QSystemTrayIcon(this)),
-      batButtons(new QButtonGroup(this))
+#include <QAction>
+#include <QCloseEvent>
+#include <QIcon>
+#include <QImage>
+#include <QMenu>
+#include <QMessageBox>
+#include <QPainter>
+#include <QPixmap>
+#include <QString>
+#include <QSystemTrayIcon>
+#include <QTimer>
+
+#include <qbuttongroup.h>
+#include <qmainwindow.h>
+#include <qrgb.h>
+
+#include <algorithm>
+#include <bits/chrono.h>
+#include <cstddef>
+#include <exception>
+#include <filesystem>
+#include <iostream>
+#include <map>
+#include <mutex>
+#include <optional>
+#include <stdexcept>
+#include <thread>
+#include <utility>
+
+MainWindow::MainWindow(StartOptions options, QWidget *parent) :
+    QMainWindow(parent),
+    ui(new Ui::MainWindow),
+    systemTray(new QSystemTrayIcon(this)),
+    batButtons(new QButtonGroup(this))
 {
     ui->setupUi(this);
     setFixedSize(size());
@@ -60,63 +61,54 @@ MainWindow::MainWindow(StartOptions options, QWidget* parent)
     if (!std::filesystem::exists("/sys/class/power_supply/BAT1/charge_control_start_threshold"))
     {
         ui->groupBat->setVisible(false);
-        std::cerr <<
-                  "Driver which could control the charging is not loaded.\n"
-                  "Check: https://github.com/BeardOverflow/msi-ec"
+        std::cerr << "Driver which could control the charging is not loaded.\n"
+                     "Check: https://github.com/BeardOverflow/msi-ec"
                   << std::endl;
     }
 
-    connect(batButtons, QOverload<QAbstractButton *, bool>::of(
-                &QButtonGroup::buttonToggled),
-            [this](QAbstractButton *button, bool checked)
-    {
-        BlockReadSetters();
-        UpdateRequestToDaemon([&](RequestFromUi& r)
-        {
-            if (checked)
-            {
-                if (button == ui->rbBatBalance)
-                {
-                    r.battery.maxLevel = BatteryLevels::Balanced;
-                }
-                if (button == ui->rbBatMax)
-                {
-                    r.battery.maxLevel = BatteryLevels::BestForMobility;
-                }
-                if (button == ui->rbBatMin)
-                {
-                    r.battery.maxLevel = BatteryLevels::BestForBattery;
-                }
-            }
-        });
-    });
+    connect(batButtons, QOverload<QAbstractButton *, bool>::of(&QButtonGroup::buttonToggled),
+            [this](QAbstractButton *button, bool checked) {
+                BlockReadSetters();
+                UpdateRequestToDaemon([&](RequestFromUi &r) {
+                    if (checked)
+                    {
+                        if (button == ui->rbBatBalance)
+                        {
+                            r.battery.maxLevel = BatteryLevels::Balanced;
+                        }
+                        if (button == ui->rbBatMax)
+                        {
+                            r.battery.maxLevel = BatteryLevels::BestForMobility;
+                        }
+                        if (button == ui->rbBatMin)
+                        {
+                            r.battery.maxLevel = BatteryLevels::BestForBattery;
+                        }
+                    }
+                });
+            });
 
-    connect(ui->btnOn, &QRadioButton::toggled, this, [this](bool on)
-    {
+    connect(ui->btnOn, &QRadioButton::toggled, this, [this](bool on) {
         if (on)
         {
             BlockReadSetters();
-            UpdateRequestToDaemon([&](RequestFromUi& r)
-            {
+            UpdateRequestToDaemon([&](RequestFromUi &r) {
                 r.boosterState = BoosterState::ON;
             });
         }
     });
 
-    connect(ui->btnOff, &QRadioButton::toggled, this, [this](bool on)
-    {
+    connect(ui->btnOff, &QRadioButton::toggled, this, [this](bool on) {
         if (on)
         {
             BlockReadSetters();
-            UpdateRequestToDaemon([&](RequestFromUi& r)
-            {
+            UpdateRequestToDaemon([&](RequestFromUi &r) {
                 r.boosterState = BoosterState::OFF;
             });
         }
     });
 
-    connect(ui->action_Game_Mode, &QAction::triggered, this, [this](bool checked)
-    {
+    connect(ui->action_Game_Mode, &QAction::triggered, this, [this](bool checked) {
         ui->boostGroup->setEnabled(!checked);
         if (checked)
         {
@@ -127,26 +119,24 @@ MainWindow::MainWindow(StartOptions options, QWidget* parent)
             gameModeThread.reset();
         }
 
-        //sync checkbox to the action
+        // sync checkbox to the action
         auto block = BlockGuard(ui->cbGameMode, ui->action_Game_Mode);
-        ui->cbGameMode->setCheckState(checked ? Qt::CheckState::Checked :
-                                      Qt::CheckState::Unchecked);
+        ui->cbGameMode->setCheckState(checked ? Qt::CheckState::Checked
+                                              : Qt::CheckState::Unchecked);
         ui->action_Game_Mode->setChecked(checked);
     });
 
-    //trigger action by checkbox
-    connect(ui->cbGameMode, &QCheckBox::stateChanged, ui->action_Game_Mode,
-            &QAction::triggered);
+    // trigger action by checkbox
+    connect(ui->cbGameMode, &QCheckBox::stateChanged, ui->action_Game_Mode, &QAction::triggered);
 
-    connect(ui->actionQuit, &QAction::triggered, this, [this]()
-    {
+    connect(ui->actionQuit, &QAction::triggered, this, [this]() {
         closing = true;
-        show(); //event is not sent to hidden
+        show(); // event is not sent to hidden
         close();
     });
 
     {
-        //NOLINTNEXTLINE
+        // NOLINTNEXTLINE
         auto trayIconMenu = new QMenu(this);
         trayIconMenu->addAction(ui->action_Game_Mode);
         trayIconMenu->addSeparator();
@@ -157,8 +147,7 @@ MainWindow::MainWindow(StartOptions options, QWidget* parent)
     SetImageIcon(std::nullopt);
     systemTray->show();
 
-    connect(systemTray, &QSystemTrayIcon::activated, this, [this](auto reason)
-    {
+    connect(systemTray, &QSystemTrayIcon::activated, this, [this](auto reason) {
         if (reason == QSystemTrayIcon::Trigger)
         {
             if (isVisible())
@@ -174,8 +163,7 @@ MainWindow::MainWindow(StartOptions options, QWidget* parent)
     });
 
     SetDaemonConnectionStateOnGuiThread(ConnState::RED);
-    QTimer::singleShot(500, this, [this, options]()
-    {
+    QTimer::singleShot(500, this, [this, options]() {
         CreateCommunicator();
         if (options.minimized)
         {
@@ -199,7 +187,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::closeEvent(QCloseEvent* event)
+void MainWindow::closeEvent(QCloseEvent *event)
 {
     if (closing)
     {
@@ -216,15 +204,14 @@ void MainWindow::LaunchGameMode()
 {
     using namespace std::chrono_literals;
 
-    //If booster is OFF and both temps are above kDegreeLimit -> turn boost ON
-    //While is HOT update timestamp.
-    //If it is NOT hot, wait timestamp + kWait then turn boost off
+    // If booster is OFF and both temps are above kDegreeLimit -> turn boost ON
+    // While is HOT update timestamp.
+    // If it is NOT hot, wait timestamp + kWait then turn boost off
 
-    gameModeThread = utility::startNewRunner([this](auto shouldStop)
-    {
+    gameModeThread = utility::startNewRunner([this](auto shouldStop) {
         BoosterOnOffDecider<3> decider;
 
-        while (! *(shouldStop))
+        while (!*(shouldStop))
         {
             std::optional<FullInfoBlock> optInfo;
             {
@@ -234,8 +221,7 @@ void MainWindow::LaunchGameMode()
             const auto state = decider.GetUpdatedState(std::move(optInfo));
             if (state != BoosterState::NO_CHANGE)
             {
-                UpdateRequestToDaemon([&state](RequestFromUi& r)
-                {
+                UpdateRequestToDaemon([&state](RequestFromUi &r) {
                     r.boosterState = state;
                 });
             }
@@ -246,8 +232,7 @@ void MainWindow::LaunchGameMode()
 
 void MainWindow::CreateCommunicator()
 {
-    communicator = utility::startNewRunner([this](const auto shouldStop) mutable
-    {
+    communicator = utility::startNewRunner([this](const auto shouldStop) mutable {
         try
         {
             CSharedDevice comm(shouldStop);
@@ -299,13 +284,12 @@ void MainWindow::CreateCommunicator()
                 std::this_thread::sleep_for(hadUserAction ? 250ms : 1s);
             }
         }
-        catch (std::exception& ex)
+        catch (std::exception &ex)
         {
-            std::cerr << "Exception in communication with daemon, retry soon: "
-                      << ex.what() << std::endl;
-            //Re-try again from the main thread later.
-            ExecOnMainThread::get().exec([this]()
-            {
+            std::cerr << "Exception in communication with daemon, retry soon: " << ex.what()
+                      << std::endl;
+            // Re-try again from the main thread later.
+            ExecOnMainThread::get().exec([this]() {
                 SetDaemonConnectionStateOnGuiThread(ConnState::RED);
                 QTimer::singleShot(5000, this, &MainWindow::CreateCommunicator);
             });
@@ -315,9 +299,7 @@ void MainWindow::CreateCommunicator()
 
 void MainWindow::UpdateUiWithInfo(FullInfoBlock info, bool possiblyBrokenConn)
 {
-    ExecOnMainThread::get().exec([this, info = std::move(info),
-                                  possiblyBrokenConn]() mutable
-    {
+    ExecOnMainThread::get().exec([this, info = std::move(info), possiblyBrokenConn]() mutable {
         static const QString fmtNum("%1");
         ui->outCpuT->setText(QString(fmtNum).arg(info.info.cpu.temperature));
         ui->outCpuR->setText(QString(fmtNum).arg(info.info.cpu.fanRPM));
@@ -336,19 +318,18 @@ void MainWindow::UpdateUiWithInfo(FullInfoBlock info, bool possiblyBrokenConn)
         SetUiBooster(info.boosterState);
         SetUiBattery(info.battery);
 
-        ui->outHwProfile->setText(info.behaveAndCurve.behaveState == BehaveState::AUTO ?
-                                  tr("Auto") :
-                                  tr("Advanced"));
+        ui->outHwProfile->setText(
+          info.behaveAndCurve.behaveState == BehaveState::AUTO ? tr("Auto") : tr("Advanced"));
 
         if (info.daemonDeviceException.empty())
         {
-            SetDaemonConnectionStateOnGuiThread(possiblyBrokenConn ? ConnState::YELLOW :
-                                                ConnState::GREEN);
+            SetDaemonConnectionStateOnGuiThread(possiblyBrokenConn ? ConnState::YELLOW
+                                                                   : ConnState::GREEN);
         }
         else
         {
-            ui->statusbar->showMessage(tr("Device error: ") + QString::fromStdString(
-                                           info.daemonDeviceException));
+            ui->statusbar->showMessage(tr("Device error: ")
+                                       + QString::fromStdString(info.daemonDeviceException));
         }
 
         SetImageIcon(info.info.cpu.temperature, Qt::green);
@@ -361,12 +342,11 @@ void MainWindow::UpdateUiWithInfo(FullInfoBlock info, bool possiblyBrokenConn)
 
 void MainWindow::SetDaemonConnectionStateOnGuiThread(const ConnState state)
 {
-    //must be called on GUI thread!
-    static const std::map<ConnState, QString> states =
-    {
-        {ConnState::GREEN, tr("Daemon is OK.")},
-        {ConnState::YELLOW, tr("Daemon is not responding...")},
-        {ConnState::RED, tr("No connection to the daemon, retrying...")},
+    // must be called on GUI thread!
+    static const std::map<ConnState, QString> states = {
+      {ConnState::GREEN, tr("Daemon is OK.")},
+      {ConnState::YELLOW, tr("Daemon is not responding...")},
+      {ConnState::RED, tr("No connection to the daemon, retrying...")},
     };
     ui->statusbar->showMessage(states.at(state));
     setEnabled(state != ConnState::RED);
@@ -379,14 +359,14 @@ void MainWindow::SetUiBooster(BoosterState state)
         auto block = BlockGuard(ui->btnOff, ui->btnOn);
         switch (state)
         {
-        case BoosterState::ON:
-            ui->btnOn->setChecked(true);
-            break;
-        case BoosterState::OFF:
-            ui->btnOff->setChecked(true);
-            break;
-        default:
-            break;
+            case BoosterState::ON:
+                ui->btnOn->setChecked(true);
+                break;
+            case BoosterState::OFF:
+                ui->btnOff->setChecked(true);
+                break;
+            default:
+                break;
         }
     }
 }
@@ -396,18 +376,18 @@ void MainWindow::SetUiBattery(const Battery &battery)
     const auto block = BlockGuard(ui->rbBatBalance, ui->rbBatMax, ui->rbBatMin);
     switch (battery.maxLevel)
     {
-    case BatteryLevels::BestForBattery:
-        ui->rbBatMin->setChecked(true);
-        break;
-    case BatteryLevels::Balanced:
-        ui->rbBatBalance->setChecked(true);
-        break;
-    case BatteryLevels::BestForMobility:
-        ui->rbBatMax->setChecked(true);
-        break;
-    case BatteryLevels::NotKnown:
-        UncheckAllBatteryButtons();
-        break;
+        case BatteryLevels::BestForBattery:
+            ui->rbBatMin->setChecked(true);
+            break;
+        case BatteryLevels::Balanced:
+            ui->rbBatBalance->setChecked(true);
+            break;
+        case BatteryLevels::BestForMobility:
+            ui->rbBatMax->setChecked(true);
+            break;
+        case BatteryLevels::NotKnown:
+            UncheckAllBatteryButtons();
+            break;
     };
 }
 
@@ -424,7 +404,7 @@ void MainWindow::UncheckAllBatteryButtons()
     }
 }
 
-void MainWindow::SetImageIcon(std::optional<int> value, const QColor& color)
+void MainWindow::SetImageIcon(std::optional<int> value, const QColor &color)
 {
     static const QIcon icon(":/images/fan.png");
     if (!value || isVisible())
@@ -453,7 +433,7 @@ void MainWindow::SetImageIcon(std::optional<int> value, const QColor& color)
 
 void MainWindow::ReadCurvesFromDaemon(BehaveWithCurve curves)
 {
-    //TODO: Parse BehaveState and send curve to the dedicated widget
+    // TODO: Parse BehaveState and send curve to the dedicated widget
     //{AUTO, ADVANCED, NO_CHANGE};
     ui->curvesWidget->SetCurves(std::move(curves.curve));
 }

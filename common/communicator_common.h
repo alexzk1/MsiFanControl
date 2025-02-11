@@ -1,22 +1,22 @@
 #pragma once
 
-#include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/mapped_region.hpp>
+#include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 
 #include <cstddef>
-#include <streambuf>
 #include <cstdint>
+#include <streambuf>
 
-inline const char* GetMemoryName()
+inline const char *GetMemoryName()
 {
-    static const char* const ptr = "MSICoolersSharedControlMem9";
+    static const char *const ptr = "MSICoolersSharedControlMem9";
     return ptr;
 }
 
 struct MemBuf : std::streambuf
 {
-    MemBuf(char* base, std::size_t size)
+    MemBuf(char *base, std::size_t size)
     {
         this->setp(base, base + size);
         this->setg(base, base, base + size);
@@ -35,13 +35,13 @@ inline constexpr std::size_t kWholeSharedMemSize = 4096;
 
 class SharedMemoryWithMutex
 {
-public:
+  public:
     SharedMemoryWithMutex() = delete;
-    SharedMemoryWithMutex(boost::interprocess::shared_memory_object&& shm)
-        :shm(std::move(shm)),
-         region(this->shm, boost::interprocess::read_write)
+    SharedMemoryWithMutex(boost::interprocess::shared_memory_object &&shm) :
+        shm(std::move(shm)),
+        region(this->shm, boost::interprocess::read_write)
     {
-        void* addr = region.get_address();
+        void *addr = region.get_address();
         mutex = new (addr) boost::interprocess::interprocess_mutex;
 
         constexpr std::size_t a = 64;
@@ -51,7 +51,7 @@ public:
         offset = r ? x + (a - r) : x;
     }
 
-    boost::interprocess::interprocess_mutex& Mutex() const
+    boost::interprocess::interprocess_mutex &Mutex() const
     {
         return *mutex;
     }
@@ -63,7 +63,7 @@ public:
 
     MemBuf UI2Daemon() const
     {
-        //1 byte is reserved to for signals
+        // 1 byte is reserved to for signals
         const auto sz = Size();
         return MemBuf(Ptr() + sz + 1, sz - 1);
     }
@@ -82,17 +82,17 @@ public:
     {
         return UiCheckByte();
     }
-private:
 
-    char& UiCheckByte() const
+  private:
+    char &UiCheckByte() const
     {
         const auto sz = Size();
         return *(Ptr() + sz);
     }
 
-    char* Ptr() const
+    char *Ptr() const
     {
-        return static_cast<char*>(region.get_address()) + offset;
+        return static_cast<char *>(region.get_address()) + offset;
     }
 
     std::size_t Size() const
@@ -108,23 +108,23 @@ private:
     boost::interprocess::shared_memory_object shm;
     boost::interprocess::mapped_region region;
 
-    boost::interprocess::interprocess_mutex* mutex;
+    boost::interprocess::interprocess_mutex *mutex;
     std::size_t offset;
 };
 
 class SharedMemory
 {
-public:
+  public:
     SharedMemory() = delete;
-    SharedMemory(boost::interprocess::shared_memory_object&& shm)
-        :shm(std::move(shm)),
-         region(this->shm, boost::interprocess::read_write)
+    SharedMemory(boost::interprocess::shared_memory_object &&shm) :
+        shm(std::move(shm)),
+        region(this->shm, boost::interprocess::read_write)
     {
     }
 
-    char* Ptr() const
+    char *Ptr() const
     {
-        return static_cast<char*>(region.get_address());
+        return static_cast<char *>(region.get_address());
     }
 
     std::size_t Size() const
@@ -132,7 +132,7 @@ public:
         return region.get_size();
     }
 
-private:
+  private:
     boost::interprocess::shared_memory_object shm;
     boost::interprocess::mapped_region region;
 };

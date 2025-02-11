@@ -1,33 +1,33 @@
 #pragma once
 
-#include <memory>
-#include <set>
-#include <cstdint>
-
-#include "communicator_common.h"
 #include "cm_ctors.h"
+#include "communicator_common.h"
 #include "device.h"
 
-//This is daemon side communicator.
+#include <cstdint>
+#include <memory>
+#include <set>
+
+// This is daemon side communicator.
 
 namespace boost::interprocess {
 class shared_memory_object;
 class named_mutex;
 class mapped_region;
-}
+} // namespace boost::interprocess
 
 class CDevice;
 
 class CSharedDevice
 {
-public:
+  public:
     CSharedDevice();
     NO_COPYMOVE(CSharedDevice);
     ~CSharedDevice();
 
     void Communicate();
 
-private:
+  private:
     struct CleanSharedMemory
     {
         NO_COPYMOVE(CleanSharedMemory);

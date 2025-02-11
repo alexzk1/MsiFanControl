@@ -1,20 +1,21 @@
 #pragma once
 
+#include "device.h"
+
+#include <QAction>
+#include <QButtonGroup>
 #include <QMainWindow>
+#include <QPoint>
+#include <QPointer>
+#include <QSystemTrayIcon>
+
+#include <qpointer.h>
+
+#include <chrono>
 #include <memory>
 #include <mutex>
 #include <optional>
-#include <qpointer.h>
 #include <thread>
-#include <mutex>
-#include <chrono>
-#include <QSystemTrayIcon>
-#include <QPointer>
-#include <QButtonGroup>
-
-#include "device.h"
-#include <QAction>
-#include <QPoint>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -32,23 +33,29 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
-public:
-    MainWindow(StartOptions options, QWidget* parent = nullptr);
+  public:
+    MainWindow(StartOptions options, QWidget *parent = nullptr);
     ~MainWindow();
 
-private slots:
+  private slots:
     void CreateCommunicator();
-protected:
-    void closeEvent(QCloseEvent* event) override;
-private:
-    enum class ConnState {GREEN, RED, YELLOW};
+
+  protected:
+    void closeEvent(QCloseEvent *event) override;
+
+  private:
+    enum class ConnState {
+        GREEN,
+        RED,
+        YELLOW
+    };
     void UpdateUiWithInfo(FullInfoBlock info, bool possiblyBrokenConn);
 
-    //must be called on GUI thread!
+    // must be called on GUI thread!
     void SetDaemonConnectionStateOnGuiThread(const ConnState state);
 
     template <typename taCallable>
-    void UpdateRequestToDaemon(const taCallable& callback)
+    void UpdateRequestToDaemon(const taCallable &callback)
     {
         const std::lock_guard grd(requestMutex);
         if (!requestToDaemon)
@@ -59,7 +66,7 @@ private:
     }
 
     void SetUiBooster(BoosterState state);
-    void SetUiBattery(const Battery& battery);
+    void SetUiBattery(const Battery &battery);
     void UncheckAllBatteryButtons();
 
     void BlockReadSetters()
@@ -74,11 +81,11 @@ private:
 
     void LaunchGameMode();
 
-    void SetImageIcon(std::optional<int> value, const QColor& color = qRgba(0, 0, 0, 0));
+    void SetImageIcon(std::optional<int> value, const QColor &color = qRgba(0, 0, 0, 0));
 
     void ReadCurvesFromDaemon(BehaveWithCurve curves);
 
-    Ui::MainWindow* ui;
+    Ui::MainWindow *ui;
     std::shared_ptr<std::thread> communicator;
 
     std::shared_ptr<std::thread> gameModeThread;
@@ -86,7 +93,8 @@ private:
     std::optional<RequestFromUi> requestToDaemon;
     std::mutex requestMutex;
 
-    std::chrono::time_point<std::chrono::steady_clock> allowedUpdate{std::chrono::steady_clock::now()};
+    std::chrono::time_point<std::chrono::steady_clock> allowedUpdate{
+      std::chrono::steady_clock::now()};
 
     std::optional<FullInfoBlock> lastReadInfoForGameModeThread;
     std::mutex lastReadInfoForGameModeThreadMutex;

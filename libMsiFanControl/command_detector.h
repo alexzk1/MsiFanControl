@@ -1,7 +1,7 @@
 #pragma once
 
-#include "device_commands.h"
 #include "device.h"
+#include "device_commands.h"
 
 #include <algorithm>
 #include <stdexcept>
@@ -11,15 +11,16 @@
 /// It will return command which had predicate's result "true" always.
 class ProperCommandDetector
 {
-public:
+  public:
     ProperCommandDetector() = delete;
-    explicit ProperCommandDetector(AddressedValueAnyList commandsToChooseFrom):
+    explicit ProperCommandDetector(AddressedValueAnyList commandsToChooseFrom) :
         commandsToChooseFrom(std::move(commandsToChooseFrom))
-    {}
+    {
+    }
 
     /// Predicated is called for each element, one which returned true will be kept.
     template <typename taPredicate>
-    void DetectProperOneByOne(const taPredicate& predicate)
+    void DetectProperOneByOne(const taPredicate &predicate)
     {
         if (commandsToChooseFrom.empty())
         {
@@ -28,8 +29,8 @@ public:
 
         if (commandsToChooseFrom.size() > 1)
         {
-            const auto it = std::find_if(commandsToChooseFrom.begin(),
-                                         commandsToChooseFrom.end(), predicate);
+            const auto it =
+              std::find_if(commandsToChooseFrom.begin(), commandsToChooseFrom.end(), predicate);
             if (it == commandsToChooseFrom.end())
             {
                 throw std::runtime_error("Could not detect proper command.");
@@ -43,7 +44,7 @@ public:
 
     /// Filter should leave 1 element.
     template <typename taFilter>
-    void DetectProperAtOnce(const taFilter& filter)
+    void DetectProperAtOnce(const taFilter &filter)
     {
         if (commandsToChooseFrom.empty())
         {
@@ -57,20 +58,20 @@ public:
     }
 
     [[nodiscard]]
-    const AddressedValueAny& get() const
+    const AddressedValueAny &get() const
     {
         validateSingleElement();
         return commandsToChooseFrom.front();
     }
 
-    //Yes, I love implicit conversions ...
-    //NOLINTNEXTLINE
-    operator const AddressedValueAny&() const
+    // Yes, I love implicit conversions ...
+    // NOLINTNEXTLINE
+    operator const AddressedValueAny &() const
     {
         return get();
     }
 
-private:
+  private:
     void validateSingleElement() const
     {
         if (commandsToChooseFrom.size() != 1)

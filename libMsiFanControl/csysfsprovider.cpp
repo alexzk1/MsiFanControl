@@ -1,35 +1,35 @@
 #include "csysfsprovider.h"
+
 #include "readwrite.h"
 #include "readwrite_provider.h"
 
 #include <algorithm>
+#include <array>
 #include <filesystem>
 #include <fstream>
 #include <ios>
 #include <iostream>
 #include <memory>
-#include <array>
 #include <utility>
 
-//NOLINTNEXTLINE
+// NOLINTNEXTLINE
 extern bool GLOBAL_DRY_RUN;
 
 class ReadWriteProviderImpl : public IReadWriteProvider
 {
-private:
+  private:
     std::filesystem::path fileName;
-public:
-    explicit ReadWriteProviderImpl(std::filesystem::path fileName):
+
+  public:
+    explicit ReadWriteProviderImpl(std::filesystem::path fileName) :
         fileName(std::move(fileName))
     {
-
     }
 
     [[nodiscard]]
     std::ofstream WriteStream() const final
     {
-        return {fileName,
-                std::ios_base::out | std::ios_base::binary | std::ios_base::app};
+        return {fileName, std::ios_base::out | std::ios_base::binary | std::ios_base::app};
     }
 
     [[nodiscard]]
@@ -42,10 +42,9 @@ public:
 std::shared_ptr<IReadWriteProvider> CSysFsProvider::CreateIoDirect(bool dryRun)
 {
     GLOBAL_DRY_RUN = dryRun;
-    static const auto genDryRun = []()->std::filesystem::path
-    {
+    static const auto genDryRun = []() -> std::filesystem::path {
         auto name = std::filesystem::temp_directory_path();
-        name /=std::filesystem::path("msiDryRun.bin");
+        name /= std::filesystem::path("msiDryRun.bin");
 
         std::array<char, 256> zeroes{};
         std::fill(zeroes.begin(), zeroes.end(), 0);
@@ -55,12 +54,11 @@ std::shared_ptr<IReadWriteProvider> CSysFsProvider::CreateIoDirect(bool dryRun)
         return name;
     };
 
-    return std::make_shared<ReadWriteProviderImpl>(dryRun ? genDryRun() :
-                                                   "/sys/kernel/debug/ec/ec0/io");
+    return std::make_shared<ReadWriteProviderImpl>(dryRun ? genDryRun()
+                                                          : "/sys/kernel/debug/ec/ec0/io");
 }
 
-CReadWrite CSysFsProvider::CreateIoObject(BackupProviderPtr backuPovider,
-                                          bool dryRun)
+CReadWrite CSysFsProvider::CreateIoObject(BackupProviderPtr backuPovider, bool dryRun)
 {
     return {CreateIoDirect(dryRun), std::move(backuPovider)};
 }

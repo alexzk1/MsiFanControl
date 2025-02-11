@@ -11,7 +11,7 @@
 template <std::size_t AvrSamplesCount>
 class BoosterOnOffDecider
 {
-public:
+  public:
     BoosterState GetUpdatedState(std::optional<FullInfoBlock> newInfo)
     {
         if (newInfo)
@@ -28,13 +28,14 @@ public:
 
         return !isHot ? BoosterState::OFF : BoosterState::NO_CHANGE;
     }
-private:
+
+  private:
     FullInfoBlock storedInfo{};
     RunningAvr<float, AvrSamplesCount> cpuAvrTemp;
     RunningAvr<float, AvrSamplesCount> gpuAvrTemp;
 
     template <typename taLeft, typename taRight>
-    static bool greater(const std::optional<taLeft>& left, taRight right)
+    static bool greater(const std::optional<taLeft> &left, taRight right)
     {
         static_assert(std::is_arithmetic_v<taRight> && std::is_arithmetic_v<taLeft>,
                       "Only arithemetic types are supported.");
@@ -43,9 +44,9 @@ private:
 
     bool IsHotNow()
     {
-        //celsium, nvidia gpu max is 93C.
+        // celsium, nvidia gpu max is 93C.
         static constexpr int kDegreeLimitBoth = 80;
-        //if cpu is such hot - boost, even if gpu is off
+        // if cpu is such hot - boost, even if gpu is off
         static constexpr int kCpuOnlyDegree = 91;
 
         static_assert(kDegreeLimitBoth < kCpuOnlyDegree, "Revise here.");
@@ -54,7 +55,6 @@ private:
         const auto avrGpu = gpuAvrTemp.GetCurrent(storedInfo.info.gpu.temperature);
 
         return greater(avrCpu, kCpuOnlyDegree)
-               || (greater(avrCpu, kDegreeLimitBoth)
-                   && greater(avrGpu, kDegreeLimitBoth));
+               || (greater(avrCpu, kDegreeLimitBoth) && greater(avrGpu, kDegreeLimitBoth));
     }
 };

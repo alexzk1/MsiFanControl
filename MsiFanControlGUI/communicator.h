@@ -1,19 +1,19 @@
 #pragma once
 
-#include <cstddef>
-#include <memory>
-#include <limits>
-
-#include "device.h"
 #include "cm_ctors.h"
 #include "communicator_common.h"
+#include "device.h"
 #include "runners.h"
 
-//This is GUI side communicator
+#include <cstddef>
+#include <limits>
+#include <memory>
+
+// This is GUI side communicator
 namespace boost::interprocess {
 class shared_memory_object;
 class named_mutex;
-}
+} // namespace boost::interprocess
 
 struct CleanSharedMemory
 {
@@ -34,14 +34,14 @@ struct CleanSharedMemory
 
 class CSharedDevice
 {
-public:
+  public:
     CSharedDevice(utility::runnerint_t should_stop);
     NO_COPYMOVE(CSharedDevice);
     ~CSharedDevice();
 
     //! @brief Returns last known data read from the daemon.
     [[nodiscard]]
-    const FullInfoBlock& LastKnownInfo() const;
+    const FullInfoBlock &LastKnownInfo() const;
 
     //! @brief Blocking call to read if daemon alive, does not update values from the BIOS,
     //! but updates LastKnownInfo() local copy.
@@ -62,8 +62,9 @@ public:
     //! @note Call is blocking for at least kMinimumServiceDelay.
     //! @returns true if daemon responds properly.
     bool RefreshData();
-private:
-    void SendRequest(const RequestFromUi& request) const;
+
+  private:
+    void SendRequest(const RequestFromUi &request) const;
 
     [[nodiscard]]
     bool UpdateInfoFromDaemon();

@@ -1,22 +1,24 @@
-#include "runners.h"
 #include "communicator.h"
 #include "device.h"
+#include "runners.h"
 
-#include <cstdlib>
 #include <cerrno>
+#include <cstdlib>
+#include <exception>
 #include <iostream>
 #include <ostream>
-#include <exception>
 #include <string>
-#include <systemd/sd-daemon.h>
 #include <thread>
 
-//NOLINTNEXTLINE
+#include <systemd/sd-daemon.h>
+
+// NOLINTNEXTLINE
 #include <signal.h>
 #include <unistd.h>
+
 #include <bits/types/sigset_t.h>
 
-//NOLINTNEXTLINE
+// NOLINTNEXTLINE
 void threadBody(const utility::runnerint_t shouldStop)
 {
     try
@@ -29,18 +31,17 @@ void threadBody(const utility::runnerint_t shouldStop)
             std::this_thread::sleep_for(kMinimumServiceDelay);
         }
     }
-    catch (std::exception& l_exception)
+    catch (std::exception &l_exception)
     {
         auto l_resultStatus = errno;
-        std::cerr << "Communication error: " << l_exception.what() << std::endl <<
-                  std::flush;
-        //NOLINTNEXTLINE
+        std::cerr << "Communication error: " << l_exception.what() << std::endl << std::flush;
+        // NOLINTNEXTLINE
         sd_notifyf(0, "STATUS=Failed: %s\n ERRNO=%i", l_exception.what(), l_resultStatus);
         kill(getpid(), SIGTERM);
     }
 }
 
-int main(int argc, const char** argv)
+int main(int argc, const char **argv)
 {
     (void)argc;
     (void)argv;
@@ -51,30 +52,31 @@ int main(int argc, const char** argv)
         sigset_t l_waitedSignals;
         sigemptyset(&l_waitedSignals);
         sigaddset(&l_waitedSignals, SIGTERM);
-        //NOLINTNEXTLINE
+        // NOLINTNEXTLINE
         sigprocmask(SIG_BLOCK, &l_waitedSignals, nullptr);
 
         auto thread = utility::startNewRunner(threadBody);
 
         sd_notify(0, "READY=1");
-        std::cerr << std::string("MSI fans control daemon has successfully started up.") <<
-                  std::endl << std::flush;
+        std::cerr << std::string("MSI fans control daemon has successfully started up.")
+                  << std::endl
+                  << std::flush;
 
         int l_signal = 0;
         sigwait(&l_waitedSignals, &l_signal);
         sd_notify(0, "STOPPING=1");
 
-        //Stop all threading operations
+        // Stop all threading operations
         thread.reset();
         sd_notify(0, "STATUS=STOPPED");
-        std::cerr << std::string("MSI fans control has been successfully shut down.") <<
-                  std::endl << std::flush;
+        std::cerr << std::string("MSI fans control has been successfully shut down.") << std::endl
+                  << std::flush;
 
         l_resultStatus = 0;
     }
-    catch (std::exception& l_exception)
+    catch (std::exception &l_exception)
     {
-        //NOLINTNEXTLINE
+        // NOLINTNEXTLINE
         sd_notifyf(0, "STATUS=Failed to start up: %s\n ERRNO=%i", l_exception.what(),
                    l_resultStatus);
     }

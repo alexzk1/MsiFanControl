@@ -3,12 +3,12 @@
 #include <cstdint>
 #include <ios>
 #include <iosfwd>
+#include <map>
+#include <optional>
+#include <stdexcept>
 #include <type_traits>
 #include <variant>
 #include <vector>
-#include <map>
-#include <stdexcept>
-#include <optional>
 
 template <typename ValueType>
 struct AddressedValueTmpl
@@ -16,32 +16,32 @@ struct AddressedValueTmpl
     using value_type = ValueType;
     static_assert(std::is_scalar_v<ValueType>, "Only scalars are allowed.");
 
-    //NOLINTNEXTLINE
+    // NOLINTNEXTLINE
     std::streampos address;
-    //NOLINTNEXTLINE
+    // NOLINTNEXTLINE
     ValueType value;
 
-    bool operator==(const AddressedValueTmpl& another) const
+    bool operator==(const AddressedValueTmpl &another) const
     {
         return std::tie(address, value) == std::tie(another.address, another.value);
     }
 
-    bool operator!=(const AddressedValueTmpl& another) const
+    bool operator!=(const AddressedValueTmpl &another) const
     {
         return !(*this == another);
     }
 
-    //support for Cereal
+    // support for Cereal
     template <class Archive>
-    void save(Archive& ar) const
+    void save(Archive &ar) const
     {
-        //https://github.com/USCiLab/cereal/issues/684
+        // https://github.com/USCiLab/cereal/issues/684
         int addr = address;
         ar(addr, value);
     }
 
     template <class Archive>
-    void load(Archive& ar)
+    void load(Archive &ar)
     {
         int addr = -1;
         ar(addr, value);
@@ -52,28 +52,28 @@ struct AddressedValueTmpl
 struct AddressedBits
 {
     using value_type = std::uint8_t;
-    //NOLINTNEXTLINE
+    // NOLINTNEXTLINE
     std::streampos address;
 
-    //bit mask, if bit is 1 then this is valid in byte
-    //NOLINTNEXTLINE
+    // bit mask, if bit is 1 then this is valid in byte
+    // NOLINTNEXTLINE
     std::uint8_t validBits;
 
-    //actual value
-    //NOLINTNEXTLINE
+    // actual value
+    // NOLINTNEXTLINE
     std::uint8_t value;
 
-    //support for Cereal
+    // support for Cereal
     template <class Archive>
-    void save(Archive& ar) const
+    void save(Archive &ar) const
     {
-        //https://github.com/USCiLab/cereal/issues/684
+        // https://github.com/USCiLab/cereal/issues/684
         std::int64_t addr = address;
         ar(addr, value, validBits);
     }
 
     template <class Archive>
-    void load(Archive& ar)
+    void load(Archive &ar)
     {
         std::int64_t addr = -1;
         ar(addr, value, validBits);
@@ -93,14 +93,13 @@ struct AddressedBits
         return existingValue;
     }
 
-    bool operator==(const AddressedBits& another) const
+    bool operator==(const AddressedBits &another) const
     {
-        return std::tie(address, value, validBits) == std::tie(another.address,
-                                                               another.value,
-                                                               another.validBits);
+        return std::tie(address, value, validBits)
+               == std::tie(another.address, another.value, another.validBits);
     }
 
-    bool operator!=(const AddressedBits& another) const
+    bool operator!=(const AddressedBits &another) const
     {
         return !(*this == another);
     }
@@ -109,32 +108,32 @@ struct AddressedBits
 struct TagIgnore
 {
     using value_type = std::uint8_t;
-    //NOLINTNEXTLINE
+    // NOLINTNEXTLINE
     std::streampos address{0};
-    //NOLINTNEXTLINE
+    // NOLINTNEXTLINE
     std::uint8_t value{0};
 
-    bool operator==(const TagIgnore&) const
+    bool operator==(const TagIgnore &) const
     {
         return true;
     }
 
-    bool operator!=(const TagIgnore&) const
+    bool operator!=(const TagIgnore &) const
     {
         return false;
     }
 
-    //support for Cereal
+    // support for Cereal
     template <class Archive>
-    void save(Archive& ar) const
+    void save(Archive &ar) const
     {
-        //https://github.com/USCiLab/cereal/issues/684
+        // https://github.com/USCiLab/cereal/issues/684
         std::int64_t addr = address;
         ar(addr, value);
     }
 
     template <class Archive>
-    void load(Archive& ar)
+    void load(Archive &ar)
     {
         std::int64_t addr = -1;
         ar(addr, value);
@@ -146,11 +145,11 @@ using AddressedValue1B = AddressedValueTmpl<std::uint8_t>;
 using AddressedValue2B = AddressedValueTmpl<std::uint16_t>;
 
 using AddressedValueAny =
-    std::variant<AddressedValue1B, AddressedValue2B, AddressedBits, TagIgnore>;
+  std::variant<AddressedValue1B, AddressedValue2B, AddressedBits, TagIgnore>;
 
 using AddressedValueAnyList = std::vector<AddressedValueAny>;
 
-//Container to be used when one of many states can be active (RadioGroup in UI).
+// Container to be used when one of many states can be active (RadioGroup in UI).
 template <typename State>
 struct AddressedValueStates
 {
@@ -159,22 +158,24 @@ struct AddressedValueStates
 
     //! @brief detects if there is 1 differente element exact between this and "other".
     //! @returns different value in this object if there is 1 difference, nullopt otherwise.
-    std::optional<typename DataType::value_type> GetOneDifference(
-        const AddressedValueStates<State>& other) const
+    std::optional<typename DataType::value_type>
+    GetOneDifference(const AddressedValueStates<State> &other) const
     {
         if (data.size() != other.data.size())
         {
-            throw std::invalid_argument("Containers must have the same amount of the states to compare.");
+            throw std::invalid_argument(
+              "Containers must have the same amount of the states to compare.");
         }
 
         std::vector<State> difference;
         difference.reserve(data.size());
-        for (const auto& value : data)
+        for (const auto &value : data)
         {
             const auto iter = other.data.find(value.first);
             if (iter == other.data.end())
             {
-                throw std::invalid_argument("Different keys found. We can compare only the states with the same keys.");
+                throw std::invalid_argument(
+                  "Different keys found. We can compare only the states with the same keys.");
             }
             if (value.second != iter->second)
             {
@@ -182,11 +183,11 @@ struct AddressedValueStates
             }
         }
 
-        return 1 == difference.size() ? std::make_optional(*data.find(
-                                                               difference.front())) : std::nullopt;
+        return 1 == difference.size() ? std::make_optional(*data.find(difference.front()))
+                                      : std::nullopt;
     }
 
-    AddressedValueAny& at(const State key)
+    AddressedValueAny &at(const State key)
     {
         auto iter = data.find(key);
         if (iter == data.end())
@@ -196,7 +197,7 @@ struct AddressedValueStates
         return iter->second;
     }
 
-    const AddressedValueAny& at(const State key) const
+    const AddressedValueAny &at(const State key) const
     {
         auto iter = data.find(key);
         if (iter == data.end())
@@ -206,22 +207,22 @@ struct AddressedValueStates
         return iter->second;
     }
 
-    DataType* operator->()
+    DataType *operator->()
     {
         return &data;
     }
 
-    const DataType* operator->() const
+    const DataType *operator->() const
     {
         return &data;
     }
 
-    DataType& operator*()
+    DataType &operator*()
     {
         return data;
     }
 
-    const DataType& operator*() const
+    const DataType &operator*() const
     {
         return data;
     }
@@ -246,13 +247,13 @@ struct AddressedValueStates
         return data.end();
     }
 
-    //support for Cereal
+    // support for Cereal
     template <class Archive>
-    void serialize(Archive& ar, const std::uint32_t /*version*/)
+    void serialize(Archive &ar, const std::uint32_t /*version*/)
     {
         ar(data);
     }
 
-    //NOLINTNEXTLINE
+    // NOLINTNEXTLINE
     DataType data;
 };

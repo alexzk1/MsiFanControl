@@ -1,29 +1,31 @@
+#include "device.h"
+
+#include "command_detector.h"
+#include "device_commands.h"
+#include "lambda_visitors.h"
+#include "readwrite.h"
+
 #include <algorithm>
-#include <map>
 #include <cstddef>
 #include <iosfwd>
+#include <iostream>
 #include <iterator>
+#include <map>
 #include <optional>
+#include <set>
 #include <stdexcept>
 #include <string>
-#include <set>
 #include <utility>
 #include <variant>
-#include <iostream>
 
-#include "device.h"
-#include "device_commands.h"
-#include "command_detector.h"
-#include "readwrite.h"
-#include "lambda_visitors.h"
-
-//NOLINTNEXTLINE
+// NOLINTNEXTLINE
 bool GLOBAL_DRY_RUN = false;
 
 namespace {
-//Cannot use assert! Because it does not call destructors and shared memory remains allocated in daemon.
+// Cannot use assert! Because it does not call destructors and shared memory remains allocated in
+// daemon.
 #ifndef NDEBUG
-void Throw(bool cond, const std::string& text)
+void Throw(bool cond, const std::string &text)
 {
     if (!cond && !GLOBAL_DRY_RUN)
     {
@@ -31,7 +33,7 @@ void Throw(bool cond, const std::string& text)
     }
 }
 #else
-#define Throw(COND, TEXT)
+    #define Throw(COND, TEXT)
 #endif
 
 using AddressedValueAllowedAddresses = std::set<std::streampos>;
@@ -43,15 +45,13 @@ struct AllowedAddresses
 
 AllowedAddresses BuildAllowedAdressesFromDefaults()
 {
-    static const auto makeSingle = [](const AddressedValueAnyList& src)
-    {
+    static const auto makeSingle = [](const AddressedValueAnyList &src) {
         AddressedValueAllowedAddresses res;
         std::transform(src.begin(), src.end(), std::inserter(res, res.end()),
-                       [](const auto& value)
-        {
-            const auto& vb = std::get<AddressedValue1B>(value);
-            return vb.address;
-        });
+                       [](const auto &value) {
+                           const auto &vb = std::get<AddressedValue1B>(value);
+                           return vb.address;
+                       });
         return res;
     };
     const auto curves = CpuGpuFanCurve::MakeDefault();
@@ -59,15 +59,15 @@ AllowedAddresses BuildAllowedAdressesFromDefaults()
 }
 } // namespace
 
-//NOLINTNEXTLINE
-Info::Info(const AddressedValueAny& temp, const AddressedValueAny& rpm) :
+// NOLINTNEXTLINE
+Info::Info(const AddressedValueAny &temp, const AddressedValueAny &rpm) :
     temperature(parseTemp(temp)),
     fanRPM(parseRPM(rpm))
 {
 }
 
-CDevice::CDevice(CReadWrite readWrite)
-    : readWriteAccess(std::move(readWrite))
+CDevice::CDevice(CReadWrite readWrite) :
+    readWriteAccess(std::move(readWrite))
 {
 }
 CDevice::~CDevice() = default;
@@ -94,13 +94,11 @@ BoosterState CDevice::ReadBoosterState() const
     Throw(diff != std::nullopt,
           "Something went wrong. Read should indicate BOOSTER's changed state.");
 
-    //We read OFF state different, that means there is ON state in device.
-    return !diff || diff->first == BoosterState::OFF ? BoosterState::ON :
-           BoosterState::OFF;
+    // We read OFF state different, that means there is ON state in device.
+    return !diff || diff->first == BoosterState::OFF ? BoosterState::ON : BoosterState::OFF;
 }
 
-void CDevice::SetBooster(CReadWrite::WriteHandle& handle,
-                         const BoosterState what) const
+void CDevice::SetBooster(CReadWrite::WriteHandle &handle, const BoosterState what) const
 {
     auto cmd = GetCmdBoosterStates();
     readWriteAccess.Write(handle, {cmd.at(what)});
@@ -122,17 +120,17 @@ BehaveWithCurve CDevice::ReadBehaveState() const
     Throw(diff != std::nullopt,
           "Something went wrong. Read should indicate BEHAVE's changed state.");
 
-    //Same logic as in booster, if "auto" is different, then "advanced" is set there.
+    // Same logic as in booster, if "auto" is different, then "advanced" is set there.
     BehaveWithCurve res;
-    res.behaveState = diff && diff->first == BehaveState::AUTO ? BehaveState::ADVANCED :
-                      BehaveState::AUTO;
+    res.behaveState =
+      diff && diff->first == BehaveState::AUTO ? BehaveState::ADVANCED : BehaveState::AUTO;
 
     readWriteAccess.Read(res.curve.cpu);
     readWriteAccess.Read(res.curve.gpu);
     return res;
 }
 
-void CDevice::SetBehaveState(const BehaveWithCurve& behaveWithCurve) const
+void CDevice::SetBehaveState(const BehaveWithCurve &behaveWithCurve) const
 {
     auto cmd = GetCmdBehaveStates();
     auto handle = readWriteAccess.StartWritting();
@@ -184,11 +182,10 @@ Battery CDevice::ReadBattery() const
 */
 void CDevice::SetBattery(const Battery &battery) const
 {
-    static const std::map<BatteryLevels, std::uint8_t> enum2value =
-    {
-        {BatteryLevels::BestForMobility, 0xE4},
-        {BatteryLevels::Balanced, 0x80 + 80},
-        {BatteryLevels::BestForBattery, 0x80 + 60},
+    static const std::map<BatteryLevels, std::uint8_t> enum2value = {
+      {BatteryLevels::BestForMobility, 0xE4},
+      {BatteryLevels::Balanced, 0x80 + 80},
+      {BatteryLevels::BestForBattery, 0x80 + 60},
     };
     if (battery.maxLevel != BatteryLevels::NotKnown)
     {
@@ -206,16 +203,14 @@ FullInfoBlock CDevice::ReadFullInformation(std::size_t aTag) const
 
 AddressedValueAnyList CDevice::GetCmdTempRPM() const
 {
-    static ProperCommandDetector cpuRpmDetector(
-    {
-        AddressedValue2B{0xC8, 0},
-        AddressedValue2B{0xCC, 0},
+    static ProperCommandDetector cpuRpmDetector({
+      AddressedValue2B{0xC8, 0},
+      AddressedValue2B{0xCC, 0},
     });
 
-    cpuRpmDetector.DetectProperAtOnce([this](auto& commandsList)
-    {
+    cpuRpmDetector.DetectProperAtOnce([this](auto &commandsList) {
         Throw(commandsList.size() == 2, "Something went wrong. cpuRpmDetector.size() == 2.");
-        //Order above is important here for the check
+        // Order above is important here for the check
         AddressedValueAnyList clone = commandsList;
         readWriteAccess.Read(clone);
         auto toErase = std::prev(commandsList.end());
@@ -226,7 +221,7 @@ AddressedValueAnyList CDevice::GetCmdTempRPM() const
         }
         else
         {
-            //Sample code I took it from checks 1 byte though ... should I (& 0xFF) here ?
+            // Sample code I took it from checks 1 byte though ... should I (& 0xFF) here ?
             const auto c9 = std::get<AddressedValue2B>(clone.at(0)).value;
             if (c9 > 0 && c9 < 50)
             {
@@ -236,53 +231,49 @@ AddressedValueAnyList CDevice::GetCmdTempRPM() const
         commandsList.erase(toErase);
     });
 
-    //CPU_GPU_TEMP_ADDRESS, CPU_GPU_RPM_ADDRESS in python sample code.
-    return
-    {
-        //cpu: temperature, rpm
-        AddressedValue1B{0x68, 0}, cpuRpmDetector,
-        //gpu: temperature, rpm
-        AddressedValue1B{0x80, 0}, AddressedValue2B{0xCA, 0},
+    // CPU_GPU_TEMP_ADDRESS, CPU_GPU_RPM_ADDRESS in python sample code.
+    return {
+      // cpu: temperature, rpm
+      AddressedValue1B{0x68, 0},
+      cpuRpmDetector,
+      // gpu: temperature, rpm
+      AddressedValue1B{0x80, 0},
+      AddressedValue2B{0xCA, 0},
     };
 }
 
 CDevice::BoosterStates CDevice::GetCmdBoosterStates() const
 {
-    //COOLER_BOOSTER_OFF_ON_VALUES in python example code.
+    // COOLER_BOOSTER_OFF_ON_VALUES in python example code.
     static const AddressedBits kBoosterOff{0x98, 0x80, 0};
-    static const AddressedBits kBoosterOn {0x98, 0x80, 0x80};
+    static const AddressedBits kBoosterOn{0x98, 0x80, 0x80};
 
-    static const BoosterStates booster =
-    {
-        //std::map
-        {
-            {BoosterState::OFF, kBoosterOff},
-            {BoosterState::ON, kBoosterOn},
-            {BoosterState::NO_CHANGE, TagIgnore{}},
-        }
-    };
+    static const BoosterStates booster = {// std::map
+                                          {
+                                            {BoosterState::OFF, kBoosterOff},
+                                            {BoosterState::ON, kBoosterOn},
+                                            {BoosterState::NO_CHANGE, TagIgnore{}},
+                                          }};
 
     return booster;
 }
 
 AddressedValue1B CDevice::GetBatteryThreshold() const
 {
-    static ProperCommandDetector addressDetector(
-    {
-        AddressedValue1B{0xEF, 0},
-        AddressedValue1B{0xD7, 0},
+    static ProperCommandDetector addressDetector({
+      AddressedValue1B{0xEF, 0},
+      AddressedValue1B{0xD7, 0},
     });
 
-    //Trying to detect 1 of the addresses.
-    addressDetector.DetectProperAtOnce([this](auto& commandsList)
-    {
+    // Trying to detect 1 of the addresses.
+    addressDetector.DetectProperAtOnce([this](auto &commandsList) {
         Throw(commandsList.size() == 2, "Something went wrong. cpuRpmDetector.size() == 2.");
-        //Order above is important here for the check
+        // Order above is important here for the check
         AddressedValueAnyList clone = commandsList;
         readWriteAccess.Read(clone);
 
-        const auto& vEF = std::get<AddressedValue1B>(clone.at(0)).value;
-        const auto& vD7 = std::get<AddressedValue1B>(clone.at(1)).value;
+        const auto &vEF = std::get<AddressedValue1B>(clone.at(0)).value;
+        const auto &vD7 = std::get<AddressedValue1B>(clone.at(1)).value;
         if (vEF < 0x80 || vEF > 0xE4)
         {
             commandsList.erase(commandsList.begin());
@@ -304,40 +295,39 @@ AddressedValue1B CDevice::GetBatteryThreshold() const
 
 void CpuGpuFanCurve::Validate() const
 {
-    static const auto validateCurve = [](const AddressedValueAnyList& src)
-    {
+    static const auto validateCurve = [](const AddressedValueAnyList &src) {
         if (src.size() < 2)
         {
             throw std::invalid_argument("Curve must contain at least 2 points.");
         }
 
-        (void)std::adjacent_find(src.begin(), src.end(), [](const auto& v1, const auto& v2)
-        {
+        (void)std::adjacent_find(src.begin(), src.end(), [](const auto &v1, const auto &v2) {
             if (!std::holds_alternative<AddressedValue1B>(v1)
-                    || !std::holds_alternative<AddressedValue1B>(v2))
+                || !std::holds_alternative<AddressedValue1B>(v2))
             {
                 throw std::invalid_argument("Curve must contain 1 byte values only!!!");
             }
-            const auto& vb1 = std::get<AddressedValue1B>(v1);
-            const auto& vb2 = std::get<AddressedValue1B>(v2);
+            const auto &vb1 = std::get<AddressedValue1B>(v1);
+            const auto &vb2 = std::get<AddressedValue1B>(v2);
 
             const bool valid = vb1.address < vb2.address && vb1.value <= vb2.value;
             if (!valid)
             {
-                throw std::runtime_error("Invalid fan's curve detected. It must increase or remain the same.");
+                throw std::runtime_error(
+                  "Invalid fan's curve detected. It must increase or remain the same.");
             }
             return false;
         });
     };
-    static const auto validateAddresses = [](const AddressedValueAnyList& src,
-                                             const AddressedValueAllowedAddresses& example)
-    {
-        for (const auto& value : src)
+    static const auto validateAddresses = [](const AddressedValueAnyList &src,
+                                             const AddressedValueAllowedAddresses &example) {
+        for (const auto &value : src)
         {
-            const auto& vb = std::get<AddressedValue1B>(value);
+            const auto &vb = std::get<AddressedValue1B>(value);
             if (example.count(vb.address) == 0)
             {
-                throw std::invalid_argument("CpuGpuFanCurve contains unknown address. Rejected for security reasons.");
+                throw std::invalid_argument(
+                  "CpuGpuFanCurve contains unknown address. Rejected for security reasons.");
             }
         }
     };
@@ -345,7 +335,7 @@ void CpuGpuFanCurve::Validate() const
     validateCurve(cpu);
     validateCurve(gpu);
 
-    //If any other address is present than we generate ourself - raise for security reasons.
+    // If any other address is present than we generate ourself - raise for security reasons.
     static const auto kAddressesChecker = BuildAllowedAdressesFromDefaults();
 
     validateAddresses(cpu, kAddressesChecker.cpu);

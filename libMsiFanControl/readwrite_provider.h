@@ -1,15 +1,15 @@
 #pragma once
 
+#include "cm_ctors.h"
+
 #include <cstdint>
 #include <fstream>
 #include <memory>
 #include <set>
-
-#include "cm_ctors.h"
 //! @brief provides IO access to the system data which should be changed.
 class IReadWriteProvider
 {
-public:
+  public:
     DEFAULT_COPYMOVE(IReadWriteProvider);
     IReadWriteProvider() = default;
     virtual ~IReadWriteProvider() = default;
@@ -27,13 +27,12 @@ using ReadWriteProviderPtr = std::shared_ptr<IReadWriteProvider>;
 //! Provider implementation must restore original system values at those offets.
 class IBackupProvider
 {
-public:
+  public:
     DEFAULT_COPYMOVE(IBackupProvider);
     IBackupProvider() = default;
     virtual ~IBackupProvider() = default;
 
-    virtual void RestoreOffsets(const std::set<std::int64_t>&
-                                offsetsToRestoreFromBackup)const = 0;
+    virtual void RestoreOffsets(const std::set<std::int64_t> &offsetsToRestoreFromBackup) const = 0;
 };
 
 using BackupProviderPtr = std::shared_ptr<IBackupProvider>;
