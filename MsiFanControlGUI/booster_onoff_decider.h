@@ -45,7 +45,7 @@ class BoosterOnOffDecider
     bool IsHotNow()
     {
         // celsium, nvidia gpu max is 93C.
-        static constexpr int kDegreeLimitBoth = 80;
+        static constexpr int kDegreeLimitBoth = 76;
         // if cpu is such hot - boost, even if gpu is off
         static constexpr int kCpuOnlyDegree = 91;
 
