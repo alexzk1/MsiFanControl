@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <utility>
 
-/// This class check contained command by the predicate once.
+/// @brief This class check contained command by the predicate once.
 /// It will return command which had predicate's result "true" always.
 class ProperCommandDetector
 {
@@ -17,7 +17,7 @@ class ProperCommandDetector
     {
     }
 
-    /// Predicated is called for each element, one which returned true will be kept.
+    /// @brief Predicated is called for each element, one which returned true will be kept.
     template <typename taPredicate>
     void DetectProperOneByOne(const taPredicate &predicate)
     {
@@ -41,13 +41,18 @@ class ProperCommandDetector
         validateSingleElement();
     }
 
-    /// Filter should leave 1 element.
+    /// @brief Filter is called once, it should leave only one element.
+    /// @note This method assumes that filter will always leave exactly one element.
+    ///       If there are more or less elements left after filtering,
+    ///       std::logic_error will be thrown.
+    /// @warning Be careful with the filter implementation. It must not leave
+    ///          zero elements, as this would lead to infinite exceptions.
     template <typename taFilter>
     void DetectProperAtOnce(const taFilter &filter)
     {
         if (commandsToChooseFrom.empty())
         {
-            throw std::runtime_error("Detector was called with empty commands list.");
+            throw std::logic_error("Detector was called with empty commands list.");
         }
         if (commandsToChooseFrom.size() > 1)
         {

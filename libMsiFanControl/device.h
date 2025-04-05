@@ -376,6 +376,11 @@ class CDevice
 
     virtual BoosterStates GetCmdBoosterStates() const;
     virtual BehaveStates GetCmdBehaveStates() const = 0;
+
+    /// @brief Tries to detect valid offset to read/write battery command to BIOS. It is different
+    /// on different models.
+    /// @returns Command for r/w. It may be wrong detected which can cause exceptions later
+    /// ("nothing works").
     virtual AddressedValue1B GetBatteryThreshold() const;
 
     void SetBooster(CReadWrite::WriteHandle &handle, const BoosterState what) const;
