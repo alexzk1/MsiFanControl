@@ -13,6 +13,8 @@ template <std::size_t AvrSamplesCount>
 class BoosterOnOffDecider
 {
   public:
+    /// @returns state which should be set since now.
+    /// @param newInfo new state received from the daemon if any.
     BoosterState GetUpdatedState(std::optional<FullInfoBlock> newInfo)
     {
         if (newInfo)

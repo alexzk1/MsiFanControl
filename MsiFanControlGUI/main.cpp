@@ -2,6 +2,9 @@
 #include "mainwindow.h"
 
 #include <boost/program_options.hpp>
+#include <boost/program_options/detail/parsers.hpp>
+#include <boost/program_options/options_description.hpp>
+#include <boost/program_options/variables_map.hpp>
 
 #include <QApplication>
 
@@ -29,7 +32,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    QApplication a(argc, argv);
+    const QApplication a(argc, argv);
     MainWindow w(StartOptions{static_cast<bool>(vm.count("minimize")),
                               static_cast<bool>(vm.count("gamemode"))},
                  nullptr);

@@ -7,7 +7,7 @@
 
 #include <memory>
 
-// This is GUI side communicator
+/// @brief This is GUI side communicator
 namespace boost::interprocess {
 class shared_memory_object;
 class named_mutex;
@@ -30,6 +30,10 @@ struct CleanSharedMemory
     }
 };
 
+/// @brief GUI side of the daemon. It is used to communicate with the daemon and read/write data
+/// from/to it.
+/// @note This class is not thread-safe, but can be used in multiple threads if each thread has its
+/// own instance of this class.
 class CSharedDevice
 {
   public:
