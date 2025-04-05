@@ -23,8 +23,20 @@ class RunningAvr
     /// @returns Avr. value if list has taCounts elements or std::nullopt otherwise.
     std::optional<T> GetCurrent(T newValue)
     {
+        OfferValue(newValue);
+        return GetCurrent();
+    }
+
+    /// @brief Adds value to the list, limiting it by last taCounts elements.
+    void OfferValue(T newValue)
+    {
         lastValues[nextIndex % lastValues.size()] = newValue;
         ++nextIndex;
+    }
+
+    /// @returns Avr. value if list has taCounts elements or std::nullopt otherwise.
+    std::optional<T> GetCurrent() const
+    {
         if (nextIndex >= lastValues.size())
         {
             return Calculate();

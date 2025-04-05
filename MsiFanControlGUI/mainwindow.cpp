@@ -220,7 +220,8 @@ void MainWindow::LaunchGameMode()
                 const std::lock_guard grd(lastReadInfoForGameModeThreadMutex);
                 std::swap(optInfo, lastReadInfoForGameModeThread);
             }
-            const auto state = decider.GetUpdatedState(std::move(optInfo));
+            decider.UpdateState(optInfo);
+            const auto state = decider.GetUpdatedBoosterState();
             if (state != BoosterState::NO_CHANGE)
             {
                 UpdateRequestToDaemon([&state](RequestFromUi &r) {

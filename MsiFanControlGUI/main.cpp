@@ -1,7 +1,7 @@
 #include "execonmainthread.h"
 #include "mainwindow.h"
 
-#include <boost/program_options.hpp>
+#include <boost/program_options.hpp> // IWYU pragma: keep
 #include <boost/program_options/detail/parsers.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/variables_map.hpp>
