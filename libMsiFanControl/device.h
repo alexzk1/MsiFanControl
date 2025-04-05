@@ -21,11 +21,14 @@
 //  https://github.com/dmitry-s93/MControlCenter/blob/main/src/operate.cpp
 // https://github.com/BeardOverflow/msi-ec/blob/main/msi-ec.c#L2613
 
+/// @brief Current state of fan's boost, value is passed/read to/from system fs.
 enum class BoosterState : std::uint8_t {
     ON,
     OFF,
     NO_CHANGE
 };
+
+/// @brief Behave state of the driver/BIOS. This value is passed/read to/from system fs.
 enum class BehaveState : std::uint8_t {
     AUTO,
     ADVANCED,
@@ -35,6 +38,7 @@ enum class BehaveState : std::uint8_t {
 using namespace std::chrono_literals;
 constexpr inline auto kMinimumServiceDelay = 500ms;
 
+///@brief Contains temperature and RPM of the CPU or GPU.
 struct Info
 {
     // NOLINTNEXTLINE
@@ -82,6 +86,7 @@ struct Info
 };
 CEREAL_CLASS_VERSION(Info, 1)
 
+/// @brief Contains both CPU and GPU struct Info.
 struct CpuGpuInfo
 {
     Info cpu;
@@ -96,7 +101,9 @@ struct CpuGpuInfo
 };
 CEREAL_CLASS_VERSION(CpuGpuInfo, 1)
 
-// Lists must contain 1 byte values only.
+/// @brief Fan's curves for CPU/GPU.
+/// @note TODO: Real use of it is not implemented in GUI, and not tested in daemon.
+/// @note Lists must contain 1 byte values only.
 struct CpuGpuFanCurve
 {
     // NOLINTNEXTLINE
@@ -117,14 +124,15 @@ struct CpuGpuFanCurve
         return !(*this == another);
     }
 
+    /// Make default fan curve. Address depends on device, and in 99% it will remain the same.
+    /// Curve itself, looks like we have 7 speed steps, each step (index into vector)
+    /// is activated at given temperature.
+    ///
+    /// Daemon uses those as example to check incoming addresses from the GUI.
+    /// @note Only mentioned here are allowed for security reasons. If any other address will be
+    /// given, except those, it will be ignored by the daemon.
     static CpuGpuFanCurve MakeDefault()
     {
-        // Make default fan curve. Address depends on device, and in 99% it will remain the same.
-        // Curve itself, looks like we have 7 speed steps, each step (index into vector)
-        // is activated at given temperature.
-
-        // Daemon uses those as example to check incoming addresses from the GUI.
-        // Only mentioned here are allowed for security reasons.
 
         static const AddressedValueAnyList cpuCurve = {
           AddressedValue1B{0x72, 0},  AddressedValue1B{0x73, 40}, AddressedValue1B{0x74, 48},
@@ -196,16 +204,28 @@ struct BehaveWithCurve
 };
 CEREAL_CLASS_VERSION(BehaveWithCurve, 1)
 
+/// @brief Defines possibly baterry behaves.
 enum class BatteryLevels : std::uint8_t {
     BestForBattery,
     Balanced,
     BestForMobility,
     NotKnown
 };
+
+/// @brief Battery behave and addressed command for the BIOS.
+/// @note @var _debugRead is updated by the daemon, it is either read from BIOS and updates @var
+/// maxLevel, or depend on @var maxLevel proper value is composed and sent to BIOS.
 struct Battery
 {
-    BatteryLevels maxLevel;
-    AddressedValue1B _debugRead;
+    BatteryLevels maxLevel{BatteryLevels::NotKnown};
+
+    Battery() = default;
+    DEFAULT_COPYMOVE(Battery);
+    ~Battery() = default;
+    explicit Battery(BatteryLevels level) :
+        maxLevel(level)
+    {
+    }
 
     // support for Cereal
     template <class Archive>
@@ -213,10 +233,34 @@ struct Battery
     {
         ar(maxLevel, _debugRead);
     }
+
+  private:
+    friend class CDevice;
+
+    explicit Battery(AddressedValue1B value) :
+        _debugRead(value)
+    {
+        if (_debugRead.value >= 0x80 && _debugRead.value <= 0xE4)
+        {
+            if (_debugRead.value == 0x80 + 60)
+            {
+                maxLevel = BatteryLevels::BestForBattery;
+            }
+            if (_debugRead.value == 0x80 + 80)
+            {
+                maxLevel = BatteryLevels::Balanced;
+            }
+            if (_debugRead.value > 0x80 + 80)
+            {
+                maxLevel = BatteryLevels::BestForMobility;
+            }
+        }
+    }
+    AddressedValue1B _debugRead{};
 };
 CEREAL_CLASS_VERSION(Battery, 1)
 
-//! @brief this is combined information from daemon to UI.
+//! @brief this is combined information passed from daemon to UI.
 struct FullInfoBlock
 {
     static inline constexpr std::size_t signature = 0xABBACDDCDEFEEF01u;
@@ -258,12 +302,14 @@ struct FullInfoBlock
 };
 CEREAL_CLASS_VERSION(FullInfoBlock, 2)
 
+/// @brief Request sent by GUI to daemon. It can be ping, action to execute, etc.
 struct RequestFromUi
 {
-    // PING_DAEMON - daemon just updates tag field, other data are last read values.
-    // READ_FRESH_DATA - daemon does actual read of the data like current temperatures and updates
-    // last read data. WRITE_DATA - daemon writes data present in this request and updates last read
-    // data by following reading.
+    /// PING_DAEMON - daemon just updates tag field, other data are last read values.
+    /// READ_FRESH_DATA - daemon does actual read of the data like current temperatures and updates
+    /// last read data.
+    /// WRITE_DATA - daemon writes data present in this request and updates last
+    /// read data by following reading.
     enum class RequestType : std::uint8_t {
         PING_DAEMON,
         READ_FRESH_DATA,
@@ -286,6 +332,9 @@ struct RequestFromUi
         }
     }
 
+    /// @returns true if this request from GUI to daemon contains some action requested by user (or
+    /// "smart" algorithm) to execute by daemon.
+    /// @note TODO: currently we support only simpliest things, like switch boost speed of the fans.
     bool HasUserAction() const
     {
         return boosterState != BoosterState::NO_CHANGE
@@ -294,6 +343,7 @@ struct RequestFromUi
 };
 CEREAL_CLASS_VERSION(RequestFromUi, 2)
 
+/// @brief This represents physical device we're on. Like whole laptop, with fans, CPU, GPU etc.
 class CDevice
 {
   public:

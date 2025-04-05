@@ -145,26 +145,9 @@ void CDevice::SetBehaveState(const BehaveWithCurve &behaveWithCurve) const
 
 Battery CDevice::ReadBattery() const
 {
-    auto cmd = GetBatteryThreshold();
+    AddressedValue1B cmd = GetBatteryThreshold();
     readWriteAccess.ReadOne(cmd);
-    Battery result{BatteryLevels::NotKnown, cmd};
-
-    if (cmd.value >= 0x80 && cmd.value <= 0xE4)
-    {
-        if (cmd.value == 0x80 + 60)
-        {
-            result.maxLevel = BatteryLevels::BestForBattery;
-        }
-        if (cmd.value == 0x80 + 80)
-        {
-            result.maxLevel = BatteryLevels::Balanced;
-        }
-        if (cmd.value > 0x80 + 80)
-        {
-            result.maxLevel = BatteryLevels::BestForMobility;
-        }
-    }
-    return result;
+    return Battery{cmd};
 }
 /*
     if (streq(buf, "max"))

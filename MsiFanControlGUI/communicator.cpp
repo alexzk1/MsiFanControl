@@ -68,7 +68,7 @@ bool CSharedDevice::SetBooster(BoosterState newState)
 bool CSharedDevice::SetBattery(Battery newState)
 {
     RequestFromUi writeBooster{RequestFromUi::RequestType::WRITE_DATA};
-    writeBooster.battery = newState;
+    writeBooster.battery = std::move(newState);
     SendRequest(writeBooster);
     return UpdateInfoFromDaemon();
 }
