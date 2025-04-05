@@ -1,5 +1,4 @@
-#ifndef EXECONMAINTHREAD_H
-#define EXECONMAINTHREAD_H
+#pragma once
 
 #include <QObject>
 
@@ -9,6 +8,8 @@
 
 using SimpleVoidFunction = std::function<void()>;
 
+/// @brief Execs callable on main (GUI) thread. This should be used if thread needs to call Qt/gui's
+/// methods.
 class ExecOnMainThread : public QObject
 {
     Q_OBJECT
@@ -22,5 +23,3 @@ class ExecOnMainThread : public QObject
   private slots:
     void doExex(const SimpleVoidFunction &lambda);
 };
-
-#endif // EXECONMAINTHREAD_H

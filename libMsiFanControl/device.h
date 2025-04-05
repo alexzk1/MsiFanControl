@@ -35,6 +35,8 @@ enum class BehaveState : std::uint8_t {
     NO_CHANGE
 };
 
+/// @brief At least delay between 2 sequental communications sessions of the daemon / GUI (it is
+/// poll-time of the daemon).
 using namespace std::chrono_literals;
 constexpr inline auto kMinimumServiceDelay = 500ms;
 

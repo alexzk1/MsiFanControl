@@ -8,7 +8,7 @@
 #include <memory>
 #include <set>
 
-// This is daemon side communicator.
+/// @brief This is daemon side communicator.
 
 namespace boost::interprocess {
 class shared_memory_object;
@@ -18,6 +18,8 @@ class mapped_region;
 
 class CDevice;
 
+/// @brief Main daemon's logic.
+/// Also it keeps backup of BIOS' "file", so any changes can be reverted out of backup.
 class CSharedDevice
 {
   public:
@@ -25,9 +27,11 @@ class CSharedDevice
     NO_COPYMOVE(CSharedDevice);
     ~CSharedDevice();
 
+    /// @brief Do 1 step if I/O communication with GUI. Process it's orders, make proper responses.
     void Communicate();
 
   private:
+    /// @brief This object removes shared memory block when created and destroyed.
     struct CleanSharedMemory
     {
         NO_COPYMOVE(CleanSharedMemory);

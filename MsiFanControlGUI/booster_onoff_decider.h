@@ -8,6 +8,7 @@
 #include <type_traits>
 #include <utility>
 
+/// @brief This is "smart logic" to decide if we should switch fan's booster.
 template <std::size_t AvrSamplesCount>
 class BoosterOnOffDecider
 {

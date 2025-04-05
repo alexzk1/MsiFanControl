@@ -19,6 +19,9 @@
 #include <variant>
 #include <vector>
 
+/// @brief This is read-write abstraction which accepts AddressedValueAnyList as commands and
+/// operates on "file" provided by ReadWriteProvider.
+///
 class CReadWrite
 {
   public:

@@ -7,12 +7,14 @@
 #include <cstddef>
 #include <streambuf>
 
+/// @returns Shared memory name to be used by GUI/daemon for the communication.
 inline const char *GetMemoryName()
 {
     static const char *const ptr = "MSICoolersSharedControlMem9";
     return ptr;
 }
 
+/// @brief streambuffer bound to the custom memory block.
 struct MemBuf : std::streambuf
 {
     MemBuf(char *base, std::size_t size)
@@ -32,6 +34,7 @@ struct MemBuf : std::streambuf
 
 inline constexpr std::size_t kWholeSharedMemSize = 4096;
 
+/// @brief Communication interface, usable by daemon & gui both.
 class SharedMemoryWithMutex
 {
   public:
@@ -111,6 +114,7 @@ class SharedMemoryWithMutex
     std::size_t offset;
 };
 
+/// @brief Access to the shared memory as regular pointer.
 class SharedMemory
 {
   public:

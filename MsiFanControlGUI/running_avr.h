@@ -7,7 +7,8 @@
 #include <optional>
 #include <type_traits>
 
-template <typename T, std::size_t Counts>
+/// @brief Running avr value of the multiply values. It keeps last taCounts values.
+template <typename T, std::size_t taCounts>
 class RunningAvr
 {
   public:
@@ -18,6 +19,8 @@ class RunningAvr
         std::fill(lastValues.begin(), lastValues.end(), static_cast<T>(0));
     }
 
+    /// @brief Adds value to the list, limiting it by last taCounts elements.
+    /// @returns Avr. value if list has taCounts elements or std::nullopt otherwise.
     std::optional<T> GetCurrent(T newValue)
     {
         lastValues[nextIndex % lastValues.size()] = newValue;
@@ -30,7 +33,7 @@ class RunningAvr
     }
 
   private:
-    std::array<T, Counts> lastValues;
+    std::array<T, taCounts> lastValues;
     std::size_t nextIndex{0};
 
     T Calculate() const

@@ -4,6 +4,8 @@
 #include "device.h"
 #include "readwrite.h"
 
+/// @brief It is used when laptop based on Gen10 is detected.
+/// Different laptops may have different offsets in the BIOS "file" for the commands.
 class CIntelGen10 : public CDevice
 {
   public:

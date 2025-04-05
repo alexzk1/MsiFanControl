@@ -6,6 +6,7 @@
 #include <memory>
 
 //! @note It requires acpi/irq working to access BIOS.
+//! @brief Creates CReadWrite abstraction to work on sysfs OR /tmp/ file (dry-run).
 class CSysFsProvider
 {
   public:

@@ -6,6 +6,9 @@
 
 #include <tuple>
 
+/// @brief Blocks signals for the given QObject pointers until the guard is destroyed.
+/// @param args A list of QObject pointers. The signals for these objects will be blocked.
+/// @return A RAII object that unblocks the signals when it goes out of scope.
 template <typename... Ptrs>
 auto BlockGuard(Ptrs... args)
 {
