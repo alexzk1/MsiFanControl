@@ -73,6 +73,14 @@ bool CSharedDevice::SetBattery(Battery newState)
     return UpdateInfoFromDaemon();
 }
 
+bool CSharedDevice::SetCpuBooster(CpuTurboBoostState newState)
+{
+    RequestFromUi writeBooster{RequestFromUi::RequestType::WRITE_DATA};
+    writeBooster.cpuTurboBoost = newState;
+    SendRequest(writeBooster);
+    return UpdateInfoFromDaemon();
+}
+
 bool CSharedDevice::RefreshData()
 {
     static const RequestFromUi readRequest{RequestFromUi::RequestType::READ_FRESH_DATA};

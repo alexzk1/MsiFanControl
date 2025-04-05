@@ -279,9 +279,9 @@ struct FullInfoBlock
     CpuGpuInfo info;
     BoosterState boosterState;
     BehaveWithCurve behaveAndCurve;
-    Battery battery;
-
     std::string daemonDeviceException;
+    Battery battery;
+    CpuTurboBoostState cpuTurboBoost;
 
     // support for Cereal
     template <class Archive>
@@ -291,6 +291,10 @@ struct FullInfoBlock
         if (version > 1)
         {
             ar(battery);
+        }
+        if (version > 2)
+        {
+            ar(cpuTurboBoost);
         }
     }
 
@@ -303,13 +307,17 @@ struct FullInfoBlock
         {
             ar(battery);
         }
+        if (version > 2)
+        {
+            ar(cpuTurboBoost);
+        }
         if (signatureRead != signature)
         {
             throw std::runtime_error("Wrong signature detected on reading FullInfoBlock.");
         }
     }
 };
-CEREAL_CLASS_VERSION(FullInfoBlock, 2)
+CEREAL_CLASS_VERSION(FullInfoBlock, 3)
 
 /// @brief Request sent by GUI to daemon. It can be ping, action to execute, etc.
 struct RequestFromUi
@@ -327,6 +335,7 @@ struct RequestFromUi
 
     RequestType request;
     BoosterState boosterState{BoosterState::NO_CHANGE};
+    CpuTurboBoostState cpuTurboBoost{CpuTurboBoostState::NO_CHANGE};
     BehaveWithCurve behaveAndCurve{};
     Battery battery{BatteryLevels::NotKnown};
 
@@ -339,6 +348,10 @@ struct RequestFromUi
         {
             ar(battery);
         }
+        if (version > 2)
+        {
+            ar(cpuTurboBoost);
+        }
     }
 
     /// @returns true if this request from GUI to daemon contains some action requested by user (or
@@ -347,10 +360,11 @@ struct RequestFromUi
     bool HasUserAction() const
     {
         return boosterState != BoosterState::NO_CHANGE
-               || battery.maxLevel != BatteryLevels::NotKnown;
+               || battery.maxLevel != BatteryLevels::NotKnown
+               || cpuTurboBoost != CpuTurboBoostState::NO_CHANGE;
     }
 };
-CEREAL_CLASS_VERSION(RequestFromUi, 2)
+CEREAL_CLASS_VERSION(RequestFromUi, 3)
 
 /// @brief This represents physical device we're on. Like whole laptop, with fans, CPU, GPU etc.
 class CDevice
@@ -372,6 +386,9 @@ class CDevice
 
     Battery ReadBattery() const;
     void SetBattery(const Battery &battery) const;
+
+    CpuTurboBoostState ReadCpuTurboBoostState() const;
+    void SetCpuTurboBoost(const CpuTurboBoostState what) const;
 
     FullInfoBlock ReadFullInformation(std::size_t aTag) const;
 

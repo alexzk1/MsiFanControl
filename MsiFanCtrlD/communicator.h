@@ -51,7 +51,7 @@ class CSharedDevice
             shared_memory_object::remove(GetMemoryName());
         }
     };
-    friend struct BackupExecutorImpl;
+    friend class BackupExecutorImpl;
     void RestoreOffsets(const std::set<int64_t> &offsetsToRestoreFromBackup) const;
     bool MakeBackupBlock();
 

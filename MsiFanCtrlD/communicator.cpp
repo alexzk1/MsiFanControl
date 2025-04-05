@@ -1,28 +1,26 @@
 
-#include "communicator.h"
+#include "communicator.h" // IWYU pragma: keep
 
-#include "cm_ctors.h"
+#include "cm_ctors.h" // IWYU pragma: keep
 #include "communicator_common.h"
-#include "csysfsprovider.h"
+#include "csysfsprovider.h" // IWYU pragma: keep
 #include "device.h"
 #include "msi_fan_control.h"
-#include "readwrite_provider.h"
+#include "readwrite_provider.h" // IWYU pragma: keep
 
-#include <boost/interprocess/creation_tags.hpp>
-#include <boost/interprocess/detail/os_file_functions.hpp>
-#include <boost/interprocess/permissions.hpp>
-#include <boost/interprocess/sync/interprocess_mutex.hpp>
-#include <boost/interprocess/sync/scoped_lock.hpp>
+#include <boost/interprocess/creation_tags.hpp>            // IWYU pragma: keep
+#include <boost/interprocess/detail/os_file_functions.hpp> // IWYU pragma: keep
+#include <boost/interprocess/permissions.hpp>              // IWYU pragma: keep
+#include <boost/interprocess/sync/interprocess_mutex.hpp>  // IWYU pragma: keep
+#include <boost/interprocess/sync/scoped_lock.hpp>         // IWYU pragma: keep
 
 #include <cereal/archives/binary.hpp>
-#include <cereal/types/array.hpp>
-#include <cereal/types/map.hpp>
-#include <cereal/types/string.hpp>
-#include <cereal/types/variant.hpp>
-#include <cereal/types/vector.hpp>
+#include <cereal/types/array.hpp>   // IWYU pragma: keep
+#include <cereal/types/map.hpp>     // IWYU pragma: keep
+#include <cereal/types/string.hpp>  // IWYU pragma: keep
+#include <cereal/types/variant.hpp> // IWYU pragma: keep
+#include <cereal/types/vector.hpp>  // IWYU pragma: keep
 
-#include <atomic>
-#include <cstddef>
 #include <cstdint>
 #include <exception>
 #include <filesystem>
@@ -30,6 +28,7 @@
 #include <ios>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <set>
 #include <string>
@@ -41,8 +40,55 @@ namespace {
 // Ok, idea is, on 1st half of the memory we will put cereal serialized current state like
 // temperature / rpm. From the 2nd half we will read contol if any.
 
+/// @brief Does backup of 1 liner files (should be used on sysfs).
+class BackupOneLiner
+{
+  public:
+    explicit BackupOneLiner(std::filesystem::path aFile) :
+        file(std::move(aFile))
+    {
+        try
+        {
+            std::ifstream inp(file);
+            std::string tmp;
+            inp >> tmp;
+            old_value = std::move(tmp);
+        }
+        catch (std::exception &ex)
+        {
+            std::cerr << "Failed to backup file: " << file << ". Reason: " << ex.what() << std::endl
+                      << std::flush;
+            old_value = std::nullopt;
+        }
+    }
+    BackupOneLiner() = delete;
+    NO_COPYMOVE(BackupOneLiner);
+
+    ~BackupOneLiner()
+    {
+        try
+        {
+            if (old_value)
+            {
+                std::ofstream out(file, std::ios_base::trunc);
+                out << *old_value;
+            }
+        }
+        catch (std::exception &ex)
+        {
+            std::cerr << "Failed to restore file: " << file << ". Reason: " << ex.what()
+                      << std::endl
+                      << std::flush;
+        }
+    }
+
+  private:
+    std::optional<std::string> old_value;
+    std::filesystem::path file;
+};
+
 // Kernel does not allow to set 0x666 on shared memory.
-struct RelaxKernel
+struct RelaxKernel : public BackupOneLiner
 {
     // NOLINTNEXTLINE
     std::filesystem::path file;
@@ -51,43 +97,25 @@ struct RelaxKernel
 
     NO_COPYMOVE(RelaxKernel);
     explicit RelaxKernel(std::filesystem::path aFile) :
-        file(std::move(aFile))
+        BackupOneLiner(std::move(aFile))
     {
         try
         {
-            {
-                std::ifstream inp(file);
-                inp >> old_value;
-            }
-            std::ofstream out(file, std::ios_base::trunc);
-            out << "0";
+            WriteFsBool(file, false);
         }
         catch (std::exception &ex)
         {
-            std::cout << "Failed to relax kernel. GUI may not connect: " << ex.what() << std::endl
+            std::cerr << "Failed to relax kernel. GUI may not connect: " << ex.what() << std::endl
                       << std::flush;
         }
     }
 
     RelaxKernel() :
-        RelaxKernel("/proc/sys/fs/protected_regular")
+        RelaxKernel({"/proc/sys/fs/protected_regular"})
     {
     }
 
-    ~RelaxKernel()
-    {
-        try
-        {
-            std::ofstream out(file, std::ios_base::trunc);
-            out << old_value;
-        }
-        catch (std::exception &ex)
-        {
-            std::cout << "Failed restore security on files. Reboot to restore: " << ex.what()
-                      << std::endl
-                      << std::flush;
-        }
-    }
+    ~RelaxKernel() = default;
 };
 
 constexpr bool kDryRun = false;
@@ -96,11 +124,9 @@ static_assert(kWholeSharedMemSize % 2 == 0, "Wrong size.");
 } // namespace
 
 // Making this separated class because we need to pass shared_ptr.
-struct BackupExecutorImpl final : public IBackupProvider
+class BackupExecutorImpl final : public IBackupProvider
 {
-    // NOLINTNEXTLINE
-    CSharedDevice *owner{nullptr};
-
+  public:
     ~BackupExecutorImpl() override = default;
     BackupExecutorImpl() = delete;
     NO_COPYMOVE(BackupExecutorImpl);
@@ -116,6 +142,11 @@ struct BackupExecutorImpl final : public IBackupProvider
             owner->RestoreOffsets(offsetsToRestoreFromBackup);
         }
     }
+
+  private:
+    // NOLINTNEXTLINE
+    CSharedDevice *owner{nullptr};
+    const BackupOneLiner backupTurboBoost{kIntelPStateNoTurbo};
 };
 
 CSharedDevice::CSharedDevice() :
@@ -206,6 +237,7 @@ void CSharedDevice::Communicate()
             // Write data sent by UI.
             device->SetBooster(fromUI.boosterState);
             device->SetBattery(fromUI.battery);
+            device->SetCpuTurboBoost(fromUI.cpuTurboBoost);
         }
 
         // Read fresh data from BIOS

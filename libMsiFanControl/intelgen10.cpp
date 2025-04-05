@@ -1,6 +1,6 @@
 #include "intelgen10.h"
 
-#include "device.h"
+#include "device.h" // IWYU pragma: keep
 #include "device_commands.h"
 #include "readwrite.h"
 

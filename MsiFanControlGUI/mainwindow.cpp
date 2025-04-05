@@ -1,10 +1,10 @@
-#include "mainwindow.h"
+#include "mainwindow.h" // IWYU pragma: keep
 
-#include "booster_onoff_decider.h"
-#include "communicator.h"
-#include "device.h"
-#include "execonmainthread.h"
-#include "gui_helpers.h"
+#include "booster_onoff_decider.h" // IWYU pragma: keep
+#include "communicator.h"          // IWYU pragma: keep
+#include "device.h"                // IWYU pragma: keep
+#include "execonmainthread.h"      // IWYU pragma: keep
+#include "gui_helpers.h"           // IWYU pragma: keep
 #include "qcheckbox.h"
 #include "qnamespace.h"
 #include "qradiobutton.h"
@@ -12,7 +12,7 @@
 #include "reads_period_detector.h"
 #include "runners.h"
 
-#include "ui_mainwindow.h"
+#include "ui_mainwindow.h" // IWYU pragma: keep
 
 #include <QAction>
 #include <QCloseEvent>
@@ -67,7 +67,7 @@ MainWindow::MainWindow(StartOptions options, QWidget *parent) :
                   << std::endl;
     }
 
-    connect(batButtons, QOverload<QAbstractButton *, bool>::of(&QButtonGroup::buttonToggled),
+    connect(batButtons, QOverload<QAbstractButton *, bool>::of(&QButtonGroup::buttonToggled), this,
             [this](QAbstractButton *button, bool checked) {
                 BlockReadSetters();
                 UpdateRequestToDaemon([&](RequestFromUi &r) {
@@ -118,6 +118,9 @@ MainWindow::MainWindow(StartOptions options, QWidget *parent) :
         else
         {
             gameModeThread.reset();
+            UpdateRequestToDaemon([&](RequestFromUi &r) {
+                r.cpuTurboBoost = CpuTurboBoostState::ON;
+            });
         }
 
         // sync checkbox to the action
@@ -202,6 +205,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
     }
 }
 
+/// @brief Starts "game mode" thread. At this mode "smart" algorithm decides when to switch on/off
+/// different boosters. All user controls of the boosters are disabled.
 void MainWindow::LaunchGameMode()
 {
     using namespace std::chrono_literals;
@@ -221,11 +226,11 @@ void MainWindow::LaunchGameMode()
                 std::swap(optInfo, lastReadInfoForGameModeThread);
             }
             decider.UpdateState(optInfo);
-            const auto state = decider.GetUpdatedBoosterState();
-            if (state != BoosterState::NO_CHANGE)
+            const auto state = decider.GetUpdatedBoosterStates();
+            if (state.HasAnyChange())
             {
                 UpdateRequestToDaemon([&state](RequestFromUi &r) {
-                    r.boosterState = state;
+                    state.UpdateRequest(r);
                 });
             }
             std::this_thread::sleep_for(kMinimumServiceDelay + 500ms);
@@ -233,6 +238,7 @@ void MainWindow::LaunchGameMode()
     });
 }
 
+/// @brief Creates communicator thread.
 void MainWindow::CreateCommunicator()
 {
     communicator = utility::startNewRunner([this](const auto &shouldStop) mutable {
@@ -276,6 +282,7 @@ void MainWindow::CreateCommunicator()
                     {
                         pingOk = comm.SetBooster(request->boosterState);
                         pingOk = comm.SetBattery(request->battery) || pingOk;
+                        pingOk = comm.SetCpuBooster(request->cpuTurboBoost) || pingOk;
                     }
                 }
 

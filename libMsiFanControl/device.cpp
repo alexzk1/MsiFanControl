@@ -1,12 +1,14 @@
 #include "device.h"
 
 #include "command_detector.h"
+#include "csysfsprovider.h"
 #include "device_commands.h"
 #include "readwrite.h"
 
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <filesystem>
 #include <iosfwd>
 #include <iterator>
 #include <map>
@@ -178,9 +180,33 @@ void CDevice::SetBattery(const Battery &battery) const
     }
 }
 
+CpuTurboBoostState CDevice::ReadCpuTurboBoostState() const
+{
+    const bool isTurboEnabled = !ReadFsBool(kIntelPStateNoTurbo);
+    return isTurboEnabled ? CpuTurboBoostState::ON : CpuTurboBoostState::OFF;
+}
+
+void CDevice::SetCpuTurboBoost(const CpuTurboBoostState what) const
+{
+    bool valueToWrite = false;
+    switch (what)
+    {
+        case CpuTurboBoostState::OFF:
+            valueToWrite = true;
+            break;
+        case CpuTurboBoostState::ON:
+            valueToWrite = false;
+            break;
+        case CpuTurboBoostState::NO_CHANGE:
+            return;
+    }
+    WriteFsBool(kIntelPStateNoTurbo, valueToWrite);
+}
+
 FullInfoBlock CDevice::ReadFullInformation(std::size_t aTag) const
 {
-    return {aTag, ReadInfo(), ReadBoosterState(), ReadBehaveState(), ReadBattery(), {}};
+    return {aTag,          ReadInfo(),    ReadBoosterState(),      ReadBehaveState(),
+            std::string{}, ReadBattery(), ReadCpuTurboBoostState()};
 }
 
 AddressedValueAnyList CDevice::GetCmdTempRPM() const

@@ -1,6 +1,6 @@
 #include "msi_fan_control.h"
 
-#include "csysfsprovider.h"
+#include "csysfsprovider.h" // IWYU pragma: keep
 #include "intelbeforegen10.h"
 #include "intelgen10.h"
 #include "readwrite_provider.h"
@@ -13,7 +13,7 @@
 #include <string>
 #include <utility>
 
-DevicePtr CreateDeviceController(BackupProviderPtr backuPovider, bool dryRun)
+DevicePtr CreateDeviceController(BackupProviderPtr backupProvider, bool dryRun)
 {
     if (!cpuid_present())
     {
@@ -51,7 +51,7 @@ DevicePtr CreateDeviceController(BackupProviderPtr backuPovider, bool dryRun)
         if (gen > 9)
         {
             return std::make_shared<CIntelGen10>(
-              CSysFsProvider::CreateIoObject(std::move(backuPovider), dryRun));
+              CSysFsProvider::CreateIoObject(std::move(backupProvider), dryRun));
         }
     }
     else
@@ -60,5 +60,5 @@ DevicePtr CreateDeviceController(BackupProviderPtr backuPovider, bool dryRun)
     }
 
     return std::make_shared<CIntelBeforeGen10>(
-      CSysFsProvider::CreateIoObject(std::move(backuPovider), dryRun));
+      CSysFsProvider::CreateIoObject(std::move(backupProvider), dryRun));
 }

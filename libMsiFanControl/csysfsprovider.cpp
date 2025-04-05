@@ -1,4 +1,4 @@
-#include "csysfsprovider.h"
+#include "csysfsprovider.h" // IWYU pragma: keep
 
 #include "readwrite.h"
 #include "readwrite_provider.h"
@@ -10,6 +10,8 @@
 #include <ios>
 #include <iostream>
 #include <memory>
+#include <stdexcept>
+#include <string>
 #include <utility>
 
 // NOLINTNEXTLINE
@@ -58,7 +60,21 @@ std::shared_ptr<IReadWriteProvider> CSysFsProvider::CreateIoDirect(bool dryRun)
                                                           : "/sys/kernel/debug/ec/ec0/io");
 }
 
-CReadWrite CSysFsProvider::CreateIoObject(BackupProviderPtr backuPovider, bool dryRun)
+CReadWrite CSysFsProvider::CreateIoObject(BackupProviderPtr backupProvider, bool dryRun)
 {
-    return {CreateIoDirect(dryRun), std::move(backuPovider)};
+    return {CreateIoDirect(dryRun), std::move(backupProvider)};
+}
+
+bool ReadFsBool(const std::filesystem::path &file)
+{
+    std::ifstream ifs(file);
+    std::string line;
+    ifs >> line;
+    return line != "0";
+}
+
+void WriteFsBool(const std::filesystem::path &file, bool value)
+{
+    std::ofstream ofs(file, std::ios_base::trunc);
+    ofs << (value ? "1" : "0");
 }
