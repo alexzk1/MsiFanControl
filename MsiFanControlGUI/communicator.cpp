@@ -57,10 +57,10 @@ bool CSharedDevice::PingDaemon()
     return UpdateInfoFromDaemon();
 }
 
-bool CSharedDevice::SetBooster(BoosterState newState)
+bool CSharedDevice::SetBoosters(BoostersStates newState)
 {
-    const RequestFromUi writeBooster{RequestFromUi::RequestType::WRITE_DATA, newState};
-
+    RequestFromUi writeBooster{RequestFromUi::RequestType::WRITE_DATA};
+    writeBooster.boostersStates = newState;
     SendRequest(writeBooster);
     return UpdateInfoFromDaemon();
 }
@@ -68,15 +68,7 @@ bool CSharedDevice::SetBooster(BoosterState newState)
 bool CSharedDevice::SetBattery(Battery newState)
 {
     RequestFromUi writeBooster{RequestFromUi::RequestType::WRITE_DATA};
-    writeBooster.battery = std::move(newState);
-    SendRequest(writeBooster);
-    return UpdateInfoFromDaemon();
-}
-
-bool CSharedDevice::SetCpuBooster(CpuTurboBoostState newState)
-{
-    RequestFromUi writeBooster{RequestFromUi::RequestType::WRITE_DATA};
-    writeBooster.cpuTurboBoost = newState;
+    writeBooster.battery = newState;
     SendRequest(writeBooster);
     return UpdateInfoFromDaemon();
 }

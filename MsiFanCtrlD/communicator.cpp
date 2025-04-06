@@ -235,9 +235,8 @@ void CSharedDevice::Communicate()
         if (fromUI.request == RequestFromUi::RequestType::WRITE_DATA)
         {
             // Write data sent by UI.
-            device->SetBooster(fromUI.boosterState);
+            device->SetBoosters(fromUI.boostersStates);
             device->SetBattery(fromUI.battery);
-            device->SetCpuTurboBoost(fromUI.cpuTurboBoost);
         }
 
         // Read fresh data from BIOS

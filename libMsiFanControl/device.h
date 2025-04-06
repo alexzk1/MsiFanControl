@@ -269,6 +269,50 @@ struct Battery
 };
 CEREAL_CLASS_VERSION(Battery, 1)
 
+struct RequestFromUi;
+struct FullInfoBlock;
+
+/// @brief Different boosters' states bound together. This result of what should be send to the
+/// daemon.
+struct BoostersStates
+{
+    BoosterState fanBoosterState{BoosterState::NO_CHANGE};
+    CpuTurboBoostState cpuTurboBoostState{CpuTurboBoostState::NO_CHANGE};
+
+    BoostersStates() = default;
+    ~BoostersStates() = default;
+    DEFAULT_COPYMOVE(BoostersStates);
+
+    bool operator==(const BoostersStates &other) const noexcept
+    {
+        const auto tie = [](const auto &v) {
+            return std::tie(v.fanBoosterState, v.cpuTurboBoostState);
+        };
+        return tie(*this) == tie(other);
+    }
+
+    bool operator!=(const BoostersStates &other) const noexcept
+    {
+        return !(*this == other);
+    }
+
+    /// @returns true if this object should be sent to daemon.
+    [[nodiscard]]
+    bool HasAnyChange() const noexcept
+    {
+        static const BoostersStates kDefault{};
+        return *this != kDefault;
+    }
+
+    // support for Cereal
+    template <class Archive>
+    void serialize(Archive &ar, const std::uint32_t /*version*/)
+    {
+        ar(fanBoosterState, cpuTurboBoostState);
+    }
+};
+CEREAL_CLASS_VERSION(BoostersStates, 3)
+
 //! @brief this is combined information passed from daemon to UI.
 struct FullInfoBlock
 {
@@ -277,47 +321,42 @@ struct FullInfoBlock
     // tag is strictly incremented by daemon, used by GUI to detect disconnect or so.
     std::size_t tag{0};
     CpuGpuInfo info;
-    BoosterState boosterState;
+    BoostersStates boostersStates;
     BehaveWithCurve behaveAndCurve;
     std::string daemonDeviceException;
     Battery battery;
-    CpuTurboBoostState cpuTurboBoost;
 
     // support for Cereal
     template <class Archive>
     void save(Archive &ar, const std::uint32_t version) const
     {
-        ar(signature, tag, info, boosterState, behaveAndCurve, daemonDeviceException);
-        if (version > 1)
+        if (version < 4)
         {
-            ar(battery);
+            throw std::runtime_error("Recompile. It is not compatible binary with older code.");
         }
-        if (version > 2)
-        {
-            ar(cpuTurboBoost);
-        }
+
+        ar(signature, tag, info, boostersStates, behaveAndCurve, daemonDeviceException, battery);
+        return;
     }
 
     template <class Archive>
     void load(Archive &ar, const std::uint32_t version)
     {
+        if (version < 4)
+        {
+            throw std::runtime_error("Recompile. It is not compatible binary with older code.");
+        }
+
         std::size_t signatureRead = 0u;
-        ar(signatureRead, tag, info, boosterState, behaveAndCurve, daemonDeviceException);
-        if (version > 1)
-        {
-            ar(battery);
-        }
-        if (version > 2)
-        {
-            ar(cpuTurboBoost);
-        }
+        ar(signatureRead, tag, info, boostersStates, behaveAndCurve, daemonDeviceException,
+           battery);
         if (signatureRead != signature)
         {
             throw std::runtime_error("Wrong signature detected on reading FullInfoBlock.");
         }
     }
 };
-CEREAL_CLASS_VERSION(FullInfoBlock, 3)
+CEREAL_CLASS_VERSION(FullInfoBlock, 4)
 
 /// @brief Request sent by GUI to daemon. It can be ping, action to execute, etc.
 struct RequestFromUi
@@ -334,8 +373,7 @@ struct RequestFromUi
     };
 
     RequestType request;
-    BoosterState boosterState{BoosterState::NO_CHANGE};
-    CpuTurboBoostState cpuTurboBoost{CpuTurboBoostState::NO_CHANGE};
+    BoostersStates boostersStates{};
     BehaveWithCurve behaveAndCurve{};
     Battery battery{BatteryLevels::NotKnown};
 
@@ -343,15 +381,11 @@ struct RequestFromUi
     template <class Archive>
     void serialize(Archive &ar, const std::uint32_t version)
     {
-        ar(boosterState, behaveAndCurve, request);
-        if (version > 1)
+        if (version < 4)
         {
-            ar(battery);
+            throw std::runtime_error("Recompile. It is not compatible binary with older code.");
         }
-        if (version > 2)
-        {
-            ar(cpuTurboBoost);
-        }
+        ar(boostersStates, behaveAndCurve, request, battery);
     }
 
     /// @returns true if this request from GUI to daemon contains some action requested by user (or
@@ -359,12 +393,10 @@ struct RequestFromUi
     /// @note TODO: currently we support only simpliest things, like switch boost speed of the fans.
     bool HasUserAction() const
     {
-        return boosterState != BoosterState::NO_CHANGE
-               || battery.maxLevel != BatteryLevels::NotKnown
-               || cpuTurboBoost != CpuTurboBoostState::NO_CHANGE;
+        return boostersStates.HasAnyChange() || battery.maxLevel != BatteryLevels::NotKnown;
     }
 };
-CEREAL_CLASS_VERSION(RequestFromUi, 3)
+CEREAL_CLASS_VERSION(RequestFromUi, 4)
 
 /// @brief This represents physical device we're on. Like whole laptop, with fans, CPU, GPU etc.
 class CDevice
@@ -379,16 +411,14 @@ class CDevice
     CpuGpuInfo ReadInfo() const;
 
     BoosterState ReadBoosterState() const;
-    void SetBooster(const BoosterState what) const;
+    CpuTurboBoostState ReadCpuTurboBoostState() const;
+    void SetBoosters(const BoostersStates what) const;
 
     BehaveWithCurve ReadBehaveState() const;
     void SetBehaveState(const BehaveWithCurve &behaveWithCurve) const;
 
     Battery ReadBattery() const;
     void SetBattery(const Battery &battery) const;
-
-    CpuTurboBoostState ReadCpuTurboBoostState() const;
-    void SetCpuTurboBoost(const CpuTurboBoostState what) const;
 
     FullInfoBlock ReadFullInformation(std::size_t aTag) const;
 
@@ -408,8 +438,6 @@ class CDevice
     /// @returns Command for r/w. It may be wrong detected which can cause exceptions later
     /// ("nothing works").
     virtual AddressedValue1B GetBatteryThreshold() const;
-
-    void SetBooster(CReadWrite::WriteHandle &handle, const BoosterState what) const;
 
   private:
     CReadWrite readWriteAccess;

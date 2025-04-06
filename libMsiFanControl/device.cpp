@@ -99,16 +99,23 @@ BoosterState CDevice::ReadBoosterState() const
     return !diff || diff->first == BoosterState::OFF ? BoosterState::ON : BoosterState::OFF;
 }
 
-void CDevice::SetBooster(CReadWrite::WriteHandle &handle, const BoosterState what) const
-{
-    auto cmd = GetCmdBoosterStates();
-    readWriteAccess.Write(handle, {cmd.at(what)});
-}
-
-void CDevice::SetBooster(const BoosterState what) const
+void CDevice::SetBoosters(const BoostersStates what) const
 {
     auto handle = readWriteAccess.StartWritting();
-    SetBooster(handle, what);
+    auto cmd = GetCmdBoosterStates();
+    readWriteAccess.Write(handle, {cmd.at(what.fanBoosterState)});
+
+    switch (what.cpuTurboBoostState)
+    {
+        case CpuTurboBoostState::OFF:
+            WriteFsBool(kIntelPStateNoTurbo, true);
+            break;
+        case CpuTurboBoostState::ON:
+            WriteFsBool(kIntelPStateNoTurbo, false);
+            break;
+        case CpuTurboBoostState::NO_CHANGE:
+            break;
+    }
 }
 
 BehaveWithCurve CDevice::ReadBehaveState() const
@@ -186,27 +193,14 @@ CpuTurboBoostState CDevice::ReadCpuTurboBoostState() const
     return isTurboEnabled ? CpuTurboBoostState::ON : CpuTurboBoostState::OFF;
 }
 
-void CDevice::SetCpuTurboBoost(const CpuTurboBoostState what) const
-{
-    bool valueToWrite = false;
-    switch (what)
-    {
-        case CpuTurboBoostState::OFF:
-            valueToWrite = true;
-            break;
-        case CpuTurboBoostState::ON:
-            valueToWrite = false;
-            break;
-        case CpuTurboBoostState::NO_CHANGE:
-            return;
-    }
-    WriteFsBool(kIntelPStateNoTurbo, valueToWrite);
-}
-
 FullInfoBlock CDevice::ReadFullInformation(std::size_t aTag) const
 {
-    return {aTag,          ReadInfo(),    ReadBoosterState(),      ReadBehaveState(),
-            std::string{}, ReadBattery(), ReadCpuTurboBoostState()};
+    return {aTag,
+            ReadInfo(),
+            BoostersStates{ReadBoosterState(), ReadCpuTurboBoostState()},
+            ReadBehaveState(),
+            std::string{},
+            ReadBattery()};
 }
 
 AddressedValueAnyList CDevice::GetCmdTempRPM() const

@@ -94,7 +94,7 @@ MainWindow::MainWindow(StartOptions options, QWidget *parent) :
         {
             BlockReadSetters();
             UpdateRequestToDaemon([&](RequestFromUi &r) {
-                r.boosterState = BoosterState::ON;
+                r.boostersStates.fanBoosterState = BoosterState::ON;
             });
         }
     });
@@ -104,7 +104,7 @@ MainWindow::MainWindow(StartOptions options, QWidget *parent) :
         {
             BlockReadSetters();
             UpdateRequestToDaemon([&](RequestFromUi &r) {
-                r.boosterState = BoosterState::OFF;
+                r.boostersStates.fanBoosterState = BoosterState::OFF;
             });
         }
     });
@@ -118,9 +118,6 @@ MainWindow::MainWindow(StartOptions options, QWidget *parent) :
         else
         {
             gameModeThread.reset();
-            UpdateRequestToDaemon([&](RequestFromUi &r) {
-                r.cpuTurboBoost = CpuTurboBoostState::ON;
-            });
         }
 
         // sync checkbox to the action
@@ -216,7 +213,7 @@ void MainWindow::LaunchGameMode()
             if (originalTurboBoostState.has_value() && originalTurboBoostState->HasAnyChange())
             {
                 UpdateRequestToDaemon([&originalTurboBoostState](RequestFromUi &r) {
-                    originalTurboBoostState->UpdateRequest(r);
+                    r.boostersStates = *originalTurboBoostState;
                 });
             }
         };
@@ -234,13 +231,14 @@ void MainWindow::LaunchGameMode()
             {
                 originalTurboBoostState = BoostersStates{};
                 // Do not copy all states, just turbo boost.
-                originalTurboBoostState->cpuTurboBoostState = optInfo->cpuTurboBoost;
+                originalTurboBoostState->cpuTurboBoostState =
+                  optInfo->boostersStates.cpuTurboBoostState;
             }
             const auto state = decider.ComputeUpdatedBoosterStates(optInfo);
             if (state.HasAnyChange())
             {
                 UpdateRequestToDaemon([&state](RequestFromUi &r) {
-                    state.UpdateRequest(r);
+                    r.boostersStates = state;
                 });
             }
             std::this_thread::sleep_for(kMinimumServiceDelay + 500ms);
@@ -290,9 +288,8 @@ void MainWindow::CreateCommunicator()
                     hadUserAction = request->HasUserAction();
                     if (hadUserAction)
                     {
-                        pingOk = comm.SetBooster(request->boosterState);
+                        pingOk = comm.SetBoosters(request->boostersStates);
                         pingOk = comm.SetBattery(request->battery) || pingOk;
-                        pingOk = comm.SetCpuBooster(request->cpuTurboBoost) || pingOk;
                     }
                 }
 
@@ -336,7 +333,7 @@ void MainWindow::UpdateUiWithInfo(FullInfoBlock info, bool possiblyBrokenConn)
             ui->outGpuR->setText(QString(fmtNum).arg(info.info.gpu.fanRPM));
         }
 
-        SetUiBooster(info.boosterState);
+        SetUiBooster(info.boostersStates);
         SetUiBattery(info.battery);
 
         ui->outHwProfile->setText(
@@ -373,12 +370,12 @@ void MainWindow::SetDaemonConnectionStateOnGuiThread(const ConnState state)
     setEnabled(state != ConnState::RED);
 }
 
-void MainWindow::SetUiBooster(BoosterState state)
+void MainWindow::SetUiBooster(const BoostersStates &state)
 {
     if (!IsReadSettingBlocked())
     {
         auto block = BlockGuard(ui->btnOff, ui->btnOn);
-        switch (state)
+        switch (state.fanBoosterState)
         {
             case BoosterState::ON:
                 ui->btnOn->setChecked(true);

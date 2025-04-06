@@ -73,7 +73,7 @@ class MainWindow final : public QMainWindow
         callback(*requestToDaemon);
     }
 
-    void SetUiBooster(BoosterState state);
+    void SetUiBooster(const BoostersStates &state);
     void SetUiBattery(const Battery &battery);
     void UncheckAllBatteryButtons();
 

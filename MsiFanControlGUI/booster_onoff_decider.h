@@ -121,59 +121,6 @@ class CpuTurboBoostController
     }
 };
 
-/// @brief Different boosters' states bound together. This result of what should be send to the
-/// daemon.
-struct BoostersStates
-{
-    BoosterState fanBoosterState{BoosterState::NO_CHANGE};
-    CpuTurboBoostState cpuTurboBoostState{CpuTurboBoostState::NO_CHANGE};
-
-    BoostersStates() = default;
-    ~BoostersStates() = default;
-    explicit BoostersStates(const FullInfoBlock &info) :
-        fanBoosterState(info.boosterState),
-        cpuTurboBoostState(info.cpuTurboBoost)
-    {
-    }
-    DEFAULT_COPYMOVE(BoostersStates);
-
-    bool operator==(const BoostersStates &other) const noexcept
-    {
-        const auto tie = [](const auto &v) {
-            return std::tie(v.fanBoosterState, v.cpuTurboBoostState);
-        };
-        return tie(*this) == tie(other);
-    }
-
-    bool operator!=(const BoostersStates &other) const noexcept
-    {
-        return !(*this == other);
-    }
-
-    BoostersStates &operator=(const FullInfoBlock &info) noexcept
-    {
-        fanBoosterState = info.boosterState;
-        cpuTurboBoostState = info.cpuTurboBoost;
-
-        return *this;
-    }
-
-    /// @returns true if this object should be sent to daemon.
-    [[nodiscard]]
-    bool HasAnyChange() const noexcept
-    {
-        static const BoostersStates kDefault{};
-        return *this != kDefault;
-    }
-
-    /// @brief Writes current state into @p request.
-    void UpdateRequest(RequestFromUi &request) const noexcept
-    {
-        request.boosterState = fanBoosterState;
-        request.cpuTurboBoost = cpuTurboBoostState;
-    }
-};
-
 /// @brief This is "smart logic" to decide if we should switch boosters (fan's, cpu turboboost,
 /// etc.).
 template <std::size_t AvrSamplesCount>
@@ -198,7 +145,7 @@ class BoostersOnOffDecider
             res.cpuTurboBoostState =
               cpuTurboBoost.Update(newInfo->info.cpu.temperature, lastStates.cpuTurboBoostState);
 
-            lastStates = *newInfo;
+            lastStates = newInfo->boostersStates;
         }
 
         // Fan's booster must be on when CPU is hot.
