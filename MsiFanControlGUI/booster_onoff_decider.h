@@ -102,41 +102,8 @@ class BoosterOnOffDecider
     {
         BoostersStates res;
         const bool isSystemHot = IsSystemHotNow();
-
-        // This booster must be on when CPU is hot.
-        switch (lastStates.fanBoosterState)
-        {
-            case BoosterState::NO_CHANGE:
-                // This is something which should not happen. But throwing exception does not help
-                // here too. Let's just pass, and see what will happen on the next cycle.
-                break;
-            case BoosterState::OFF:
-                res.fanBoosterState = isSystemHot ? BoosterState::ON : BoosterState::NO_CHANGE;
-                break;
-            case BoosterState::ON:
-                res.fanBoosterState = !isSystemHot ? BoosterState::OFF : BoosterState::NO_CHANGE;
-                break;
-        };
-
-        // This booster can be on when CPU is cold.
-        switch (lastStates.cpuTurboBoostState)
-        {
-            case CpuTurboBoostState::NO_CHANGE:
-                // This is something which should not happen. But throwing exception does not help
-                // here too. Let's just pass, and see what will happen on the next cycle.
-                break;
-            case CpuTurboBoostState::OFF:
-                res.cpuTurboBoostState =
-                  !isSystemHot && lastStates.PassedSinceCpuBoostOff() > 5000ms
-                    ? CpuTurboBoostState::ON
-                    : CpuTurboBoostState::NO_CHANGE;
-                break;
-            case CpuTurboBoostState::ON:
-                res.cpuTurboBoostState =
-                  isSystemHot ? CpuTurboBoostState::OFF : CpuTurboBoostState::NO_CHANGE;
-                break;
-        };
-
+        UpdateFanBooster(res, isSystemHot);
+        UpdateCpuTurboBooster(res, isSystemHot);
         return res;
     }
 
@@ -160,15 +127,50 @@ class BoosterOnOffDecider
     {
         const auto avrCpu = cpuAvrTemp.GetCurrent();
         const auto avrGpu = gpuAvrTemp.GetCurrent();
-        return (greater(avrCpu, kDegreeLimitBoth) && greater(avrGpu, kDegreeLimitBoth))
-               || IsCpuHotNow();
+        return greater(avrCpu, kCpuOnlyDegree)
+               || (greater(avrCpu, kDegreeLimitBoth) && greater(avrGpu, kDegreeLimitBoth));
     }
 
-    [[nodiscard]]
-    bool IsCpuHotNow() const noexcept
+    /// @brief Decides next state of the fan's booster.
+    /// @note This booster must be on when CPU is hot.
+    void UpdateFanBooster(BoostersStates &state, const bool isSystemHot) const noexcept
     {
-        const auto avrCpu = cpuAvrTemp.GetCurrent();
-        return greater(avrCpu, kCpuOnlyDegree);
+        switch (lastStates.fanBoosterState)
+        {
+            case BoosterState::NO_CHANGE:
+                // This is something which should not happen. But throwing exception does not help
+                // here too. Let's just pass, and see what will happen on the next cycle.
+                break;
+            case BoosterState::OFF:
+                state.fanBoosterState = isSystemHot ? BoosterState::ON : BoosterState::NO_CHANGE;
+                break;
+            case BoosterState::ON:
+                state.fanBoosterState = !isSystemHot ? BoosterState::OFF : BoosterState::NO_CHANGE;
+                break;
+        };
+    }
+
+    /// @brief Decides next state of the cpu turbo-boost mode.
+    /// @note This booster can be on when CPU is cold.
+    void UpdateCpuTurboBooster(BoostersStates &state, const bool isSystemHot) const noexcept
+    {
+        switch (lastStates.cpuTurboBoostState)
+        {
+            case CpuTurboBoostState::NO_CHANGE:
+                // This is something which should not happen. But throwing exception does not help
+                // here too. Let's just pass, and see what will happen on the next cycle.
+                break;
+            case CpuTurboBoostState::OFF:
+                state.cpuTurboBoostState =
+                  !isSystemHot && lastStates.PassedSinceCpuBoostOff() > 5000ms
+                    ? CpuTurboBoostState::ON
+                    : CpuTurboBoostState::NO_CHANGE;
+                break;
+            case CpuTurboBoostState::ON:
+                state.cpuTurboBoostState =
+                  isSystemHot ? CpuTurboBoostState::OFF : CpuTurboBoostState::NO_CHANGE;
+                break;
+        };
     }
 
     // Celsium, nvidia gpu max is 93C.
