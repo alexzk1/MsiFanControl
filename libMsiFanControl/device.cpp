@@ -89,7 +89,7 @@ CpuGpuInfo CDevice::ReadInfo() const
     return {cpu, gpu};
 }
 
-BoosterState CDevice::ReadBoosterState() const
+BoostersStates CDevice::ReadBoostersStates() const
 {
     auto cmd = GetCmdBoosterStates();
     const auto clone = cmd;
@@ -99,8 +99,11 @@ BoosterState CDevice::ReadBoosterState() const
     Throw(diff != std::nullopt,
           "Something went wrong. Read should indicate BOOSTER's changed state.");
 
+    const bool isTurboEnabled = !ReadFsBool(kIntelPStateNoTurbo);
+
     // We read OFF state different, that means there is ON state in device.
-    return !diff || diff->first == BoosterState::OFF ? BoosterState::ON : BoosterState::OFF;
+    return {!diff || diff->first == BoosterState::OFF ? BoosterState::ON : BoosterState::OFF,
+            isTurboEnabled ? CpuTurboBoostState::ON : CpuTurboBoostState::OFF};
 }
 
 void CDevice::SetBoosters(const BoostersStates what) const
@@ -191,20 +194,10 @@ void CDevice::SetBattery(const Battery &battery) const
     }
 }
 
-CpuTurboBoostState CDevice::ReadCpuTurboBoostState() const
-{
-    const bool isTurboEnabled = !ReadFsBool(kIntelPStateNoTurbo);
-    return isTurboEnabled ? CpuTurboBoostState::ON : CpuTurboBoostState::OFF;
-}
-
 FullInfoBlock CDevice::ReadFullInformation(std::size_t aTag) const
 {
-    return {aTag,
-            ReadInfo(),
-            BoostersStates{ReadBoosterState(), ReadCpuTurboBoostState()},
-            ReadBehaveState(),
-            std::string{},
-            ReadBattery()};
+    return {aTag,          ReadInfo(),   ReadBoostersStates(), ReadBehaveState(),
+            std::string{}, ReadBattery()};
 }
 
 AddressedValueAnyList CDevice::GetCmdTempRPM() const

@@ -18,8 +18,7 @@ class CDevice
 
     CpuGpuInfo ReadInfo() const;
 
-    BoosterState ReadBoosterState() const;
-    CpuTurboBoostState ReadCpuTurboBoostState() const;
+    BoostersStates ReadBoostersStates() const;
     void SetBoosters(const BoostersStates what) const;
 
     BehaveWithCurve ReadBehaveState() const;

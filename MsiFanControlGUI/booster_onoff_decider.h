@@ -68,9 +68,9 @@ class CpuTurboBoostController
         const float acceleration = *accel;
 
         static constexpr float kCpuOnlyHotDegree =
-          85.0; ///< Temperature threshold to consider disabling turbo-boost.
+          83.0; ///< Temperature threshold to consider disabling turbo-boost.
         static constexpr float kCpuOnlyColdDegree =
-          75.0; ///< Temperature threshold to consider enabling turbo-boost.
+          72.0; ///< Temperature threshold to consider enabling turbo-boost.
 
         if (currentState == CpuTurboBoostState::ON)
         {
