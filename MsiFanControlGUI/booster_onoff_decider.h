@@ -3,12 +3,94 @@
 #include "cm_ctors.h" // IWYU pragma: keep
 #include "device.h"   // IWYU pragma: keep
 #include "running_avr.h"
+#include "tabular_derivative.h"
 
 #include <chrono>
 #include <cstddef>
 #include <optional>
 #include <tuple>
 #include <type_traits>
+
+/**
+ * @brief Controller for managing CPU turbo-boost state based on temperature trends.
+ *
+ * This class uses temperature derivative calculations to dynamically adjust the
+ * CPU turbo boost. The turbo boost can be enabled or disabled based on the current
+ * temperature and its rate of change (acceleration).
+ */
+class CpuTurboBoostController
+{
+  public:
+    /**
+     * @brief Constructs a CpuTurboBoostController instance.
+     *
+     * @param alpha_temp Smoothing factor for temperature derivative (rate of temperature change)
+     * [0.0 – 1.0].
+     * @param alpha_derivative Smoothing factor for temperature acceleration (second derivative)
+     * [0.0 – 1.0].
+     */
+    explicit CpuTurboBoostController(float alpha_temp = 0.3f, float alpha_derivative = 0.5f) :
+        dT(alpha_temp),
+        d2T(alpha_derivative)
+    {
+    }
+
+    /**
+     * @brief Updates the CPU temperature and returns a new turbo-boost state.
+     *
+     * This method calculates the rate of temperature change and its acceleration,
+     * and determines if the turbo-boost feature should be enabled, disabled, or left unchanged.
+     *
+     * @param currentTemperature The current CPU temperature in Celsius.
+     * @param currentState The current state of the turbo-boost feature (ON, OFF, or NO_CHANGE).
+     * @return CpuTurboBoostState The new turbo-boost state: ON, OFF, or NO_CHANGE.
+     */
+    CpuTurboBoostState Update(const float currentTemperature,
+                              const CpuTurboBoostState currentState) noexcept
+    {
+        dT.Update(currentTemperature);
+
+        const auto tempDerivative = dT.Result();
+        if (!tempDerivative.has_value())
+            return CpuTurboBoostState::NO_CHANGE;
+
+        d2T.Update(*tempDerivative);
+        const auto accel = d2T.Result();
+        if (!accel.has_value())
+            return CpuTurboBoostState::NO_CHANGE;
+
+        // Decision logic.
+        const float temp = currentTemperature;
+        const float rate = *tempDerivative;
+        const float acceleration = *accel;
+
+        static constexpr float kCpuOnlyHotDegree =
+          85.0; ///< Temperature threshold to consider disabling turbo-boost.
+        static constexpr float kCpuOnlyColdDegree =
+          70.0; ///< Temperature threshold to consider enabling turbo-boost.
+
+        if (currentState == CpuTurboBoostState::ON)
+        {
+            if (temp >= kCpuOnlyHotDegree && rate > 0.5f && acceleration > 0.0f)
+            {
+                return CpuTurboBoostState::OFF;
+            }
+        }
+        else if (currentState == CpuTurboBoostState::OFF)
+        {
+            if (temp <= kCpuOnlyColdDegree && rate < 0.0f && acceleration < 0.0f)
+            {
+                return CpuTurboBoostState::ON;
+            }
+        }
+
+        return CpuTurboBoostState::NO_CHANGE;
+    }
+
+  private:
+    TabularDerivative dT;  ///< First derivative (rate of temperature change)
+    TabularDerivative d2T; ///< Second derivative (temperature acceleration)
+};
 
 /// @brief Different boosters' states bound together.
 struct BoostersStates
@@ -75,46 +157,56 @@ struct BoostersStates
     }
 };
 
-/// @brief This is "smart logic" to decide if we should switch fan's booster.
+/// @brief This is "smart logic" to decide if we should switch boosters (fan's, cpu turboboost,
+/// etc.).
 template <std::size_t AvrSamplesCount>
-class BoosterOnOffDecider
+class BoostersOnOffDecider
 {
   public:
-    /// @brief Updates state with new info from daemon. If no info - it will use previous one.
+    /// @brief  Computes updated state with new info from daemon.
     /// It's safe to call this method even if there is no new info, but in that case it won't
     /// update anything. This method should be called periodically (every second or so).
     /// @param newInfo new state received from the daemon if any.
-    /// @note it is methematically important to keep period time fixed.
-    void UpdateState(const std::optional<FullInfoBlock> &newInfo) noexcept
+    /// @returns States which should be passed to daemon based on last call(s) to UpdateState().
+    [[nodiscard]]
+    BoostersStates ComputeUpdatedBoosterStates(const std::optional<FullInfoBlock> &newInfo) noexcept
     {
+        BoostersStates res;
         if (newInfo)
         {
             cpuAvrTemp.OfferValue(newInfo->info.cpu.temperature);
-            cpuAvrTempOnLongRun.OfferValue(newInfo->info.cpu.temperature);
             gpuAvrTemp.OfferValue(newInfo->info.gpu.temperature);
             lastStates = *newInfo;
         }
-    }
 
-    /// @brief Computes boosters states using latest values set by UpdateState().
-    /// @returns States which should be passed to daemon based on last call(s) to UpdateState().
-    [[nodiscard]]
-    BoostersStates GetUpdatedBoosterStates() const noexcept
-    {
-        BoostersStates res;
-        const bool isSystemHot = IsSystemHotNow();
-        UpdateFanBooster(res, isSystemHot);
-        UpdateCpuTurboBooster(res, isSystemHot);
+        // Updating CPU turboboost state, it has own complex decider.
+        res.cpuTurboBoostState =
+          cpuTurboBoost.Update(newInfo->info.cpu.temperature, lastStates.cpuTurboBoostState);
+
+        // Fan's booster must be on when CPU is hot.
+        const bool isSystemHot = IsSystemHot();
+        switch (lastStates.fanBoosterState)
+        {
+            case BoosterState::NO_CHANGE:
+                // This is something which should not happen. But throwing exception does not help
+                // here too. Let's just pass, and see what will happen on the next cycle.
+                break;
+            case BoosterState::OFF:
+                res.fanBoosterState = isSystemHot ? BoosterState::ON : BoosterState::NO_CHANGE;
+                break;
+            case BoosterState::ON:
+                res.fanBoosterState = !isSystemHot ? BoosterState::OFF : BoosterState::NO_CHANGE;
+                break;
+        };
+
         return res;
     }
 
   private:
     BoostersStates lastStates;
-
     RunningAvr<float, AvrSamplesCount> cpuAvrTemp;
-    RunningAvr<float, AvrSamplesCount * 5> cpuAvrTempOnLongRun;
-
     RunningAvr<float, AvrSamplesCount> gpuAvrTemp;
+    CpuTurboBoostController cpuTurboBoost;
 
     template <typename taLeft, typename taRight>
     [[nodiscard]]
@@ -125,77 +217,16 @@ class BoosterOnOffDecider
         return left.has_value() && *left > right;
     }
 
-    template <typename taCpuTemp>
-    bool IsSystemHot(const taCpuTemp &cpuTemp) const noexcept
+    bool IsSystemHot() const noexcept
     {
-        const auto avrCpu = cpuTemp.GetCurrent();
+        // Celsium, nvidia gpu max is 93C.
+        static constexpr int kDegreeLimitBoth = 80;
+        static constexpr int kCpuOnlyHotDegree = 91;
+        static_assert(kDegreeLimitBoth < kCpuOnlyHotDegree, "Revise here.");
+
+        const auto avrCpu = cpuAvrTemp.GetCurrent();
         const auto avrGpu = gpuAvrTemp.GetCurrent();
-        return greater(avrCpu, kCpuOnlyDegree)
+        return greater(avrCpu, kCpuOnlyHotDegree)
                || (greater(avrCpu, kDegreeLimitBoth) && greater(avrGpu, kDegreeLimitBoth));
     }
-
-    [[nodiscard]]
-    bool IsSystemHotNow() const noexcept
-    {
-        return IsSystemHot(cpuAvrTemp);
-    }
-
-    [[nodiscard]]
-    bool IsSystemHotOnLongRun() const noexcept
-    {
-        return IsSystemHot(cpuAvrTempOnLongRun);
-    }
-
-    /// @brief Decides next state of the fan's booster.
-    /// @note This booster must be on when CPU is hot.
-    void UpdateFanBooster(BoostersStates &state, const bool isSystemHot) const noexcept
-    {
-        switch (lastStates.fanBoosterState)
-        {
-            case BoosterState::NO_CHANGE:
-                // This is something which should not happen. But throwing exception does not help
-                // here too. Let's just pass, and see what will happen on the next cycle.
-                break;
-            case BoosterState::OFF:
-                state.fanBoosterState = isSystemHot ? BoosterState::ON : BoosterState::NO_CHANGE;
-                break;
-            case BoosterState::ON:
-                state.fanBoosterState = !isSystemHot ? BoosterState::OFF : BoosterState::NO_CHANGE;
-                break;
-        };
-    }
-
-    /// @brief Decides next state of the cpu turbo-boost mode.
-    /// @note This booster can be on when CPU is cold.
-    void UpdateCpuTurboBooster(BoostersStates &state, const bool isSystemHot) const noexcept
-    {
-        switch (lastStates.cpuTurboBoostState)
-        {
-            case CpuTurboBoostState::NO_CHANGE:
-                // This is something which should not happen. But throwing exception does not help
-                // here too. Let's just pass, and see what will happen on the next cycle.
-                break;
-            case CpuTurboBoostState::OFF:
-                state.cpuTurboBoostState =
-                  !IsSystemHotOnLongRun()
-                      && lastStates.PassedSinceCpuBoostOff() > kMinimalTimeCpuTurboBoostOff
-                    ? CpuTurboBoostState::ON
-                    : CpuTurboBoostState::NO_CHANGE;
-                break;
-            case CpuTurboBoostState::ON:
-                state.cpuTurboBoostState =
-                  isSystemHot ? CpuTurboBoostState::OFF : CpuTurboBoostState::NO_CHANGE;
-                break;
-        };
-    }
-
-    // Celsium, nvidia gpu max is 93C.
-    inline static constexpr int kDegreeLimitBoth = 80;
-    // If cpu is such hot - boost, even if gpu is off
-    inline static constexpr int kCpuOnlyDegree = 91;
-    static_assert(kDegreeLimitBoth < kCpuOnlyDegree, "Revise here.");
-
-    // For how long cpu turbo-boost should remain turned off at least. Which should prevent beats of
-    // on/off fast.
-    inline static constexpr auto kMinimalTimeCpuTurboBoostOff = 5000ms;
 };

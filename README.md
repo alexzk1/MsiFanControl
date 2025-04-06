@@ -27,6 +27,11 @@ Reboot, so everything will apply. On 1st run after reboot daemon will make the b
 
 Run GUI application, tick checkbox "Game Mode Automatic Boost Control", minimize it to the tray (gui program must run), go play your games. It will take care of the fans.
 
+# Stress test "smart logic" of the "game mode"
+Install `stress-ng` (https://www.tecmint.com/linux-cpu-load-stress-test-with-stress-ng-tool/).
+
+Run `sudo stress-ng --cpu 8 --timeout 90`.
+
 # Dependencies
 
 You will need installed system wide: g++ (latest), cmake, boost 1.8+, cereal (C++ headers only serialization library), libcpuid, qt5 widgets (for GUI).

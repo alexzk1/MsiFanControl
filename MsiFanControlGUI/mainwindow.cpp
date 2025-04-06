@@ -211,7 +211,7 @@ void MainWindow::LaunchGameMode()
 {
     using namespace std::chrono_literals;
     gameModeThread = utility::startNewRunner([this](const auto &shouldStop) {
-        BoosterOnOffDecider<3> decider;
+        BoostersOnOffDecider<3> decider;
 
         while (!*(shouldStop))
         {
@@ -220,8 +220,7 @@ void MainWindow::LaunchGameMode()
                 const std::lock_guard grd(lastReadInfoForGameModeThreadMutex);
                 std::swap(optInfo, lastReadInfoForGameModeThread);
             }
-            decider.UpdateState(optInfo);
-            const auto state = decider.GetUpdatedBoosterStates();
+            const auto state = decider.ComputeUpdatedBoosterStates(optInfo);
             if (state.HasAnyChange())
             {
                 UpdateRequestToDaemon([&state](RequestFromUi &r) {
