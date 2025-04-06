@@ -1,10 +1,13 @@
 #pragma once
 
+#include "cm_ctors.h"
+
 #include <QObject>
 
 #include <qtmetamacros.h>
 
 #include <functional>
+#include <iostream>
 
 using SimpleVoidFunction = std::function<void()>;
 
@@ -22,4 +25,29 @@ class ExecOnMainThread : public QObject
     void needExec(SimpleVoidFunction lambda);
   private slots:
     void doExex(const SimpleVoidFunction &lambda);
+};
+
+/// @brief Execs callable in destructor of this object.
+template <typename taCallable>
+class ExecOnExitScope
+{
+  public:
+    explicit ExecOnExitScope(const taCallable &callable) :
+        callable(callable) {};
+    ExecOnExitScope() = delete;
+    NO_COPYMOVE(ExecOnExitScope);
+    ~ExecOnExitScope()
+    {
+        try
+        {
+            callable();
+        }
+        catch (...)
+        {
+            std::cerr << "ExecOnExitScope callable throwed exception." << std::endl;
+        }
+    }
+
+  private:
+    const taCallable &callable;
 };

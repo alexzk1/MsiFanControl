@@ -47,6 +47,10 @@ class CpuTurboBoostController
     CpuTurboBoostState Update(const float currentTemperature,
                               const CpuTurboBoostState currentState) noexcept
     {
+        // If user turns on algorithm when it is already hot, we should issue orders immediately, we
+        // can't wait d2T to be collected. Also it can be constant d2T but hot.
+        const bool justCreated = d2T.Result().has_value();
+
         dT.Update(currentTemperature);
 
         const auto tempDerivative = dT.Result();
@@ -70,14 +74,14 @@ class CpuTurboBoostController
 
         if (currentState == CpuTurboBoostState::ON)
         {
-            if (temp >= kCpuOnlyHotDegree && rate > 0.5f && acceleration > 0.0f)
+            if (temp >= kCpuOnlyHotDegree && (justCreated || (rate > 0.5f && acceleration > 0.0f)))
             {
                 return CpuTurboBoostState::OFF;
             }
         }
         else if (currentState == CpuTurboBoostState::OFF)
         {
-            if (temp <= kCpuOnlyColdDegree && rate < 0.0f && acceleration < 0.0f)
+            if (temp <= kCpuOnlyColdDegree && rate <= 0.0f && acceleration <= 0.0f)
             {
                 return CpuTurboBoostState::ON;
             }

@@ -211,14 +211,30 @@ void MainWindow::LaunchGameMode()
 {
     using namespace std::chrono_literals;
     gameModeThread = utility::startNewRunner([this](const auto &shouldStop) {
-        BoostersOnOffDecider<3> decider;
+        std::optional<BoostersStates> originalTurboBoostState;
+        const auto restoreTurboBoost = [&originalTurboBoostState, this]() {
+            if (originalTurboBoostState.has_value() && originalTurboBoostState->HasAnyChange())
+            {
+                UpdateRequestToDaemon([&originalTurboBoostState](RequestFromUi &r) {
+                    originalTurboBoostState->UpdateRequest(r);
+                });
+            }
+        };
+        const ExecOnExitScope restoreTurboBoostWhenExit(restoreTurboBoost);
 
+        BoostersOnOffDecider<3> decider;
         while (!*(shouldStop))
         {
             std::optional<FullInfoBlock> optInfo;
             {
                 const std::lock_guard grd(lastReadInfoForGameModeThreadMutex);
                 std::swap(optInfo, lastReadInfoForGameModeThread);
+            }
+            if (!originalTurboBoostState.has_value() && optInfo.has_value())
+            {
+                originalTurboBoostState = BoostersStates{};
+                // Do not copy all states, just turbo boost.
+                originalTurboBoostState->cpuTurboBoostState = optInfo->cpuTurboBoost;
             }
             const auto state = decider.ComputeUpdatedBoosterStates(optInfo);
             if (state.HasAnyChange())
