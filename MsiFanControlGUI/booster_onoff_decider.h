@@ -70,18 +70,19 @@ class CpuTurboBoostController
         static constexpr float kCpuOnlyHotDegree =
           85.0; ///< Temperature threshold to consider disabling turbo-boost.
         static constexpr float kCpuOnlyColdDegree =
-          70.0; ///< Temperature threshold to consider enabling turbo-boost.
+          75.0; ///< Temperature threshold to consider enabling turbo-boost.
 
         if (currentState == CpuTurboBoostState::ON)
         {
-            if (temp >= kCpuOnlyHotDegree && (justCreated || (rate > 0.5f && acceleration > 0.0f)))
+            if (temp >= kCpuOnlyHotDegree
+                && (justCreated || (rate > 0.5f && IsPositive(acceleration))))
             {
                 return CpuTurboBoostState::OFF;
             }
         }
         else if (currentState == CpuTurboBoostState::OFF)
         {
-            if (temp <= kCpuOnlyColdDegree && rate <= 0.0f && acceleration <= 0.0f)
+            if (temp <= kCpuOnlyColdDegree && !IsPositive(rate) && !IsPositive(acceleration))
             {
                 return CpuTurboBoostState::ON;
             }
@@ -93,6 +94,29 @@ class CpuTurboBoostController
   private:
     TabularDerivative dT;  ///< First derivative (rate of temperature change)
     TabularDerivative d2T; ///< Second derivative (temperature acceleration)
+
+    template <class T>
+    static constexpr int sgn(const T v)
+    {
+        static_assert(std::is_arithmetic<T>::value, "Only arithmetic types are supported.");
+        static_assert(static_cast<int>(true) == 1 && static_cast<int>(false) == 0, "Woops!");
+        constexpr T kZero{0};
+
+        if constexpr (std::is_signed<T>::value)
+        {
+            return static_cast<int>(v > kZero) - static_cast<int>(v < kZero);
+        }
+
+        if constexpr (std::is_unsigned<T>::value)
+        {
+            return static_cast<int>(v > kZero);
+        }
+    }
+
+    static bool IsPositive(float v)
+    {
+        return 1 == sgn(v);
+    }
 };
 
 /// @brief Different boosters' states bound together. This result of what should be send to the
