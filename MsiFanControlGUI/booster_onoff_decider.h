@@ -163,12 +163,13 @@ class BoostersOnOffDecider
         {
             cpuAvrTemp.OfferValue(newInfo->info.cpu.temperature);
             gpuAvrTemp.OfferValue(newInfo->info.gpu.temperature);
+
+            // Updating CPU turboboost state, it has own complex decider.
+            res.cpuTurboBoostState =
+              cpuTurboBoost.Update(newInfo->info.cpu.temperature, lastStates.cpuTurboBoostState);
+
             lastStates = *newInfo;
         }
-
-        // Updating CPU turboboost state, it has own complex decider.
-        res.cpuTurboBoostState =
-          cpuTurboBoost.Update(newInfo->info.cpu.temperature, lastStates.cpuTurboBoostState);
 
         // Fan's booster must be on when CPU is hot.
         const bool isSystemHot = IsSystemHot();
