@@ -210,11 +210,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
 void MainWindow::LaunchGameMode()
 {
     using namespace std::chrono_literals;
-
-    // If booster is OFF and both temps are above kDegreeLimit -> turn boost ON
-    // While is HOT update timestamp.
-    // If it is NOT hot, wait timestamp + kWait then turn boost off
-
     gameModeThread = utility::startNewRunner([this](const auto &shouldStop) {
         BoosterOnOffDecider<3> decider;
 
