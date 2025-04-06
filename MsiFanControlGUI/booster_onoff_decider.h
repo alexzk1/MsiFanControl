@@ -47,42 +47,45 @@ class CpuTurboBoostController
     CpuTurboBoostState Update(const float currentTemperature,
                               const CpuTurboBoostState currentState) noexcept
     {
-        // If user turns on algorithm when it is already hot, we should issue orders immediately, we
-        // can't wait d2T to be collected. Also it can be constant d2T but hot.
-        const bool justCreated = d2T.Result().has_value();
-
-        dT.Update(currentTemperature);
-
-        const auto tempDerivative = dT.Result();
-        if (!tempDerivative.has_value())
-            return CpuTurboBoostState::NO_CHANGE;
-
-        d2T.Update(*tempDerivative);
-        const auto accel = d2T.Result();
-        if (!accel.has_value())
-            return CpuTurboBoostState::NO_CHANGE;
-
-        // Decision logic.
-        const float temp = currentTemperature;
-        const float rate = *tempDerivative;
-        const float acceleration = *accel;
-
         static constexpr float kCpuOnlyHotDegree =
           83.0; ///< Temperature threshold to consider disabling turbo-boost.
         static constexpr float kCpuOnlyColdDegree =
           72.0; ///< Temperature threshold to consider enabling turbo-boost.
 
+        // If user turns on algorithm when it is already hot, we should issue orders immediately, we
+        // can't wait d2T to be collected. Also it can be constant d2T but hot.
+        const auto justCreatedResult = [&currentState, &currentTemperature]() {
+            return currentState == CpuTurboBoostState::ON && currentTemperature >= kCpuOnlyHotDegree
+                     ? CpuTurboBoostState::OFF
+                     : CpuTurboBoostState::NO_CHANGE;
+        };
+
+        dT.Update(currentTemperature);
+
+        const auto tempDerivative = dT.Result();
+        if (!tempDerivative.has_value())
+            return justCreatedResult();
+
+        d2T.Update(*tempDerivative);
+        const auto accel = d2T.Result();
+        if (!accel.has_value())
+            return justCreatedResult();
+
+        // Decision logic.
+        const float rate = *tempDerivative;
+        const float acceleration = *accel;
+
         if (currentState == CpuTurboBoostState::ON)
         {
-            if (temp >= kCpuOnlyHotDegree
-                && (justCreated || (rate > 0.5f && IsPositive(acceleration))))
+            if (currentTemperature >= kCpuOnlyHotDegree && rate > 0.5f && IsPositive(acceleration))
             {
                 return CpuTurboBoostState::OFF;
             }
         }
         else if (currentState == CpuTurboBoostState::OFF)
         {
-            if (temp <= kCpuOnlyColdDegree && !IsPositive(rate) && !IsPositive(acceleration))
+            if (currentTemperature <= kCpuOnlyColdDegree && !IsPositive(rate)
+                && !IsPositive(acceleration))
             {
                 return CpuTurboBoostState::ON;
             }
