@@ -14,28 +14,28 @@ class RunningAvr
   public:
     static_assert(std::is_arithmetic_v<T>, "Only arithmetic types are supported.");
 
-    RunningAvr()
+    RunningAvr() noexcept
     {
         std::fill(lastValues.begin(), lastValues.end(), static_cast<T>(0));
     }
 
     /// @brief Adds value to the list, limiting it by last taCounts elements.
     /// @returns Avr. value if list has taCounts elements or std::nullopt otherwise.
-    std::optional<T> GetCurrent(T newValue)
+    std::optional<T> GetCurrent(T newValue) noexcept
     {
         OfferValue(newValue);
         return GetCurrent();
     }
 
     /// @brief Adds value to the list, limiting it by last taCounts elements.
-    void OfferValue(T newValue)
+    void OfferValue(T newValue) noexcept
     {
         lastValues[nextIndex % lastValues.size()] = newValue;
         ++nextIndex;
     }
 
     /// @returns Avr. value if list has taCounts elements or std::nullopt otherwise.
-    std::optional<T> GetCurrent() const
+    std::optional<T> GetCurrent() const noexcept
     {
         if (nextIndex >= lastValues.size())
         {
@@ -48,7 +48,7 @@ class RunningAvr
     std::array<T, taCounts> lastValues;
     std::size_t nextIndex{0};
 
-    T Calculate() const
+    T Calculate() const noexcept
     {
         return std::accumulate(lastValues.begin(), lastValues.end(), T(0)) / lastValues.size();
     }

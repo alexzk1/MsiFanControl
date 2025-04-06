@@ -7,7 +7,7 @@
 #include <chrono>
 #include <cstddef>
 #include <optional>
-#include <stdexcept>
+#include <tuple>
 #include <type_traits>
 
 /// @brief Different boosters' states bound together.
@@ -26,7 +26,7 @@ struct BoostersStates
     }
     DEFAULT_COPYMOVE(BoostersStates);
 
-    bool operator==(const BoostersStates &other) const
+    bool operator==(const BoostersStates &other) const noexcept
     {
         const auto tie = [](const auto &v) {
             return std::tie(v.fanBoosterState, v.cpuTurboBoostState);
@@ -34,12 +34,12 @@ struct BoostersStates
         return tie(*this) == tie(other);
     }
 
-    bool operator!=(const BoostersStates &other) const
+    bool operator!=(const BoostersStates &other) const noexcept
     {
         return !(*this == other);
     }
 
-    BoostersStates &operator=(const FullInfoBlock &info)
+    BoostersStates &operator=(const FullInfoBlock &info) noexcept
     {
         fanBoosterState = info.boosterState;
         if (cpuTurboBoostState != info.cpuTurboBoost
@@ -54,21 +54,21 @@ struct BoostersStates
 
     /// @returns true if this object should be sent to daemon.
     [[nodiscard]]
-    bool HasAnyChange() const
+    bool HasAnyChange() const noexcept
     {
         static const BoostersStates kDefault{};
         return *this != kDefault;
     }
 
     /// @brief Writes current state into @p request.
-    void UpdateRequest(RequestFromUi &request) const
+    void UpdateRequest(RequestFromUi &request) const noexcept
     {
         request.boosterState = fanBoosterState;
         request.cpuTurboBoost = cpuTurboBoostState;
     }
 
     [[nodiscard]]
-    std::chrono::milliseconds PassedSinceCpuBoostOff() const
+    std::chrono::milliseconds PassedSinceCpuBoostOff() const noexcept
     {
         return std::chrono::duration_cast<std::chrono::milliseconds>(
           std::chrono::system_clock::now() - cpuTurboBoostOffAt);
@@ -85,7 +85,7 @@ class BoosterOnOffDecider
     /// update anything. This method should be called periodically (every second or so).
     /// @param newInfo new state received from the daemon if any.
     /// @note it is methematically important to keep period time fixed.
-    void UpdateState(const std::optional<FullInfoBlock> &newInfo)
+    void UpdateState(const std::optional<FullInfoBlock> &newInfo) noexcept
     {
         if (newInfo)
         {
@@ -98,22 +98,23 @@ class BoosterOnOffDecider
     /// @brief Computes boosters states using latest values set by UpdateState().
     /// @returns States which should be passed to daemon based on last call(s) to UpdateState().
     [[nodiscard]]
-    BoostersStates GetUpdatedBoosterStates() const
+    BoostersStates GetUpdatedBoosterStates() const noexcept
     {
         BoostersStates res;
-        const bool isHot = IsHotNow();
+        const bool isSystemHot = IsSystemHotNow();
 
         // This booster must be on when CPU is hot.
         switch (lastStates.fanBoosterState)
         {
             case BoosterState::NO_CHANGE:
-                throw std::logic_error("We do not expect BoosterState::NO_CHANGE from the daemon.");
+                // This is something which should not happen. But throwing exception does not help
+                // here too. Let's just pass, and see what will happen on the next cycle.
                 break;
             case BoosterState::OFF:
-                res.fanBoosterState = isHot ? BoosterState::ON : BoosterState::NO_CHANGE;
+                res.fanBoosterState = isSystemHot ? BoosterState::ON : BoosterState::NO_CHANGE;
                 break;
             case BoosterState::ON:
-                res.fanBoosterState = !isHot ? BoosterState::OFF : BoosterState::NO_CHANGE;
+                res.fanBoosterState = !isSystemHot ? BoosterState::OFF : BoosterState::NO_CHANGE;
                 break;
         };
 
@@ -121,16 +122,18 @@ class BoosterOnOffDecider
         switch (lastStates.cpuTurboBoostState)
         {
             case CpuTurboBoostState::NO_CHANGE:
-                throw std::logic_error("We do not expect BoosterState::NO_CHANGE from the daemon.");
+                // This is something which should not happen. But throwing exception does not help
+                // here too. Let's just pass, and see what will happen on the next cycle.
                 break;
             case CpuTurboBoostState::OFF:
-                res.cpuTurboBoostState = !isHot && lastStates.PassedSinceCpuBoostOff() > 5000ms
-                                           ? CpuTurboBoostState::ON
-                                           : CpuTurboBoostState::NO_CHANGE;
+                res.cpuTurboBoostState =
+                  !isSystemHot && lastStates.PassedSinceCpuBoostOff() > 5000ms
+                    ? CpuTurboBoostState::ON
+                    : CpuTurboBoostState::NO_CHANGE;
                 break;
             case CpuTurboBoostState::ON:
                 res.cpuTurboBoostState =
-                  isHot ? CpuTurboBoostState::OFF : CpuTurboBoostState::NO_CHANGE;
+                  isSystemHot ? CpuTurboBoostState::OFF : CpuTurboBoostState::NO_CHANGE;
                 break;
         };
 
@@ -145,7 +148,7 @@ class BoosterOnOffDecider
 
     template <typename taLeft, typename taRight>
     [[nodiscard]]
-    static bool greater(const std::optional<taLeft> &left, taRight right)
+    static bool greater(const std::optional<taLeft> &left, taRight right) noexcept
     {
         static_assert(std::is_arithmetic_v<taRight> && std::is_arithmetic_v<taLeft>,
                       "Only arithemetic types are supported.");
@@ -153,16 +156,16 @@ class BoosterOnOffDecider
     }
 
     [[nodiscard]]
-    bool IsHotNow() const
+    bool IsSystemHotNow() const noexcept
     {
         const auto avrCpu = cpuAvrTemp.GetCurrent();
         const auto avrGpu = gpuAvrTemp.GetCurrent();
         return (greater(avrCpu, kDegreeLimitBoth) && greater(avrGpu, kDegreeLimitBoth))
-               || IsHotCpuNow();
+               || IsCpuHotNow();
     }
 
     [[nodiscard]]
-    bool IsHotCpuNow() const
+    bool IsCpuHotNow() const noexcept
     {
         const auto avrCpu = cpuAvrTemp.GetCurrent();
         return greater(avrCpu, kCpuOnlyDegree);
