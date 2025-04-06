@@ -90,6 +90,7 @@ class BoosterOnOffDecider
         if (newInfo)
         {
             cpuAvrTemp.OfferValue(newInfo->info.cpu.temperature);
+            cpuAvrTempOnLongRun.OfferValue(newInfo->info.cpu.temperature);
             gpuAvrTemp.OfferValue(newInfo->info.gpu.temperature);
             lastStates = *newInfo;
         }
@@ -111,6 +112,8 @@ class BoosterOnOffDecider
     BoostersStates lastStates;
 
     RunningAvr<float, AvrSamplesCount> cpuAvrTemp;
+    RunningAvr<float, AvrSamplesCount * 5> cpuAvrTempOnLongRun;
+
     RunningAvr<float, AvrSamplesCount> gpuAvrTemp;
 
     template <typename taLeft, typename taRight>
@@ -122,13 +125,25 @@ class BoosterOnOffDecider
         return left.has_value() && *left > right;
     }
 
-    [[nodiscard]]
-    bool IsSystemHotNow() const noexcept
+    template <typename taCpuTemp>
+    bool IsSystemHot(const taCpuTemp &cpuTemp) const noexcept
     {
-        const auto avrCpu = cpuAvrTemp.GetCurrent();
+        const auto avrCpu = cpuTemp.GetCurrent();
         const auto avrGpu = gpuAvrTemp.GetCurrent();
         return greater(avrCpu, kCpuOnlyDegree)
                || (greater(avrCpu, kDegreeLimitBoth) && greater(avrGpu, kDegreeLimitBoth));
+    }
+
+    [[nodiscard]]
+    bool IsSystemHotNow() const noexcept
+    {
+        return IsSystemHot(cpuAvrTemp);
+    }
+
+    [[nodiscard]]
+    bool IsSystemHotOnLongRun() const noexcept
+    {
+        return IsSystemHot(cpuAvrTempOnLongRun);
     }
 
     /// @brief Decides next state of the fan's booster.
@@ -162,7 +177,8 @@ class BoosterOnOffDecider
                 break;
             case CpuTurboBoostState::OFF:
                 state.cpuTurboBoostState =
-                  !isSystemHot && lastStates.PassedSinceCpuBoostOff() > kMinimalTimeCpuTurboBoostOff
+                  !IsSystemHotOnLongRun()
+                      && lastStates.PassedSinceCpuBoostOff() > kMinimalTimeCpuTurboBoostOff
                     ? CpuTurboBoostState::ON
                     : CpuTurboBoostState::NO_CHANGE;
                 break;
@@ -179,6 +195,7 @@ class BoosterOnOffDecider
     inline static constexpr int kCpuOnlyDegree = 91;
     static_assert(kDegreeLimitBoth < kCpuOnlyDegree, "Revise here.");
 
-    // For how long cpu turbo-boost should remain turned off at least.
+    // For how long cpu turbo-boost should remain turned off at least. Which should prevent beats of
+    // on/off fast.
     inline static constexpr auto kMinimalTimeCpuTurboBoostOff = 5000ms;
 };
