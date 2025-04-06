@@ -162,7 +162,7 @@ class BoosterOnOffDecider
                 break;
             case CpuTurboBoostState::OFF:
                 state.cpuTurboBoostState =
-                  !isSystemHot && lastStates.PassedSinceCpuBoostOff() > 5000ms
+                  !isSystemHot && lastStates.PassedSinceCpuBoostOff() > kMinimalTimeCpuTurboBoostOff
                     ? CpuTurboBoostState::ON
                     : CpuTurboBoostState::NO_CHANGE;
                 break;
@@ -178,4 +178,7 @@ class BoosterOnOffDecider
     // If cpu is such hot - boost, even if gpu is off
     inline static constexpr int kCpuOnlyDegree = 91;
     static_assert(kDegreeLimitBoth < kCpuOnlyDegree, "Revise here.");
+
+    // For how long cpu turbo-boost should remain turned off at least.
+    inline static constexpr auto kMinimalTimeCpuTurboBoostOff = 5000ms;
 };
