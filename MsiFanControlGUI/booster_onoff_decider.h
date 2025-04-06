@@ -5,7 +5,6 @@
 #include "running_avr.h"
 #include "tabular_derivative.h"
 
-#include <chrono>
 #include <cstddef>
 #include <optional>
 #include <tuple>
@@ -92,12 +91,12 @@ class CpuTurboBoostController
     TabularDerivative d2T; ///< Second derivative (temperature acceleration)
 };
 
-/// @brief Different boosters' states bound together.
+/// @brief Different boosters' states bound together. This result of what should be send to the
+/// daemon.
 struct BoostersStates
 {
     BoosterState fanBoosterState{BoosterState::NO_CHANGE};
     CpuTurboBoostState cpuTurboBoostState{CpuTurboBoostState::NO_CHANGE};
-    std::chrono::system_clock::time_point cpuTurboBoostOffAt{std::chrono::system_clock::now()};
 
     BoostersStates() = default;
     ~BoostersStates() = default;
@@ -124,11 +123,6 @@ struct BoostersStates
     BoostersStates &operator=(const FullInfoBlock &info) noexcept
     {
         fanBoosterState = info.boosterState;
-        if (cpuTurboBoostState != info.cpuTurboBoost
-            && info.cpuTurboBoost == CpuTurboBoostState::OFF)
-        {
-            cpuTurboBoostOffAt = std::chrono::system_clock::now();
-        }
         cpuTurboBoostState = info.cpuTurboBoost;
 
         return *this;
@@ -147,13 +141,6 @@ struct BoostersStates
     {
         request.boosterState = fanBoosterState;
         request.cpuTurboBoost = cpuTurboBoostState;
-    }
-
-    [[nodiscard]]
-    std::chrono::milliseconds PassedSinceCpuBoostOff() const noexcept
-    {
-        return std::chrono::duration_cast<std::chrono::milliseconds>(
-          std::chrono::system_clock::now() - cpuTurboBoostOffAt);
     }
 };
 
