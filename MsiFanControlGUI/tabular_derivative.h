@@ -6,6 +6,7 @@
 #include <stdexcept>
 
 /// @brief Computes running tabular derivative of the function, based on real time passed.
+/// Measure units are [value unit] per [real time second].
 class TabularDerivative
 {
   public:
@@ -42,6 +43,9 @@ class TabularDerivative
     void Update(float value)
     {
         history.emplace_back(value);
+        // Limiting to 3 values which is central difference or 2 which is forward difference.
+        // It is enough to compute derivative. If more points are needed, then
+        // central differences with larger window should be used. But it will increase latency.
         if (history.size() > 3)
         {
             history.pop_front();
@@ -55,7 +59,7 @@ class TabularDerivative
         // EMA (exponential smoothing).
         if (!smoothed)
         {
-            smoothed = std::move(derivative);
+            smoothed = derivative;
             return;
         }
         *smoothed = alpha * derivative.value() + (1.0f - alpha) * smoothed.value();
@@ -63,6 +67,7 @@ class TabularDerivative
 
     /// @returns Smoothed function by real time derivative since last Update(). Or std::nullopt if
     /// it is not possible to compute yet.
+    /// @note measure units are [value unit] per [real time second].
     [[nodiscard]]
     const std::optional<float> &Result() const
     {
@@ -82,6 +87,11 @@ class TabularDerivative
         }
     };
 
+    /// @returns computed derivative measured in [value unit] per [real time second]. Or
+    /// std::nullopt if it is not possible to compute yet. Uses first and last measure in history.
+    /// @note It assumes that Update() was called at least twice before this call. Otherwise,
+    /// it throws an exception. If the history size is less than 2, it returns std::nullopt.
+    [[nodiscard]]
     TComputedValue ComputeDerivativeBasedOnHistory() const
     {
         if (history.size() < 2)
@@ -91,8 +101,10 @@ class TabularDerivative
         const auto &right = history.back();
         const auto &left = history.front();
 
+        // Manual cast to seconds with milliseconds precision.
         const float dtSeconds =
-          std::chrono::duration_cast<std::chrono::milliseconds>(right.time - left.time).count()
+          static_cast<float>(
+            std::chrono::duration_cast<std::chrono::milliseconds>(right.time - left.time).count())
           / 1000.f;
 
         if (dtSeconds <= 0.0f)
