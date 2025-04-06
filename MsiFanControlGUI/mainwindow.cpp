@@ -2,9 +2,9 @@
 
 #include "booster_onoff_decider.h" // IWYU pragma: keep
 #include "communicator.h"          // IWYU pragma: keep
-#include "device.h"                // IWYU pragma: keep
 #include "execonmainthread.h"      // IWYU pragma: keep
 #include "gui_helpers.h"           // IWYU pragma: keep
+#include "messages_types.h"        // IWYU pragma: keep
 #include "qcheckbox.h"
 #include "qnamespace.h"
 #include "qradiobutton.h"

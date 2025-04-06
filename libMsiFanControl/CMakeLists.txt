@@ -22,6 +22,7 @@ add_library(MsiFanControl STATIC
   intelbeforegen10.h intelbeforegen10.cpp
 
   msi_fan_control.h msi_fan_control.cpp
+  messages_types.h
 )
 
 target_compile_definitions(MsiFanControl PRIVATE LIBMSIFANCONTROL_LIBRARY)

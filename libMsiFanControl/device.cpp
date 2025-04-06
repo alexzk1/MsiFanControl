@@ -1,14 +1,13 @@
-#include "device.h"
+#include "device.h" // IWYU pragma: keep
 
 #include "command_detector.h"
 #include "csysfsprovider.h"
-#include "device_commands.h"
+#include "device_commands.h" // IWYU pragma: keep
 #include "readwrite.h"
 
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <filesystem>
 #include <iosfwd>
 #include <iterator>
 #include <map>
@@ -21,6 +20,11 @@
 
 // NOLINTNEXTLINE
 bool GLOBAL_DRY_RUN = false;
+
+// Rosetta stone: https://github.com/YoyPa/isw/blob/master/wiki/msi%20ec.png
+//  More information:
+//  https://github.com/dmitry-s93/MControlCenter/blob/main/src/operate.cpp
+// https://github.com/BeardOverflow/msi-ec/blob/main/msi-ec.c#L2613
 
 namespace {
 // Cannot use assert! Because it does not call destructors and shared memory remains allocated in

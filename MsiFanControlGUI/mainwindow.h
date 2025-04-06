@@ -1,7 +1,7 @@
 #pragma once
 
-#include "cm_ctors.h" // IWYU pragma: keep
-#include "device.h"   // IWYU pragma: keep
+#include "cm_ctors.h"       // IWYU pragma: keep
+#include "messages_types.h" // IWYU pragma: keep
 
 #include <QAction>
 #include <QButtonGroup>
