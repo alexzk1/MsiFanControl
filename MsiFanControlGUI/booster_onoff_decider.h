@@ -95,8 +95,9 @@ class CpuTurboBoostController
     TabularDerivative dT;  ///< First derivative (rate of temperature change)
     TabularDerivative d2T; ///< Second derivative (temperature acceleration)
 
+    /// @returns -1, 0 or 1 depend on sign of @p value.
     template <class T>
-    static constexpr int sgn(const T v)
+    static constexpr int sgn(const T value)
     {
         static_assert(std::is_arithmetic<T>::value, "Only arithmetic types are supported.");
         static_assert(static_cast<int>(true) == 1 && static_cast<int>(false) == 0, "Woops!");
@@ -104,18 +105,19 @@ class CpuTurboBoostController
 
         if constexpr (std::is_signed<T>::value)
         {
-            return static_cast<int>(v > kZero) - static_cast<int>(v < kZero);
+            return static_cast<int>(value > kZero) - static_cast<int>(value < kZero);
         }
 
         if constexpr (std::is_unsigned<T>::value)
         {
-            return static_cast<int>(v > kZero);
+            return static_cast<int>(value > kZero);
         }
     }
 
-    static bool IsPositive(float v)
+    /// @returns true if @p v is greater than 0.
+    static bool IsPositive(float value)
     {
-        return 1 == sgn(v);
+        return 1 == sgn(value);
     }
 };
 
