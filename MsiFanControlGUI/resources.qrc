@@ -3,5 +3,6 @@
         <file>../images/fan.png</file>
         <file>../images/boost.png</file>
         <file>../images/quit.png</file>
+        <file>../images/boost2.png</file>
     </qresource>
 </RCC>

@@ -23,12 +23,14 @@
 #include <QOverload>
 #include <QPainter>
 #include <QPixmap>
+#include <QRectF>
 #include <QString>
 #include <QSystemTrayIcon>
 #include <QTimer>
 
 #include <qbuttongroup.h>
 #include <qmainwindow.h>
+#include <qpaintdevice.h>
 #include <qrgb.h>
 
 #include <algorithm>
@@ -321,6 +323,17 @@ void MainWindow::UpdateUiWithInfo(FullInfoBlock info, bool possiblyBrokenConn)
         static const QString fmtNum("%1");
         ui->outCpuT->setText(QString(fmtNum).arg(info.info.cpu.temperature));
         ui->outCpuR->setText(QString(fmtNum).arg(info.info.cpu.fanRPM));
+        if (info.boostersStates.cpuTurboBoostState == CpuTurboBoostState::ON)
+        {
+            ui->lblCpuBoost->setScaledContents(true);
+            ui->lblCpuBoost->setPixmap({":/images/boost2.png"});
+            ui->lblCpuBoost->setToolTip(tr("Cpu's turbo-boost mode is active."));
+        }
+        else
+        {
+            ui->lblCpuBoost->clear();
+            ui->lblCpuBoost->setToolTip("");
+        }
         if (0 == info.info.gpu.temperature)
         {
             static const QString offline(tr("Offline"));
@@ -350,7 +363,8 @@ void MainWindow::UpdateUiWithInfo(FullInfoBlock info, bool possiblyBrokenConn)
                                        + QString::fromStdString(info.daemonDeviceException));
         }
 
-        SetImageIcon(info.info.cpu.temperature, Qt::green);
+        SetImageIcon(info.info.cpu.temperature, Qt::green,
+                     info.boostersStates.cpuTurboBoostState == CpuTurboBoostState::ON);
         ReadCurvesFromDaemon(std::move(info.behaveAndCurve));
 
         const std::lock_guard grd(lastReadInfoForGameModeThreadMutex);
@@ -422,27 +436,48 @@ void MainWindow::UncheckAllBatteryButtons()
     }
 }
 
-void MainWindow::SetImageIcon(std::optional<int> value, const QColor &color)
+void MainWindow::SetImageIcon(std::optional<int> value, const QColor &color,
+                              const bool cpuTurboBoost)
 {
     static const QIcon icon(":/images/fan.png");
+    static const QImage overlay(":/images/boost2.png");
+
     if (!value || isVisible())
     {
         systemTray->setIcon(icon);
     }
     else
     {
-        QImage image(25, 25, QImage::Format_RGBA8888);
+        // Image size and font size are bound because of the scaling on final output.
+        // Bigger image size set here, bigger font we need.
+        QImage image(64, 64, QImage::Format_RGBA8888);
         image.fill(qRgba(0, 0, 0, 0));
+
         QPainter p;
         if (!p.begin(&image))
         {
             systemTray->setIcon(icon);
             return;
         }
-
+        // Setters should be called after "begin".
+        p.setRenderHint(QPainter::Antialiasing);
         p.setPen(QPen(color));
-        p.setFont(QFont("Times", 14, QFont::Bold));
-        p.drawText(image.rect(), Qt::AlignCenter, QString("%1°").arg(*value));
+
+        if (cpuTurboBoost)
+        {
+            const QRectF targetRect(0, 0, 16, 16);
+            const QRectF textRect(targetRect.width(), 0, image.width() - targetRect.width(),
+                                  image.height());
+
+            p.drawImage(targetRect, overlay);
+            p.setFont(QFont("Times", 29, QFont::Bold));
+            p.drawText(textRect, Qt::AlignCenter, QString("%1°").arg(*value));
+        }
+        else
+        {
+            p.setFont(QFont("Times", 35, QFont::Bold));
+            p.drawText(image.rect(), Qt::AlignCenter, QString("%1°").arg(*value));
+        }
         p.end();
 
         systemTray->setIcon(QIcon(QPixmap::fromImage(image)));

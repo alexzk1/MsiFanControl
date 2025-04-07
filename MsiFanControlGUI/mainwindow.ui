@@ -33,13 +33,6 @@
          <string>Temperature, C</string>
         </property>
         <layout class="QGridLayout" name="gridLayout">
-         <item row="1" column="1">
-          <widget class="QLabel" name="outGpuT">
-           <property name="text">
-            <string>0</string>
-           </property>
-          </widget>
-         </item>
          <item row="1" column="0">
           <widget class="QLabel" name="label_2">
            <property name="text">
@@ -58,6 +51,20 @@
           <widget class="QLabel" name="outCpuT">
            <property name="text">
             <string>0</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLabel" name="outGpuT">
+           <property name="text">
+            <string>0</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QLabel" name="lblCpuBoost">
+           <property name="text">
+            <string/>
            </property>
           </widget>
          </item>
@@ -190,7 +197,7 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="2" alignment="Qt::Qt::AlignVCenter">
+         <item row="0" column="2" alignment="Qt::AlignVCenter">
           <widget class="QGroupBox" name="boostGroup">
            <property name="title">
             <string/>
@@ -228,10 +235,10 @@
     <item>
      <widget class="QCheckBox" name="cbGameMode">
       <property name="toolTip">
-       <string>Automatically controls boost switch to prevent thottling itno the games.</string>
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Automatically controls fan's boost switch and CPU's turbo-boost to prevent thermal throttling.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
       <property name="text">
-       <string>Game Mode Automatic Boost Control</string>
+       <string>Game Mode - Automatic Boosts Control</string>
       </property>
      </widget>
     </item>

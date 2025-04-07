@@ -89,7 +89,8 @@ class MainWindow final : public QMainWindow
 
     void LaunchGameMode();
 
-    void SetImageIcon(std::optional<int> value, const QColor &color = qRgba(0, 0, 0, 0));
+    void SetImageIcon(std::optional<int> value, const QColor &color = qRgba(0, 0, 0, 0),
+                      const bool cpuTurboBoost = false);
 
     void ReadCurvesFromDaemon(BehaveWithCurve curves);
 
