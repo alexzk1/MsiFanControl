@@ -52,6 +52,8 @@ class CpuTurboBoostController
         static constexpr float kCpuOnlyColdDegree =
           72.0; ///< Temperature threshold to consider enabling turbo-boost.
 
+        static constexpr float kTooFastHeatingRateDegreesPerSecond = 0.5f;
+
         // If user turns on algorithm when it is already hot, we should issue orders immediately, we
         // can't wait d2T to be collected. Also it can be constant d2T but hot.
         const auto justCreatedResult = [&currentState, &currentTemperature]() {
@@ -77,7 +79,8 @@ class CpuTurboBoostController
 
         if (currentState == CpuTurboBoostState::ON)
         {
-            if (currentTemperature >= kCpuOnlyHotDegree && rate > 0.5f && IsPositive(acceleration))
+            if (currentTemperature >= kCpuOnlyHotDegree
+                && rate > kTooFastHeatingRateDegreesPerSecond && IsPositive(acceleration))
             {
                 return CpuTurboBoostState::OFF;
             }
