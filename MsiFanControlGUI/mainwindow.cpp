@@ -325,9 +325,12 @@ void MainWindow::UpdateUiWithInfo(FullInfoBlock info, bool possiblyBrokenConn)
         ui->outCpuR->setText(QString(fmtNum).arg(info.info.cpu.fanRPM));
         if (info.boostersStates.cpuTurboBoostState == CpuTurboBoostState::ON)
         {
-            ui->lblCpuBoost->setScaledContents(true);
-            ui->lblCpuBoost->setPixmap({":/images/boost2.png"});
-            ui->lblCpuBoost->setToolTip(tr("Cpu's turbo-boost mode is active."));
+            if (!ui->lblCpuBoost->pixmap())
+            {
+                ui->lblCpuBoost->setScaledContents(true);
+                ui->lblCpuBoost->setPixmap({":/images/boost2.png"});
+                ui->lblCpuBoost->setToolTip(tr("Cpu's turbo-boost mode is active."));
+            }
         }
         else
         {
