@@ -16,6 +16,11 @@
 class ReadsPeriodDetector
 {
   public:
+    /// @brief Constructs a new instance of the ReadsPeriodDetector class.
+    ///
+    /// @param isPingOk Indicates whether the ping to the daemon is successful.
+    /// @param sharedDevice The shared device object containing information about the CPU
+    /// temperature.
     ReadsPeriodDetector(const bool &isPingOk, const CSharedDevice &sharedDevice) :
         isPingOk(isPingOk),
         sharedDevice(sharedDevice)
@@ -62,12 +67,15 @@ class ReadsPeriodDetector
     }
 
   private:
+    /// @brief Represents a record of how often we should read real values from the BIOS based on
+    /// CPU temperature.
     struct TTempPeriodRecord
     {
         std::uint16_t cpuTemp;
         std::size_t loopPeriod;
     };
 
+    /// @brief Validates that the records are ordered by temperature and no record has zero period.
     static std::vector<TTempPeriodRecord> Validate(std::initializer_list<TTempPeriodRecord> records)
     {
         auto it = std::adjacent_find(records.begin(), records.end(),
@@ -98,7 +106,7 @@ class ReadsPeriodDetector
 
         return records;
     }
-
+    /// @brief Is ping to daemon is successful. If not, we should update as fast as possible.
     const bool &isPingOk;
     const CSharedDevice &sharedDevice;
 };
