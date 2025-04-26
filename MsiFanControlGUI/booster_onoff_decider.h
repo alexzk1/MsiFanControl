@@ -188,16 +188,27 @@ class BoostersOnOffDecider
         return left.has_value() && *left > right;
     }
 
+    [[nodiscard]]
     bool IsSystemHot() const noexcept
     {
         // Celsium, nvidia gpu max is 93C.
-        static constexpr int kDegreeLimitBoth = 80;
-        static constexpr int kCpuOnlyHotDegree = 91;
-        static_assert(kDegreeLimitBoth < kCpuOnlyHotDegree, "Revise here.");
 
         const auto avrCpu = cpuAvrTemp.GetCurrent();
         const auto avrGpu = gpuAvrTemp.GetCurrent();
-        return greater(avrCpu, kCpuOnlyHotDegree)
-               || (greater(avrCpu, kDegreeLimitBoth) && greater(avrGpu, kDegreeLimitBoth));
+        const bool isGpuActive = avrGpu > 0;
+
+        if (isGpuActive)
+        {
+            static constexpr int kGpuTempLimit = 75; // 75°C GPU
+            static constexpr int kCpuTempLimit = 85; // 85°C CPU
+            static_assert(kGpuTempLimit < kCpuTempLimit, "Revise here.");
+
+            return greater(avrCpu, kCpuTempLimit) || greater(avrGpu, kGpuTempLimit);
+        }
+        else
+        {
+            static constexpr int kCpuOnlyHotDegree = 91;
+            return greater(avrCpu, kCpuOnlyHotDegree);
+        }
     }
 };
