@@ -2,12 +2,12 @@
 
 #include "cm_ctors.h" // IWYU pragma: keep
 #include "device.h"   // IWYU pragma: keep
+#include "messages_types.h"
 #include "running_avr.h"
-#include "tabular_derivative.h"
+#include "tabular_derivative.h" // IWYU pragma: keep
 
 #include <cstddef>
 #include <optional>
-#include <tuple>
 #include <type_traits>
 
 /**
@@ -44,8 +44,7 @@ class CpuTurboBoostController
      * @param currentState The current state of the turbo-boost feature (ON, OFF, or NO_CHANGE).
      * @return CpuTurboBoostState The new turbo-boost state: ON, OFF, or NO_CHANGE.
      */
-    CpuTurboBoostState Update(const float currentTemperature,
-                              const CpuTurboBoostState currentState) noexcept
+    CpuTurboBoostState Update(const float currentTemperature, const CpuTurboBoostState currentState)
     {
         static constexpr float kCpuOnlyHotDegree =
           83.0; ///< Temperature threshold to consider disabling turbo-boost.
@@ -66,12 +65,16 @@ class CpuTurboBoostController
 
         const auto tempDerivative = dT.Result();
         if (!tempDerivative.has_value())
+        {
             return justCreatedResult();
+        }
 
         d2T.Update(*tempDerivative);
         const auto accel = d2T.Result();
         if (!accel.has_value())
+        {
             return justCreatedResult();
+        }
 
         // Decision logic.
         const float rate = *tempDerivative;
@@ -105,16 +108,16 @@ class CpuTurboBoostController
     template <class T>
     static constexpr int sgn(const T value)
     {
-        static_assert(std::is_arithmetic<T>::value, "Only arithmetic types are supported.");
+        static_assert(std::is_arithmetic_v<T>, "Only arithmetic types are supported.");
         static_assert(static_cast<int>(true) == 1 && static_cast<int>(false) == 0, "Woops!");
         constexpr T kZero{0};
 
-        if constexpr (std::is_signed<T>::value)
+        if constexpr (std::is_signed_v<T>)
         {
             return static_cast<int>(value > kZero) - static_cast<int>(value < kZero);
         }
 
-        if constexpr (std::is_unsigned<T>::value)
+        if constexpr (std::is_unsigned_v<T>)
         {
             return static_cast<int>(value > kZero);
         }
@@ -139,7 +142,7 @@ class BoostersOnOffDecider
     /// @param newInfo new state received from the daemon if any.
     /// @returns States which should be passed to daemon based on last call(s) to UpdateState().
     [[nodiscard]]
-    BoostersStates ComputeUpdatedBoosterStates(const std::optional<FullInfoBlock> &newInfo) noexcept
+    BoostersStates ComputeUpdatedBoosterStates(const std::optional<FullInfoBlock> &newInfo)
     {
         BoostersStates res;
         if (newInfo)
