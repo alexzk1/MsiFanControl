@@ -7,6 +7,9 @@ post_install() {
 
   echo ":: Enabling msifancontrol.service..."  
   systemctl preset msifancontrol.service >/dev/null 2>&1
+  systemctl enable msifancontrol.service
+  systemctl start msifancontrol.service
+
   echo ">> Updating icon cache..."
   gtk-update-icon-cache -q /usr/share/icons/hicolor  
 }
