@@ -1,9 +1,8 @@
 #include "communicator.h"
-#include "device.h"
+#include "messages_types.h"
 #include "runners.h"
 
 #include <cerrno>
-#include <cstdlib>
 #include <exception>
 #include <iostream>
 #include <ostream>

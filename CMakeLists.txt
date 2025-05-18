@@ -1,9 +1,14 @@
 # Set the minimum required CMake version:
-cmake_minimum_required( VERSION 3.14 FATAL_ERROR )
+cmake_minimum_required( VERSION 3.15 FATAL_ERROR )
 
 project(MsiFanControlEverything)
+
+option(BUILD_TESTS "Build tests" ON)
 
 add_subdirectory(libMsiFanControl)
 add_subdirectory(MsiFanCtrlD)
 add_subdirectory(MsiFanControlGUI)
-add_subdirectory(tests)
+
+if(BUILD_TESTS)
+    add_subdirectory(tests)
+endif()

@@ -1,0 +1,26 @@
+post_install() {
+
+  echo "::Enabling ec_sys write support..."
+  echo "options ec_sys write_support=1" > /etc/modprobe.d/ec_sys_by_msifanctrl.conf
+  modprobe -r ec_sys 2>/dev/null || true
+  modprobe ec_sys write_support=1
+
+  echo ":: Enabling msifancontrol.service..."  
+  systemctl preset msifancontrol.service >/dev/null 2>&1
+  echo ">> Updating icon cache..."
+  gtk-update-icon-cache -q /usr/share/icons/hicolor  
+}
+
+pre_remove() {
+  echo ":: Stopping msifancontrol.service..."
+  systemctl stop msifancontrol.service >/dev/null 2>&1 || true
+}
+
+post_remove() {
+  echo ">> Updating icon cache..."
+  gtk-update-icon-cache -q /usr/share/icons/hicolor
+}
+
+post_upgrade() {
+  post_install
+}

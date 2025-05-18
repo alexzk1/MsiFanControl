@@ -1,0 +1,65 @@
+# Maintainer: Oleksiy Zakharov <alexzkhr@gmail.com>
+
+pkgname=msifancontrol
+pkgver=0.1.r0.g0000000
+pkgrel=1
+pkgdesc="MSI fan controller daemon and GUI for Linux"
+arch=('x86_64')
+url="https://github.com/alexzk1/MsiFanControl"
+license=('MIT')
+depends=('libcpuid' 'systemd-libs' 'cereal' 'boost')
+makedepends=('cmake' 'gcc' 'git')
+source=("git+$url.git"
+        "msifancontrol.service"
+        "msifancontrol.install"
+        "msifancontrol.desktop")
+install=msifancontrol.install
+md5sums=('SKIP' 'SKIP' 'SKIP' 'SKIP')
+
+qt_version="qt5"
+
+check() {
+  if [[ "$qt_version" == "qt6" ]]; then
+    depends+=('qt6-base')
+  else
+    depends+=('qt5-base')
+  fi
+}
+
+prepare() {
+  if [[ -n "$QT_VERSION" ]]; then
+    qt_version="$QT_VERSION"
+  fi
+}
+
+pkgver() {
+  cd "$srcdir/MsiFanControl"
+  git describe --tags --long | sed 's/^v//;s/-/.r/;s/-/./'
+}
+
+build() {
+    local qt_base
+    if [[ "$qt_version" == "qt6" ]]; then
+        qt_base="Qt6"
+    else
+        qt_base="Qt5"
+    fi
+
+    cmake -B build -S "$srcdir/MsiFanControl" -DBUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DQT_VERSION_MAJOR="$qt_base"
+    cmake --build build
+}
+
+package() {
+  install -Dm755 build/MsiFanCtrlD/MsiFanCtrlD "$pkgdir/usr/bin/msifancontrold"
+  install -Dm755 build/MsiFanControlGUI/MsiFanControlGUI "$pkgdir/usr/bin/msifancontrolgui"
+
+  install -Dm644 msifancontrol.service "$pkgdir/usr/lib/systemd/system/msifancontrol.service"
+
+  install -Dm644 msifancontrol.desktop \
+    "$pkgdir/etc/xdg/autostart/msifancontrol.desktop"
+
+  install -Dm644 "$srcdir/MsiFanControl/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  install -Dm644 "$srcdir/MsiFanControl/images/fan.png" "$pkgdir/usr/share/icons/hicolor/128x128/apps/msifancontrol.png"
+}

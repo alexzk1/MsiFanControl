@@ -49,5 +49,5 @@ Additionaly, acpi irq must be enabled, i.e. booting kernel with `acpi=off` or `a
 It appears that checking temperature (reading values over debug interface) raises electricty usage and temperature itself. So this app was redesigned in the such way, so lower your current temp is, bigger time between 2 updates will be. So on the cold cpu program will update values 1-2-3 times per minute. On the hot cpu it can be once per 2 seconds.
 
 # TODO:
-1. Automate what I wrote above by installer.
+1. ~~Automate what I wrote above by installer.~~ Done for ArchLinux.
 2. Implement more functions, like fan's curves in GUI.
