@@ -58,8 +58,12 @@ package() {
   install -Dm644 msifancontrol.desktop \
     "$pkgdir/etc/xdg/autostart/msifancontrol.desktop"
 
+  install -Dm644 msifancontrol.desktop \
+    "$pkgdir/usr/share/applications/msifancontrol.desktop"
+
   install -Dm644 "$srcdir/MsiFanControl/LICENSE" \
     "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
   install -Dm644 "$srcdir/MsiFanControl/images/fan.png" "$pkgdir/usr/share/icons/hicolor/128x128/apps/msifancontrol.png"
+
 }
