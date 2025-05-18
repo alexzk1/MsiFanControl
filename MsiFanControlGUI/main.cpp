@@ -7,6 +7,10 @@
 #include <boost/program_options/variables_map.hpp>
 
 #include <QApplication>
+#include <QMessageBox>
+#include <QSharedMemory>
+
+#include <qapplication.h>
 
 #include <iostream>
 
@@ -33,6 +37,20 @@ int main(int argc, char *argv[])
     }
 
     const QApplication a(argc, argv);
+    a.setApplicationDisplayName("MSI Fans Control");
+    a.setApplicationName("MSI Fans Control Gui Application");
+    a.setWindowIcon(QIcon(":/images/fan.png"));
+
+    QSharedMemory sharedMemory;
+    sharedMemory.setKey(a.applicationName() + "LockOnce");
+    if (!sharedMemory.create(1))
+    {
+        QMessageBox::warning(
+          nullptr, a.applicationDisplayName(),
+          QObject::tr("GUI control module is already running. Check your status bar."));
+        return 0;
+    }
+
     MainWindow w(StartOptions{static_cast<bool>(vm.count("minimize")),
                               static_cast<bool>(vm.count("gamemode"))},
                  nullptr);
