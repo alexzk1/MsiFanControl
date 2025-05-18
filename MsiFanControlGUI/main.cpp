@@ -8,9 +8,8 @@
 
 #include <QApplication>
 #include <QMessageBox>
+#include <QObject>
 #include <QSharedMemory>
-
-#include <qapplication.h>
 
 #include <iostream>
 
