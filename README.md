@@ -15,7 +15,7 @@ https://github.com/dmitry-s93/MControlCenter
 
 "Selling point" is - GUI aplication part controls fan's boost by algorithm which gives perfect gaming experience. Also quering ACPI for details like temperatures is done in smart way, so it does not distrub CPU too much. It gets down to 34 C if left alone, while other apps will keep it at 40-50 C.
 
-Implemented self-restriction via `libseccomp` so this one is much safer to run as `root` than anything else.
+Implemented self-restriction via `libseccomp` so this one is much safer to run as `root` than anything else. Restriction is enabled if `--restrict` command line parameter is given. Note, it may add some heat to your CPU.
 
 Everthing else (present into other solutions) does not look too much important for me.
 
@@ -30,7 +30,7 @@ Reboot, so everything will apply. On 1st run after reboot daemon will make the b
 Run GUI application, tick checkbox "Game Mode Automatic Boost Control", minimize it to the tray (gui program must run), go play your games. It will take care of the fans.
 
 ## Arch Linux
-You can download all files from `linux` subfolder and run `makepkg -is`
+You can download all files from `linux` subfolder and run `makepkg -is`. Restriction is enabled by default in file `linux/msifancontrol.service`.
 
 # Stress test "smart logic" of the "game mode"
 Install `stress-ng` (https://www.tecmint.com/linux-cpu-load-stress-test-with-stress-ng-tool/).

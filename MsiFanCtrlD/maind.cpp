@@ -3,7 +3,9 @@
 #include "runners.h"
 #include "seccomp_wrapper.hpp"
 
+#include <algorithm>
 #include <cerrno>
+#include <cstring>
 #include <exception>
 #include <iostream>
 #include <ostream>
@@ -43,6 +45,7 @@ void threadBody(const utility::runnerint_t shouldStop)
 
 int main(int argc, const char **argv)
 {
+    constexpr auto kRestrict = "--restrict";
     (void)argc;
     (void)argv;
 
@@ -58,8 +61,13 @@ int main(int argc, const char **argv)
         auto thread = utility::startNewRunner(threadBody);
 
         sd_notify(0, "READY=1");
-        auto kernelSecurity = CSecCompWrapper::Allocate();
-        if (kernelSecurity->Engage())
+        const bool isSecurityEnabled =
+          argc > 1 && std::any_of(argv, argv + argc, [](const char *const param) {
+              return strcmp(param, kRestrict) == 0;
+          });
+        auto kernelSecurity = isSecurityEnabled ? CSecCompWrapper::Allocate() : nullptr;
+
+        if (kernelSecurity && kernelSecurity->Engage())
         {
             std::cerr << std::string("MSI fans control daemon has successfully started up with "
                                      "kernel enforced restrictions.")
@@ -68,11 +76,15 @@ int main(int argc, const char **argv)
         }
         else
         {
-            std::cerr << std::string(
-              "MSI fans control daemon has started up but kernel securiy was not applied. This "
-              "instance is weaker for potential attacks.")
+            std::cerr << std::string("MSI fans control daemon has started up but kernel securiy "
+                                     "was not applied.\nIt is weaker for potential attacks.")
                       << std::endl
                       << std::flush;
+            if (!isSecurityEnabled)
+            {
+                std::cerr << "To enable restriction add " << kRestrict << " parameter."
+                          << std::endl;
+            }
         }
 
         int l_signal = 0;

@@ -8,7 +8,7 @@ Type=simple
 Restart=on-failure
 RestartSec=10
 User=root
-ExecStart=/usr/bin/msifancontrold
+ExecStart=/usr/bin/msifancontrold --restrict
 KillMode=process
 
 [Install]
