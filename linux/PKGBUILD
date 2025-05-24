@@ -7,8 +7,8 @@ pkgdesc="MSI fan controller daemon and GUI for Linux"
 arch=('x86_64')
 url="https://github.com/alexzk1/MsiFanControl"
 license=('MIT')
-depends=('libcpuid' 'systemd-libs' 'cereal' 'boost')
-makedepends=('cmake' 'gcc' 'git')
+depends=('libcpuid' 'systemd-libs' 'cereal' 'boost' 'libseccomp')
+makedepends=('cmake' 'gcc' 'git' 'extra-cmake-modules')
 source=("git+$url.git"
         "msifancontrol.service"
         "msifancontrol.install"

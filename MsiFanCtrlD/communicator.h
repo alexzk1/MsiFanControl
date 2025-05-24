@@ -18,6 +18,8 @@ class mapped_region;
 
 class CDevice;
 
+static inline constexpr auto kBackupSharedSize = 256;
+
 /// @brief Main daemon's logic.
 /// Also it keeps backup of BIOS' "file", so any changes can be reverted out of backup.
 class CSharedDevice

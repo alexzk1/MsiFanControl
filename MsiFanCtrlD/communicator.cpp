@@ -301,12 +301,11 @@ bool CSharedDevice::MakeBackupBlock()
     // "leaked" until reboot. It keeps original ACPI data, not modified.
     using namespace boost::interprocess;
     static const char *kBackupName = "MSIFansACPIBackup";
-    static constexpr auto kExpectedSize = 256;
 
     try
     {
         auto shm = shared_memory_object(create_only, kBackupName, read_write);
-        shm.truncate(kExpectedSize);
+        shm.truncate(kBackupSharedSize);
 
         sharedBackup = std::make_shared<SharedMemory>(std::move(shm));
         try

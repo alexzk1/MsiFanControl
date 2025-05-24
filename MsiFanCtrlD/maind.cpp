@@ -1,6 +1,7 @@
 #include "communicator.h"
 #include "messages_types.h"
 #include "runners.h"
+#include "seccomp_wrapper.hpp"
 
 #include <cerrno>
 #include <exception>
@@ -57,9 +58,22 @@ int main(int argc, const char **argv)
         auto thread = utility::startNewRunner(threadBody);
 
         sd_notify(0, "READY=1");
-        std::cerr << std::string("MSI fans control daemon has successfully started up.")
-                  << std::endl
-                  << std::flush;
+        auto kernelSecurity = CSecCompWrapper::Allocate();
+        if (kernelSecurity->Engage())
+        {
+            std::cerr << std::string("MSI fans control daemon has successfully started up with "
+                                     "kernel enforced restrictions.")
+                      << std::endl
+                      << std::flush;
+        }
+        else
+        {
+            std::cerr << std::string(
+              "MSI fans control daemon has started up but kernel securiy was not applied. This "
+              "instance is weaker for potential attacks.")
+                      << std::endl
+                      << std::flush;
+        }
 
         int l_signal = 0;
         sigwait(&l_waitedSignals, &l_signal);
@@ -67,6 +81,8 @@ int main(int argc, const char **argv)
 
         // Stop all threading operations
         thread.reset();
+        kernelSecurity.reset();
+
         sd_notify(0, "STATUS=STOPPED");
         std::cerr << std::string("MSI fans control has been successfully shut down.") << std::endl
                   << std::flush;

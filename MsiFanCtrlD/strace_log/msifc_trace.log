@@ -1,0 +1,512 @@
+50040 execve("/usr/bin/msifancontrold", ["/usr/bin/msifancontrold"], 0x7ffcb130c4c8 /* 11 vars */) = 0
+50040 brk(NULL)                         = 0x612d87f86000
+50040 access("/etc/ld.so.preload", R_OK) = -1 ENOENT (No such file or directory)
+50040 openat(AT_FDCWD, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+50040 fstat(3, {st_mode=S_IFREG|0644, st_size=233139, ...}) = 0
+50040 mmap(NULL, 233139, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7fa699251000
+50040 close(3)                          = 0
+50040 mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fa69924f000
+50040 openat(AT_FDCWD, "/usr/lib/libcpuid.so.18", O_RDONLY|O_CLOEXEC) = 3
+50040 read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+50040 fstat(3, {st_mode=S_IFREG|0755, st_size=267200, ...}) = 0
+50040 mmap(NULL, 295624, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7fa699206000
+50040 mmap(0x7fa699209000, 61440, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x3000) = 0x7fa699209000
+50040 mmap(0x7fa699218000, 176128, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x12000) = 0x7fa699218000
+50040 mmap(0x7fa699243000, 20480, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x3c000) = 0x7fa699243000
+50040 mmap(0x7fa699248000, 25288, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7fa699248000
+50040 close(3)                          = 0
+50040 openat(AT_FDCWD, "/usr/lib/libsystemd.so.0", O_RDONLY|O_CLOEXEC) = 3
+50040 read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+50040 fstat(3, {st_mode=S_IFREG|0755, st_size=1172808, ...}) = 0
+50040 mmap(NULL, 1177856, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7fa6990e6000
+50040 mmap(0x7fa6990fa000, 778240, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x14000) = 0x7fa6990fa000
+50040 mmap(0x7fa6991b8000, 258048, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0xd2000) = 0x7fa6991b8000
+50040 mmap(0x7fa6991f7000, 57344, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x110000) = 0x7fa6991f7000
+50040 mmap(0x7fa699205000, 2304, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7fa699205000
+50040 close(3)                          = 0
+50040 openat(AT_FDCWD, "/usr/lib/libstdc++.so.6", O_RDONLY|O_CLOEXEC) = 3
+50040 read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+50040 fstat(3, {st_mode=S_IFREG|0755, st_size=22478592, ...}) = 0
+50040 mmap(NULL, 2699336, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7fa698e00000
+50040 mmap(0x7fa698e97000, 1396736, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x97000) = 0x7fa698e97000
+50040 mmap(0x7fa698fec000, 598016, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1ec000) = 0x7fa698fec000
+50040 mmap(0x7fa69907e000, 73728, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x27e000) = 0x7fa69907e000
+50040 mmap(0x7fa699090000, 12360, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7fa699090000
+50040 close(3)                          = 0
+50040 openat(AT_FDCWD, "/usr/lib/libgcc_s.so.1", O_RDONLY|O_CLOEXEC) = 3
+50040 read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+50040 fstat(3, {st_mode=S_IFREG|0644, st_size=906008, ...}) = 0
+50040 mmap(NULL, 180712, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7fa6990b9000
+50040 mmap(0x7fa6990bd000, 143360, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x4000) = 0x7fa6990bd000
+50040 mmap(0x7fa6990e0000, 16384, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x27000) = 0x7fa6990e0000
+50040 mmap(0x7fa6990e4000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x2a000) = 0x7fa6990e4000
+50040 close(3)                          = 0
+50040 openat(AT_FDCWD, "/usr/lib/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+50040 read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0px\2\0\0\0\0\0"..., 832) = 832
+50040 pread64(3, "\6\0\0\0\4\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0"..., 840, 64) = 840
+50040 fstat(3, {st_mode=S_IFREG|0755, st_size=2006328, ...}) = 0
+50040 pread64(3, "\6\0\0\0\4\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0"..., 840, 64) = 840
+50040 mmap(NULL, 2030680, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7fa698c10000
+50040 mmap(0x7fa698c34000, 1507328, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x24000) = 0x7fa698c34000
+50040 mmap(0x7fa698da4000, 319488, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x194000) = 0x7fa698da4000
+50040 mmap(0x7fa698df2000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1e1000) = 0x7fa698df2000
+50040 mmap(0x7fa698df8000, 31832, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7fa698df8000
+50040 close(3)                          = 0
+50040 openat(AT_FDCWD, "/usr/lib/libcap.so.2", O_RDONLY|O_CLOEXEC) = 3
+50040 read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0@|\0\0\0\0\0\0"..., 832) = 832
+50040 fstat(3, {st_mode=S_IFREG|0755, st_size=43064, ...}) = 0
+50040 mmap(NULL, 45128, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7fa6990ad000
+50040 mmap(0x7fa6990b0000, 20480, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x3000) = 0x7fa6990b0000
+50040 mmap(0x7fa6990b5000, 8192, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x8000) = 0x7fa6990b5000
+50040 mmap(0x7fa6990b7000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x9000) = 0x7fa6990b7000
+50040 close(3)                          = 0
+50040 openat(AT_FDCWD, "/usr/lib/libm.so.6", O_RDONLY|O_CLOEXEC) = 3
+50040 read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+50040 fstat(3, {st_mode=S_IFREG|0755, st_size=1014104, ...}) = 0
+50040 mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fa6990ab000
+50040 mmap(NULL, 1012040, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7fa698b18000
+50040 mmap(0x7fa698b27000, 548864, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0xf000) = 0x7fa698b27000
+50040 mmap(0x7fa698bad000, 397312, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x95000) = 0x7fa698bad000
+50040 mmap(0x7fa698c0e000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0xf6000) = 0x7fa698c0e000
+50040 close(3)                          = 0
+50040 mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fa6990a9000
+50040 mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fa6990a7000
+50040 arch_prctl(ARCH_SET_FS, 0x7fa6990aa640) = 0
+50040 set_tid_address(0x7fa6990aa910)   = 50040
+50040 set_robust_list(0x7fa6990aa920, 24) = 0
+50040 rseq(0x7fa6990aa400, 0x20, 0, 0x53053053) = 0
+50040 mprotect(0x7fa698df2000, 16384, PROT_READ) = 0
+50040 mprotect(0x7fa698c0e000, 4096, PROT_READ) = 0
+50040 mprotect(0x7fa6990b7000, 4096, PROT_READ) = 0
+50040 mprotect(0x7fa6990e4000, 4096, PROT_READ) = 0
+50040 mprotect(0x7fa69907e000, 69632, PROT_READ) = 0
+50040 mprotect(0x7fa6991f7000, 53248, PROT_READ) = 0
+50040 mprotect(0x7fa699243000, 12288, PROT_READ) = 0
+50040 mprotect(0x612d75283000, 8192, PROT_READ) = 0
+50040 mprotect(0x7fa6992c5000, 8192, PROT_READ) = 0
+
+50040 prlimit64(0, RLIMIT_STACK, NULL, {rlim_cur=8192*1024, rlim_max=RLIM64_INFINITY}) = 0
+50040 munmap(0x7fa699251000, 233139)    = 0
+50040 prctl(PR_CAPBSET_READ, CAP_MAC_OVERRIDE) = 1
+50040 prctl(PR_CAPBSET_READ, 0x30 /* CAP_??? */) = -1 EINVAL (Invalid argument)
+50040 prctl(PR_CAPBSET_READ, CAP_CHECKPOINT_RESTORE) = 1
+50040 prctl(PR_CAPBSET_READ, 0x2c /* CAP_??? */) = -1 EINVAL (Invalid argument)
+50040 prctl(PR_CAPBSET_READ, 0x2a /* CAP_??? */) = -1 EINVAL (Invalid argument)
+50040 prctl(PR_CAPBSET_READ, 0x29 /* CAP_??? */) = -1 EINVAL (Invalid argument)
+
+50040 futex(0x7fa6990906bc, FUTEX_WAKE_PRIVATE, 2147483647) = 0
+50040 getrandom("\x54\x2a\x6b\x76\xe8\xd9\x1a\x95", 8, GRND_NONBLOCK) = 8
+50040 brk(NULL)                         = 0x612d87f86000
+50040 brk(0x612d87fa7000)               = 0x612d87fa7000
+
+
+50040 openat(AT_FDCWD, "/sys/devices/system/cpu/online", O_RDONLY|O_CLOEXEC) = 3
+50040 read(3, "0-11\n", 1024)           = 5
+50040 close(3)                          = 0
+50040 rt_sigprocmask(SIG_BLOCK, [TERM], NULL, 8) = 0
+50040 rt_sigaction(SIGRT_1, {sa_handler=0x7fa698ca2ef0, sa_mask=[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x7fa698c4def0}, NULL, 8) = 0
+50040 rt_sigprocmask(SIG_UNBLOCK, [RTMIN RT_1], NULL, 8) = 0
+50040 mmap(NULL, 8392704, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_STACK, -1, 0) = 0x7fa698317000
+50040 mprotect(0x7fa698318000, 8388608, PROT_READ|PROT_WRITE) = 0
+50040 rt_sigprocmask(SIG_BLOCK, ~[], [TERM], 8) = 0
+50040 clone3({flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS|CLONE_PARENT_SETTID|CLONE_CHILD_CLEARTID, child_tid=0x7fa698b17990, parent_tid=0x7fa698b17990, exit_signal=0, stack=0x7fa698317000, stack_size=0x7ffe00, tls=0x7fa698b176c0} => {parent_tid=[50041]}, 88) = 50041
+50040 rt_sigprocmask(SIG_SETMASK, [TERM], NULL, 8) = 0
+50041 rseq(0x7fa698b17480, 0x20, 0, 0x53053053) = 0
+
+/// LOADED HERE ???
+50040 write(2, "MSI fans control daemon has succ"..., 52 <unfinished ...>
+50041 set_robust_list(0x7fa698b179a0, 24 <unfinished ...>
+50040 <... write resumed>)              = 52
+50041 <... set_robust_list resumed>)    = 0
+50040 write(2, "\n", 1 <unfinished ...>
+50041 rt_sigprocmask(SIG_SETMASK, [TERM],  <unfinished ...>
+50040 <... write resumed>)              = 1
+50041 <... rt_sigprocmask resumed>NULL, 8) = 0
+50040 rt_sigtimedwait([TERM],  <unfinished ...>
+50041 mmap(NULL, 134217728, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fa690200000
+50041 munmap(0x7fa690200000, 65011712)  = 0
+50041 munmap(0x7fa698000000, 2097152)   = 0
+50041 mprotect(0x7fa694000000, 135168, PROT_READ|PROT_WRITE) = 0
+50041 unlink("/dev/shm/MSICoolersSharedControlMem9") = 0
+50041 openat(AT_FDCWD, "/dev/shm/MSIFansACPIBackup", O_RDWR|O_CREAT|O_EXCL|O_NOFOLLOW|O_CLOEXEC, 0644) = -1 EEXIST (File exists)
+50041 futex(0x7fa6990e5070, FUTEX_WAKE_PRIVATE, 2147483647) = 0
+50041 openat(AT_FDCWD, "/dev/shm/MSIFansACPIBackup", O_RDWR|O_NOFOLLOW|O_CLOEXEC) = 3
+50041 fstat(3, {st_mode=S_IFREG|0644, st_size=256, ...}) = 0
+50041 mmap(NULL, 256, PROT_READ|PROT_WRITE, MAP_SHARED, 3, 0) = 0x7fa699289000
+50041 futex(0x7fa6990906c8, FUTEX_WAKE_PRIVATE, 2147483647) = 0
+50041 openat(AT_FDCWD, "/sys/devices/system/cpu/intel_pstate/no_turbo", O_RDONLY) = 4
+50041 read(4, "0\n", 8191)              = 2
+50041 close(4)                          = 0
+50041 openat(AT_FDCWD, "/sys/devices/system/cpu/online", O_RDONLY|O_CLOEXEC) = 4
+50041 read(4, "0-11\n", 1024)           = 5
+50041 close(4)                          = 0
+50041 write(2, "CPU Gen detected: ", 18) = 18
+50041 write(2, "11", 2)                 = 2
+50041 write(2, "\n", 1)                 = 1
+50041 openat(AT_FDCWD, "/proc/sys/fs/protected_regular", O_RDONLY) = 4
+50041 read(4, "1\n", 8191)              = 2
+50041 close(4)                          = 0
+50041 openat(AT_FDCWD, "", O_WRONLY|O_CREAT|O_TRUNC, 0666) = -1 ENOENT (No such file or directory)
+50041 openat(AT_FDCWD, "/dev/shm/MSICoolersSharedControlMem9", O_RDWR|O_CREAT|O_EXCL|O_NOFOLLOW|O_CLOEXEC, 0666) = 4
+50041 fchmod(4, 0666)                   = 0
+50041 fallocate(4, 0, 0, 4096)          = 0
+50041 ftruncate(4, 4096)                = 0
+50041 fstat(4, {st_mode=S_IFREG|0666, st_size=4096, ...}) = 0
+50041 mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_SHARED, 4, 0) = 0x7fa699288000
+50041 openat(AT_FDCWD, "/proc/sys/fs/protected_regular", O_WRONLY|O_CREAT|O_TRUNC, 0666) = 5
+50041 write(5, "1", 1)                  = 1
+50041 close(5)                          = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 0x7fa698b168e0) = 0
+50041 clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=500000000}, 
