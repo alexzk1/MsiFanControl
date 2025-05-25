@@ -8,6 +8,8 @@
 #include <cstring>
 #include <exception>
 #include <iostream>
+#include <mutex>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <thread>
@@ -20,12 +22,21 @@
 
 #include <bits/types/sigset_t.h>
 
+namespace {
+// Note, security blocks thread creation calls (which includes it would block forks()).
+// So we have to wait thread launched, than engage security.
+std::mutex runThreadAfterSecurity;
+} // namespace
+
 // NOLINTNEXTLINE
 void threadBody(const utility::runnerint_t shouldStop)
 {
+    const std::lock_guard delayedStart(runThreadAfterSecurity);
     try
     {
         CSharedDevice sharedDevice;
+        sd_notify(0, "READY=1");
+
         while (!(*shouldStop))
         {
             sharedDevice.Communicate();
@@ -58,16 +69,19 @@ int main(int argc, const char **argv)
         // NOLINTNEXTLINE
         sigprocmask(SIG_BLOCK, &l_waitedSignals, nullptr);
 
+        std::optional<std::lock_guard<std::mutex>> delayedStart;
+        delayedStart.emplace(runThreadAfterSecurity);
         auto thread = utility::startNewRunner(threadBody);
 
-        sd_notify(0, "READY=1");
         const bool isSecurityEnabled =
           argc > 1 && std::any_of(argv, argv + argc, [](const char *const param) {
               return strcmp(param, kRestrict) == 0;
           });
         auto kernelSecurity = isSecurityEnabled ? CSecCompWrapper::Allocate() : nullptr;
+        const bool securityEngaged = kernelSecurity && kernelSecurity->Engage();
+        delayedStart.reset();
 
-        if (kernelSecurity && kernelSecurity->Engage())
+        if (securityEngaged)
         {
             std::cerr << std::string("MSI fans control daemon has successfully started up with "
                                      "kernel enforced restrictions.")
