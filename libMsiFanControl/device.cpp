@@ -3,6 +3,7 @@
 #include "command_detector.h"
 #include "csysfsprovider.h"
 #include "device_commands.h" // IWYU pragma: keep
+#include "messages_types.h"  // IWYU pragma: keep
 #include "readwrite.h"
 
 #include <algorithm>
