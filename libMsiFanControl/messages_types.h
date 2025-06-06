@@ -2,6 +2,7 @@
 
 #include "cm_ctors.h"        // IWYU pragma: keep
 #include "device_commands.h" // IWYU pragma: keep
+#include "lambda_visitors.h" // IWYU pragma: keep
 
 #include <cereal/cereal.hpp>
 
@@ -59,28 +60,36 @@ struct Info
     // Those statics can be re-used from GUI.
     static std::uint16_t parseTemp(const AddressedValueAny &temp)
     {
-        assert(std::holds_alternative<AddressedValue1B>(temp)
-               && "We expect 1 byte request for the temperature.");
-        return std::visit(
-          [](const auto &val) -> std::uint16_t {
+        sfw::LambdaVisitor visitor{
+          [](const AddressedValue1B &val) -> std::uint16_t {
+              static_assert(1 == sizeof(val.value));
               return val.value;
           },
-          temp);
+          [](const auto &) -> std::uint16_t {
+              throw std::runtime_error("Unsupported variant passed to parseTemp().");
+          },
+        };
+        return std::visit(visitor, temp);
     }
 
     static std::uint16_t parseRPM(const AddressedValueAny &rpm)
     {
-        assert(std::holds_alternative<AddressedValue2B>(rpm)
-               && "We expect 2 bytes request for the rpm.");
-        return std::visit(
-          [](const auto &val) -> std::uint16_t {
+        sfw::LambdaVisitor visitor{
+          [](const AddressedValue2B &val) -> std::uint16_t {
+              static_assert(2 == sizeof(val.value));
               if (val.value)
               {
-                  return 478000.0 / val.value;
+                  return static_cast<std::uint16_t>(478000.0 / val.value);
               }
               return 0u;
           },
-          rpm);
+          [](const auto &) -> std::uint16_t {
+              throw std::runtime_error("Unsupported variant passed to parseRPM().");
+          },
+        };
+        assert(std::holds_alternative<AddressedValue2B>(rpm)
+               && "We expect 2 bytes request for the rpm.");
+        return std::visit(visitor, rpm);
     }
 
     // support for Cereal
