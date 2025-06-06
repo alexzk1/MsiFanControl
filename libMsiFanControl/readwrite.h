@@ -186,10 +186,10 @@ class CReadWrite
     void ForEachByte(const taElementType &element, const taCallable &func) const
     {
         using value_t = decltype(element.value);
-        const auto offset = static_cast<std::int64_t>(element.address);
+        const auto offset = static_cast<std::streamoff>(element.address);
         for (std::size_t i = 0; i < sizeof(value_t); ++i)
         {
-            func(offset + static_cast<std::int64_t>(i));
+            func(offset + static_cast<std::streamoff>(i));
         }
     }
 

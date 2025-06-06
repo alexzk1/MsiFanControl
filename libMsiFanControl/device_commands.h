@@ -6,6 +6,7 @@
 #include <map>
 #include <optional>
 #include <stdexcept>
+#include <tuple>
 #include <type_traits>
 #include <variant>
 #include <vector>
@@ -45,14 +46,14 @@ struct AddressedValueTmpl
     void save(Archive &ar) const
     {
         // https://github.com/USCiLab/cereal/issues/684
-        int addr = address;
+        std::streamoff addr = address;
         ar(addr, value);
     }
 
     template <class Archive>
     void load(Archive &ar)
     {
-        int addr = -1;
+        std::streamoff addr = -1;
         ar(addr, value);
         address = addr;
     }
@@ -82,14 +83,14 @@ struct AddressedBits
     void save(Archive &ar) const
     {
         // https://github.com/USCiLab/cereal/issues/684
-        std::int64_t addr = address;
+        std::streamoff addr = address;
         ar(addr, value, validBits);
     }
 
     template <class Archive>
     void load(Archive &ar)
     {
-        std::int64_t addr = -1;
+        std::streamoff addr = -1;
         ar(addr, value, validBits);
         address = addr;
     }
@@ -149,14 +150,14 @@ struct TagIgnore
     void save(Archive &ar) const
     {
         // https://github.com/USCiLab/cereal/issues/684
-        std::int64_t addr = address;
+        std::streamoff addr = address;
         ar(addr, value);
     }
 
     template <class Archive>
     void load(Archive &ar)
     {
-        std::int64_t addr = -1;
+        std::streamoff addr = -1;
         ar(addr, value);
         address = addr;
     }
