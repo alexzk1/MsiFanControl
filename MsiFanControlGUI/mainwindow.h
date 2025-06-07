@@ -2,10 +2,12 @@
 
 #include "cm_ctors.h"       // IWYU pragma: keep
 #include "messages_types.h" // IWYU pragma: keep
+#include "passed_time.hpp"  // IWYU pragma: keep
 
 #include <QAction>
 #include <QButtonGroup>
 #include <QMainWindow>
+#include <QObject>
 #include <QPoint>
 #include <QPointer>
 #include <QSystemTrayIcon>
@@ -17,12 +19,12 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
-#include <chrono>
 #include <cstdint>
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <thread>
+#include <unordered_map>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -82,13 +84,11 @@ class MainWindow final : public QMainWindow
     /// the device.
     /// This method must be called when some GUI control is changed by user and is written to
     /// device.
-    // TODO: probably those 2 methods must be separated class and it should be personal object per
-    // GUI control (now it is 1 blocker for all controls).
-    void BlockReadSetters();
+    void BlockReadSetters(const QObject *whom);
 
     /// @brief GUI setters/visualizers of the data from the device must call this function.
     /// @returns true if current data must NOT update the GUI controls yet.
-    bool IsReadSettingBlocked();
+    bool IsReadSettingBlocked(const QObject *whom);
 
     void LaunchGameMode();
 
@@ -105,13 +105,12 @@ class MainWindow final : public QMainWindow
     std::optional<RequestFromUi> requestToDaemon;
     std::mutex requestMutex;
 
-    std::chrono::time_point<std::chrono::steady_clock> allowedUpdate{
-      std::chrono::steady_clock::now()};
-
     std::optional<FullInfoBlock> lastReadInfoForGameModeThread;
     std::mutex lastReadInfoForGameModeThreadMutex;
 
     QPointer<QSystemTrayIcon> systemTray;
     QPointer<QButtonGroup> batButtons;
     bool closing{false};
+
+    std::unordered_map<const QObject *, std::optional<CPassedTime>> updateFromDaemonBlockers;
 };

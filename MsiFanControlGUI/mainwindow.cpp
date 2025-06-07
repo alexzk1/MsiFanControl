@@ -11,12 +11,8 @@
 #include "qtimer.h"
 #include "reads_period_detector.h"
 #include "runners.h"
-#include "ui_mainwindow.h" // IWYU pragma: keep
 
-#include <qbuttongroup.h>
-#include <qmainwindow.h>
-#include <qpaintdevice.h>
-#include <qrgb.h>
+#include "ui_mainwindow.h" // IWYU pragma: keep
 
 #include <QAction>
 #include <QCloseEvent>
@@ -24,6 +20,7 @@
 #include <QImage>
 #include <QMenu>
 #include <QMessageBox>
+#include <QObject>
 #include <QOverload>
 #include <QPainter>
 #include <QPixmap>
@@ -31,6 +28,12 @@
 #include <QString>
 #include <QSystemTrayIcon>
 #include <QTimer>
+
+#include <qbuttongroup.h>
+#include <qmainwindow.h>
+#include <qpaintdevice.h>
+#include <qrgb.h>
+
 #include <algorithm>
 #include <bits/chrono.h>
 #include <cassert>
@@ -62,7 +65,7 @@ MainWindow::MainWindow(StartOptions options, QWidget *parent) :
 
     connect(batButtons, QOverload<QAbstractButton *, bool>::of(&QButtonGroup::buttonToggled), this,
             [this](QAbstractButton *button, bool checked) {
-                BlockReadSetters();
+                BlockReadSetters(ui->rbBatBalance);
                 UpdateRequestToDaemon([&](RequestFromUi &r) {
                     if (checked)
                     {
@@ -85,7 +88,7 @@ MainWindow::MainWindow(StartOptions options, QWidget *parent) :
     connect(ui->btnOn, &QRadioButton::toggled, this, [this](bool on) {
         if (on)
         {
-            BlockReadSetters();
+            BlockReadSetters(ui->btnOn);
             UpdateRequestToDaemon([&](RequestFromUi &r) {
                 r.boostersStates.fanBoosterState = BoosterState::ON;
             });
@@ -95,7 +98,7 @@ MainWindow::MainWindow(StartOptions options, QWidget *parent) :
     connect(ui->btnOff, &QRadioButton::toggled, this, [this](bool on) {
         if (on)
         {
-            BlockReadSetters();
+            BlockReadSetters(ui->btnOn); // Those 2 should use the same object.
             UpdateRequestToDaemon([&](RequestFromUi &r) {
                 r.boostersStates.fanBoosterState = BoosterState::OFF;
             });
@@ -380,7 +383,7 @@ void MainWindow::SetDaemonConnectionStateOnGuiThread(const ConnState state)
 
 void MainWindow::SetUiBooster(const BoostersStates &state)
 {
-    if (!IsReadSettingBlocked())
+    if (!IsReadSettingBlocked(ui->btnOn))
     {
         auto block = BlockGuard(ui->btnOff, ui->btnOn);
         switch (state.fanBoosterState)
@@ -399,7 +402,7 @@ void MainWindow::SetUiBooster(const BoostersStates &state)
 
 void MainWindow::SetUiBattery(const Battery &battery)
 {
-    if (!IsReadSettingBlocked())
+    if (!IsReadSettingBlocked(ui->rbBatBalance))
     {
         const auto block = BlockGuard(ui->rbBatBalance, ui->rbBatMax, ui->rbBatMin);
 
@@ -442,14 +445,23 @@ void MainWindow::UncheckAllBatteryButtons()
     }
 }
 
-void MainWindow::BlockReadSetters()
+void MainWindow::BlockReadSetters(const QObject *whom)
 {
-    allowedUpdate = std::chrono::steady_clock::now() + std::chrono::seconds(10);
+    using namespace std::chrono_literals;
+    updateFromDaemonBlockers[whom].emplace(kMinimumServiceDelay + 5000ms);
 }
 
-bool MainWindow::IsReadSettingBlocked()
+bool MainWindow::IsReadSettingBlocked(const QObject *whom)
 {
-    return std::chrono::steady_clock::now() < allowedUpdate;
+    if (!updateFromDaemonBlockers.count(whom))
+    {
+        return false;
+    }
+    if (const auto &opt = updateFromDaemonBlockers.at(whom))
+    {
+        return opt->IsPassed();
+    }
+    return false;
 }
 
 void MainWindow::SetImageIcon(std::optional<int> value, const QColor &color,
