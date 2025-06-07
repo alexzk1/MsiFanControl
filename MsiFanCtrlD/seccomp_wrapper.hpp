@@ -8,9 +8,9 @@
 #include <linux/futex.h>
 #include <seccomp.h>
 #include <sys/mman.h>
+#include <sys/wait.h>
 
 #include <bits/types.h>
-#include <cerrno>
 #include <cstddef>
 #include <iostream>
 #include <memory>
@@ -116,17 +116,19 @@ class CSecCompWrapper
             return InstallOpenAt() && InstallMMapUnmap() && InstallMProtect()
                    && InstallAllowRule(SCMP_SYS(fstat)) && InstallAllowRule(SCMP_SYS(write))
                    && InstallAllowRule(SCMP_SYS(read)) && InstallAllowRule(SCMP_SYS(close))
+
                    && InstallAllowRule(SCMP_SYS(unlink))
                    && InstallAllowRule(SCMP_SYS(fchmod), Equals<__mode_t>(1u, 0666))
 
                    && InstallAllowRule(SCMP_SYS(exit_group)) && InstallAllowRule(SCMP_SYS(exit))
+                   && InstallAllowRule(SCMP_SYS(waitpid)) && InstallAllowRule(SCMP_SYS(waitid))
+                   && InstallAllowRule(SCMP_SYS(wait4)) && InstallAllowRule(SCMP_SYS(futex))
+
                    && InstallAllowRule(SCMP_SYS(clock_nanosleep))
                    && InstallAllowRule(SCMP_SYS(nanosleep))
                    && InstallAllowRule(SCMP_SYS(rt_sigtimedwait))
                    && InstallAllowRule(SCMP_SYS(rt_sigprocmask))
                    && InstallAllowRule(SCMP_SYS(rt_sigaction))
-
-                   && InstallAllowRule(SCMP_SYS(futex), Equals<int>(1u, FUTEX_WAKE_PRIVATE))
 
                    && InstallAllowRule(SCMP_SYS(fallocate), Equals<int>(1u, 0),
                                        Equals<__off_t>(2u, 0),

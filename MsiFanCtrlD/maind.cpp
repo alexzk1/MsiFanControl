@@ -106,7 +106,9 @@ int main(int argc, const char **argv)
         sd_notify(0, "STOPPING=1");
 
         // Stop all threading operations
+        std::cerr << "Stopping thread...";
         thread.reset();
+        std::cerr << "Thread was stopped...";
 
         sd_notify(0, "STATUS=STOPPED");
         std::cerr << std::string("MSI fans control has been successfully shut down.") << std::endl
