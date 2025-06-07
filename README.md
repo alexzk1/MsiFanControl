@@ -19,7 +19,7 @@ Note all that mentioned software may conflict with this program.
 
 Implemented self-restriction via `libseccomp` so this one is much safer to run as `root` than anything else. Restriction is enabled if `--restrict` command line parameter is given. Note, it may add some heat to your CPU.
 
-Battery charging levels change works without additional software.
+Battery charging level change works without additional software.
 
 Everthing else (present into other solutions) does not look too much important for me.
 
