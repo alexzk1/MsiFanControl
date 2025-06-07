@@ -11,8 +11,12 @@
 #include "qtimer.h"
 #include "reads_period_detector.h"
 #include "runners.h"
-
 #include "ui_mainwindow.h" // IWYU pragma: keep
+
+#include <qbuttongroup.h>
+#include <qmainwindow.h>
+#include <qpaintdevice.h>
+#include <qrgb.h>
 
 #include <QAction>
 #include <QCloseEvent>
@@ -27,15 +31,10 @@
 #include <QString>
 #include <QSystemTrayIcon>
 #include <QTimer>
-
-#include <qbuttongroup.h>
-#include <qmainwindow.h>
-#include <qpaintdevice.h>
-#include <qrgb.h>
-
 #include <algorithm>
 #include <bits/chrono.h>
 #include <cassert>
+#include <chrono>
 #include <cstddef>
 #include <exception>
 #include <iostream>
@@ -441,6 +440,16 @@ void MainWindow::UncheckAllBatteryButtons()
             batButtons->setExclusive(true);
         }
     }
+}
+
+void MainWindow::BlockReadSetters()
+{
+    allowedUpdate = std::chrono::steady_clock::now() + std::chrono::seconds(10);
+}
+
+bool MainWindow::IsReadSettingBlocked()
+{
+    return std::chrono::steady_clock::now() < allowedUpdate;
 }
 
 void MainWindow::SetImageIcon(std::optional<int> value, const QColor &color,

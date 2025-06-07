@@ -77,15 +77,18 @@ class MainWindow final : public QMainWindow
     void SetUiBattery(const Battery &battery);
     void UncheckAllBatteryButtons();
 
-    void BlockReadSetters()
-    {
-        allowedUpdate = std::chrono::steady_clock::now() + std::chrono::seconds(10);
-    }
+    ///@brief There is communication lag of writting settings than reading it back.
+    /// So once we sent off new value, we must wait for some time before we can actualize data from
+    /// the device.
+    /// This method must be called when some GUI control is changed by user and is written to
+    /// device.
+    // TODO: probably those 2 methods must be separated class and it should be personal object per
+    // GUI control (now it is 1 blocker for all controls).
+    void BlockReadSetters();
 
-    bool IsReadSettingBlocked()
-    {
-        return std::chrono::steady_clock::now() < allowedUpdate;
-    }
+    /// @brief GUI setters/visualizers of the data from the device must call this function.
+    /// @returns true if current data must NOT update the GUI controls yet.
+    bool IsReadSettingBlocked();
 
     void LaunchGameMode();
 
