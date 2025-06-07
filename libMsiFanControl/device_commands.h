@@ -59,6 +59,11 @@ struct AddressedValueTmpl
     }
 };
 
+/// @brief Shortcut for 1 byte value.
+using AddressedValue1B = AddressedValueTmpl<std::uint8_t>;
+/// @brief Shortcut for 2 bytes value.
+using AddressedValue2B = AddressedValueTmpl<std::uint16_t>;
+
 /// @brief Similar to @struct AddressedValueTmpl but works with individual bits. Can access 1 byet =
 /// 8 bits at once.
 struct AddressedBits
@@ -77,6 +82,13 @@ struct AddressedBits
     /// @brief actual 1 byte value
     // NOLINTNEXTLINE
     std::uint8_t value;
+
+    static AddressedBits From1BValue(const AddressedValue1B &val, std::uint8_t validBits)
+    {
+        AddressedBits bits{val.address, validBits, val.value};
+        bits.MaskValue();
+        return bits;
+    }
 
     // support for Cereal
     template <class Archive>
@@ -162,11 +174,6 @@ struct TagIgnore
         address = addr;
     }
 };
-
-/// @brief Shortcut for 1 byte value.
-using AddressedValue1B = AddressedValueTmpl<std::uint8_t>;
-/// @brief Shortcut for 2 bytes value.
-using AddressedValue2B = AddressedValueTmpl<std::uint16_t>;
 
 /// @brief Possibly values we accepts.
 using AddressedValueAny =

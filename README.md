@@ -2,7 +2,7 @@
 Linux solution to control fans on MSI laptops.
 
 
-More to read:
+More to read, to try:
 
 https://github.com/YoyPa/isw/blob/master/wiki/msi%20ec.png
 (and the whole repo there)
@@ -10,6 +10,8 @@ https://github.com/YoyPa/isw/blob/master/wiki/msi%20ec.png
 https://github.com/BeardOverflow/msi-ec
 
 https://github.com/dmitry-s93/MControlCenter
+
+Note all that mentioned software may conflict with this program.
 
 # Why this one ?
 
@@ -21,6 +23,7 @@ Everthing else (present into other solutions) does not look too much important f
 
 # How to run
 
+## Manual installation
 Compile.
 Install daemon using systemd (edit supplied .service). You need to allow debug EC access. How to do you can check here:
 https://github.com/YoyPa/isw
@@ -32,6 +35,8 @@ Run GUI application, tick checkbox "Game Mode Automatic Boost Control", minimize
 ## Arch Linux
 You can download all files from `linux` subfolder and run `makepkg -is`. Restriction is enabled by default in file `linux/msifancontrol.service`.
 
+Additional manual configuration is not expected.
+
 # Stress test "smart logic" of the "game mode"
 Install `stress-ng` (https://www.tecmint.com/linux-cpu-load-stress-test-with-stress-ng-tool/).
 
@@ -40,10 +45,6 @@ Run `sudo stress-ng --cpu 8 --timeout 90`.
 # Dependencies
 
 You will need installed system wide: g++ (latest), cmake, boost 1.8+, cereal (C++ headers only serialization library), libcpuid, qt5 widgets (for GUI), libseccomp.
-
-Optionally you may try to install https://github.com/BeardOverflow/msi-ec
-
-msi-ec allows to control battery maximum charge (and many other things outside scope of this program).
 
 # Warning
 Use at your own risk, no liability for me. This program is based on researchings of the other peoples (see the links). It must be used ONLY on MSI laptops with Intel CPUs. Daemon will try to check if proper CPU and laptop are used.

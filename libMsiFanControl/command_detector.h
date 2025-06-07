@@ -75,10 +75,15 @@ class ProperCommandDetector
         return get();
     }
 
+    bool isValid() const
+    {
+        return commandsToChooseFrom.size() == 1;
+    }
+
   private:
     void validateSingleElement() const
     {
-        if (commandsToChooseFrom.size() != 1)
+        if (!isValid())
         {
             throw std::logic_error("Command should be detected before use.");
         }

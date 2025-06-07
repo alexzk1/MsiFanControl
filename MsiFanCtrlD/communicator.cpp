@@ -4,7 +4,8 @@
 #include "cm_ctors.h" // IWYU pragma: keep
 #include "communicator_common.h"
 #include "csysfsprovider.h" // IWYU pragma: keep
-#include "device.h"
+#include "device.h"         // IWYU pragma: keep
+#include "messages_types.h"
 #include "msi_fan_control.h"
 #include "readwrite_provider.h" // IWYU pragma: keep
 
@@ -203,6 +204,7 @@ CSharedDevice::~CSharedDevice()
 void CSharedDevice::Communicate()
 {
     using namespace boost::interprocess;
+
     RequestFromUi fromUI;
     {
         const scoped_lock<interprocess_mutex> grd(sharedMem->Mutex());

@@ -35,9 +35,9 @@
 
 #include <algorithm>
 #include <bits/chrono.h>
+#include <cassert>
 #include <cstddef>
 #include <exception>
-#include <filesystem>
 #include <iostream>
 #include <map>
 #include <mutex>
@@ -60,14 +60,6 @@ MainWindow::MainWindow(StartOptions options, QWidget *parent) :
     batButtons->addButton(ui->rbBatMin);
     UncheckAllBatteryButtons();
     batButtons->setExclusive(true);
-
-    if (!std::filesystem::exists("/sys/class/power_supply/BAT1/charge_control_start_threshold"))
-    {
-        ui->groupBat->setVisible(false);
-        std::cerr << "Driver which could control the charging is not loaded.\n"
-                     "Check: https://github.com/BeardOverflow/msi-ec"
-                  << std::endl;
-    }
 
     connect(batButtons, QOverload<QAbstractButton *, bool>::of(&QButtonGroup::buttonToggled), this,
             [this](QAbstractButton *button, bool checked) {
@@ -408,22 +400,34 @@ void MainWindow::SetUiBooster(const BoostersStates &state)
 
 void MainWindow::SetUiBattery(const Battery &battery)
 {
-    const auto block = BlockGuard(ui->rbBatBalance, ui->rbBatMax, ui->rbBatMin);
-    switch (battery.maxLevel)
+    if (!IsReadSettingBlocked())
     {
-        case BatteryLevels::BestForBattery:
-            ui->rbBatMin->setChecked(true);
-            break;
-        case BatteryLevels::Balanced:
-            ui->rbBatBalance->setChecked(true);
-            break;
-        case BatteryLevels::BestForMobility:
-            ui->rbBatMax->setChecked(true);
-            break;
-        case BatteryLevels::NotKnown:
+        const auto block = BlockGuard(ui->rbBatBalance, ui->rbBatMax, ui->rbBatMin);
+
+        // TODO: add some verbosity, like message somewhere "cannot control the battery" depend on
+        // enum's value.
+        if (!battery.IsMode())
+        {
             UncheckAllBatteryButtons();
-            break;
-    };
+            return;
+        }
+        switch (battery.maxLevel)
+        {
+            case BatteryLevels::BestForBattery:
+                ui->rbBatMin->setChecked(true);
+                break;
+            case BatteryLevels::Balanced:
+                ui->rbBatBalance->setChecked(true);
+                break;
+            case BatteryLevels::BestForMobility:
+                ui->rbBatMax->setChecked(true);
+                break;
+            default:
+                assert(false && "Something went wrong, check Battery::IsMode() too.");
+                UncheckAllBatteryButtons();
+                break;
+        };
+    }
 }
 
 void MainWindow::UncheckAllBatteryButtons()

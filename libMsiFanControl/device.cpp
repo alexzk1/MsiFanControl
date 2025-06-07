@@ -4,14 +4,12 @@
 #include "csysfsprovider.h"
 #include "device_commands.h" // IWYU pragma: keep
 #include "messages_types.h"  // IWYU pragma: keep
-#include "readwrite.h"
+#include "readwrite.h"       // IWYU pragma: keep
 
 #include <algorithm>
 #include <cstddef>
-#include <cstdint>
 #include <iosfwd>
 #include <iterator>
-#include <map>
 #include <optional>
 #include <set>
 #include <stdexcept>
@@ -49,6 +47,7 @@ struct AllowedAddresses
     AddressedValueAllowedAddresses gpu;
 };
 
+// For security reasons we accept only known addresses to write.
 AllowedAddresses BuildAllowedAdressesFromDefaults()
 {
     static const auto makeSingle = [](const AddressedValueAnyList &src) {
@@ -162,9 +161,12 @@ void CDevice::SetBehaveState(const BehaveWithCurve &behaveWithCurve) const
 
 Battery CDevice::ReadBattery() const
 {
-    AddressedValue1B cmd = GetBatteryThreshold();
-    readWriteAccess.ReadOne(cmd);
-    return Battery{cmd};
+    if (auto cmd = GetBatteryThreshold())
+    {
+        readWriteAccess.ReadOne(*cmd);
+        return Battery{*cmd};
+    }
+    return Battery{};
 }
 /*
     if (streq(buf, "max"))
@@ -181,17 +183,15 @@ Battery CDevice::ReadBattery() const
 */
 void CDevice::SetBattery(const Battery &battery) const
 {
-    static const std::map<BatteryLevels, std::uint8_t> enum2value = {
-      {BatteryLevels::BestForMobility, 0xE4},
-      {BatteryLevels::Balanced, 0x80 + 80},
-      {BatteryLevels::BestForBattery, 0x80 + 60},
-    };
-    if (battery.maxLevel != BatteryLevels::NotKnown)
+    if (const auto val = Battery::LevelToPercents(battery.maxLevel))
     {
-        auto cmd = GetBatteryThreshold();
-        cmd.value = enum2value.at(battery.maxLevel);
-        auto handle = readWriteAccess.StartWritting();
-        readWriteAccess.Write(handle, {cmd});
+        if (auto cmd = GetBatteryThreshold())
+        {
+            readWriteAccess.CancelBackupOn(*cmd);
+            cmd->value = *val;
+            auto handle = readWriteAccess.StartWritting();
+            readWriteAccess.Write(handle, {*cmd});
+        }
     }
 }
 
@@ -203,6 +203,7 @@ FullInfoBlock CDevice::ReadFullInformation(std::size_t aTag) const
 
 AddressedValueAnyList CDevice::GetCmdTempRPM() const
 {
+    // I think we can do such a static because we have exactly 1 device (PC).
     static ProperCommandDetector cpuRpmDetector({
       AddressedValue2B{0xC8, 0},
       AddressedValue2B{0xCC, 0},
@@ -258,8 +259,10 @@ CDevice::BoosterStates CDevice::GetCmdBoosterStates() const
     return booster;
 }
 
-AddressedValue1B CDevice::GetBatteryThreshold() const
+std::optional<AddressedBits> CDevice::GetBatteryThreshold() const
 {
+    // I think we can do such a static because we have exactly 1 device (PC).
+    // We must read all bits for detection, as we base on it.
     static ProperCommandDetector addressDetector({
       AddressedValue1B{0xEF, 0},
       AddressedValue1B{0xD7, 0},
@@ -272,25 +275,23 @@ AddressedValue1B CDevice::GetBatteryThreshold() const
         AddressedValueAnyList clone = commandsList;
         readWriteAccess.Read(clone);
 
-        const auto &vEF = std::get<AddressedValue1B>(clone.at(0)).value;
-        const auto &vD7 = std::get<AddressedValue1B>(clone.at(1)).value;
-        if (vEF < 0x80 || vEF > 0xE4)
+        const auto &vEF = std::get<AddressedValue1B>(clone.at(0));
+        const auto &vD7 = std::get<AddressedValue1B>(clone.at(1));
+        if (Battery::IsWrongBytePercent(vEF))
         {
             commandsList.erase(commandsList.begin());
         }
-        if (vD7 < 0x80 || vD7 > 0xE4)
+        if (Battery::IsWrongBytePercent(vD7))
         {
             commandsList.erase(std::prev(commandsList.end()));
         }
-
-        // FIXME: We may have excepton on lambda exit if both addresses failed the check.
-        // And everything will not work than.
-        if (commandsList.size() == 1)
-        {
-            readWriteAccess.CancelBackupOn(commandsList.front());
-        }
     });
-    return std::get<AddressedValue1B>(addressDetector.get());
+
+    if (addressDetector.isValid())
+    {
+        return AddressedBits::From1BValue(std::get<AddressedValue1B>(addressDetector.get()), 0x7F);
+    }
+    return std::nullopt;
 }
 
 void CpuGpuFanCurve::Validate() const

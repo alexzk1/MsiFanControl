@@ -10,6 +10,8 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <optional>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -224,7 +226,9 @@ enum class BatteryLevels : std::uint8_t {
     BestForBattery,
     Balanced,
     BestForMobility,
-    NotKnown
+    NotKnown,
+    InvalidRange,
+    CannotAccess,
 };
 
 /// @brief Battery behave and addressed command for the BIOS.
@@ -232,7 +236,7 @@ enum class BatteryLevels : std::uint8_t {
 /// maxLevel, or depend on @var maxLevel proper value is composed and sent to BIOS.
 struct Battery
 {
-    BatteryLevels maxLevel{BatteryLevels::NotKnown};
+    BatteryLevels maxLevel{BatteryLevels::CannotAccess};
 
     Battery() = default;
     DEFAULT_COPYMOVE(Battery);
@@ -242,6 +246,16 @@ struct Battery
     {
     }
 
+    bool IsMode() const
+    {
+        static const std::set<BatteryLevels> notModes = {
+          BatteryLevels::CannotAccess,
+          BatteryLevels::InvalidRange,
+          BatteryLevels::NotKnown,
+        };
+        return 0 == notModes.count(maxLevel);
+    }
+
     // support for Cereal
     template <class Archive>
     void serialize(Archive &ar, const std::uint32_t /*version*/)
@@ -249,29 +263,62 @@ struct Battery
         ar(maxLevel, _debugRead);
     }
 
+    static std::optional<std::uint8_t> LevelToPercents(BatteryLevels level)
+    {
+        const auto it = enum2value.find(level);
+        if (it == enum2value.end())
+        {
+            return std::nullopt;
+        }
+        return it->second;
+    }
+
+    static bool IsWrongBytePercent(const AddressedValue1B &value)
+    {
+        static_assert(kRequiredOffset + kFullBattery <= static_cast<std::uint64_t>(0xFF));
+        return value.value < kRequiredOffset || value.value > kRequiredOffset + kFullBattery;
+    }
+
+    static bool IsWrongBytePercent(const AddressedBits &value)
+    {
+        return value.value > kFullBattery;
+    }
+
+    static BatteryLevels BiosToLevel(AddressedBits value)
+    {
+        if (IsWrongBytePercent(value))
+        {
+            return BatteryLevels::InvalidRange;
+        }
+
+        for (const auto &kv : enum2value)
+        {
+            if (kv.second == value.value)
+            {
+                return kv.first;
+            }
+        }
+        return BatteryLevels::NotKnown;
+    }
+
   private:
     friend class CDevice;
 
-    explicit Battery(AddressedValue1B value) :
+    static constexpr std::uint8_t kRequiredOffset = 0x80;
+    static constexpr std::uint8_t kFullBattery = 100 /* (percents) */;
+
+    inline static const std::map<BatteryLevels, std::uint8_t> enum2value = {
+      {BatteryLevels::BestForMobility, kFullBattery},
+      {BatteryLevels::Balanced, 80 /* (percents) */},
+      {BatteryLevels::BestForBattery, 60 /* (percents) */},
+    };
+
+    explicit Battery(AddressedBits value) :
+        maxLevel(BiosToLevel(value)),
         _debugRead(value)
     {
-        if (_debugRead.value >= 0x80 && _debugRead.value <= 0xE4)
-        {
-            if (_debugRead.value == 0x80 + 60)
-            {
-                maxLevel = BatteryLevels::BestForBattery;
-            }
-            if (_debugRead.value == 0x80 + 80)
-            {
-                maxLevel = BatteryLevels::Balanced;
-            }
-            if (_debugRead.value > 0x80 + 80)
-            {
-                maxLevel = BatteryLevels::BestForMobility;
-            }
-        }
     }
-    AddressedValue1B _debugRead{};
+    AddressedBits _debugRead{};
 };
 CEREAL_CLASS_VERSION(Battery, 1)
 
@@ -381,7 +428,7 @@ struct RequestFromUi
     RequestType request;
     BoostersStates boostersStates{};
     BehaveWithCurve behaveAndCurve{};
-    Battery battery{BatteryLevels::NotKnown};
+    Battery battery{BatteryLevels::CannotAccess};
 
     // support for Cereal
     template <class Archive>
@@ -400,7 +447,7 @@ struct RequestFromUi
     [[nodiscard]]
     bool HasUserAction() const
     {
-        return boostersStates.HasAnyChange() || battery.maxLevel != BatteryLevels::NotKnown;
+        return boostersStates.HasAnyChange() || battery.IsMode();
     }
 };
 CEREAL_CLASS_VERSION(RequestFromUi, 4)

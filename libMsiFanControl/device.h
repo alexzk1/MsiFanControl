@@ -2,11 +2,15 @@
 
 #include "cm_ctors.h"
 #include "device_commands.h"
-#include "messages_types.h"
-#include "readwrite.h"
+#include "messages_types.h" // IWYU pragma: keep
+#include "readwrite.h"      // IWYU pragma: keep
+
+#include <cstddef>
+#include <optional>
 
 /// @brief This represents physical device we're on. Like whole laptop, with fans, CPU, GPU etc.
 /// This is supposed to be used from the daemon with root access.
+/// @note This class is not thread-safe.
 class CDevice
 {
   public:
@@ -42,9 +46,8 @@ class CDevice
 
     /// @brief Tries to detect valid offset to read/write battery command to BIOS. It is different
     /// on different models.
-    /// @returns Command for r/w. It may be wrong detected which can cause exceptions later
-    /// ("nothing works").
-    virtual AddressedValue1B GetBatteryThreshold() const;
+    /// @returns Command for r/w or std::nullopt if it was not detected.
+    virtual std::optional<AddressedBits> GetBatteryThreshold() const;
 
   private:
     CReadWrite readWriteAccess;
