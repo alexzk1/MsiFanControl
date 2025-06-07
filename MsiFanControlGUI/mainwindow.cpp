@@ -453,15 +453,17 @@ void MainWindow::BlockReadSetters(const QObject *whom)
 
 bool MainWindow::IsReadSettingBlocked(const QObject *whom)
 {
+    constexpr bool kNotBlocked = false;
+
     if (!updateFromDaemonBlockers.count(whom))
     {
-        return false;
+        return kNotBlocked;
     }
     if (const auto &opt = updateFromDaemonBlockers.at(whom))
     {
-        return opt->IsPassed();
+        return !opt->IsPassed();
     }
-    return false;
+    return kNotBlocked;
 }
 
 void MainWindow::SetImageIcon(std::optional<int> value, const QColor &color,

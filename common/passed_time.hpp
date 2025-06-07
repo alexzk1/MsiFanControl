@@ -23,7 +23,7 @@ class CPassedTime
     [[nodiscard]]
     bool IsPassed() const
     {
-        return std::chrono::steady_clock::now() < passed_at_;
+        return passed_at_ <= std::chrono::steady_clock::now();
     }
 
     operator bool() const
