@@ -48,6 +48,11 @@
 #include <thread>
 #include <utility>
 
+namespace {
+using namespace std::chrono_literals;
+constexpr auto kDaemonToGuiLag = kMinimumServiceDelay + 5000ms;
+} // namespace
+
 MainWindow::MainWindow(StartOptions options, QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
@@ -447,8 +452,7 @@ void MainWindow::UncheckAllBatteryButtons()
 
 void MainWindow::BlockReadSetters(const QObject *whom)
 {
-    using namespace std::chrono_literals;
-    updateFromDaemonBlockers[whom].emplace(kMinimumServiceDelay + 5000ms);
+    updateFromDaemonBlockers[whom].emplace(kDaemonToGuiLag);
 }
 
 bool MainWindow::IsReadSettingBlocked(const QObject *whom)
