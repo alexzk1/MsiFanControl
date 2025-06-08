@@ -11,7 +11,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <optional>
-#include <set>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -221,58 +220,72 @@ struct BehaveWithCurve
 };
 CEREAL_CLASS_VERSION(BehaveWithCurve, 1)
 
-/// @brief Defines possibly baterry behaves.
-enum class BatteryLevels : std::uint8_t {
-    BestForBattery,
-    Balanced,
-    BestForMobility,
-    NotKnown,
-    InvalidRange,
-    CannotAccess,
-};
-
 /// @brief Battery behave and addressed command for the BIOS.
 /// @note @var _debugRead is updated by the daemon, it is either read from BIOS and updates @var
 /// maxLevel, or depend on @var maxLevel proper value is composed and sent to BIOS.
 struct Battery
 {
-    BatteryLevels maxLevel{BatteryLevels::CannotAccess};
+    /// @brief Defines possibly baterry behaves.
+    enum class BatteryLevels : std::uint8_t {
+        BestForBattery,
+        Balanced,
+        BestForMobility,
+    };
+
+    /// @brief Battery control has some value but it does not fit BatteryLevels categories.
+    struct TLevelWasNotExact
+    {
+    };
+    /// @brief Battery control had something invalid, like 120% charge.
+    struct TInvalidRange
+    {
+    };
+    /// @brief Could not find out the address which controls the battery.
+    struct TCannotDetectBatteryControlSlot
+    {
+    };
+
+    using TBatteryState = std::variant<TCannotDetectBatteryControlSlot, TLevelWasNotExact,
+                                       TInvalidRange, BatteryLevels>;
+
+    TBatteryState maxLevel{TCannotDetectBatteryControlSlot{}};
 
     Battery() = default;
     DEFAULT_COPYMOVE(Battery);
     ~Battery() = default;
-    explicit Battery(BatteryLevels level) :
-        maxLevel(level)
+    explicit Battery(TBatteryState level) :
+        maxLevel(std::move(level))
     {
-    }
-
-    /// @returns true if object contains enum value corresponding to charging level selected.
-    /// @returns false if object contains one of error states.
-    bool IsMode() const
-    {
-        static const std::set<BatteryLevels> notModes = {
-          BatteryLevels::CannotAccess,
-          BatteryLevels::InvalidRange,
-          BatteryLevels::NotKnown,
-        };
-        return 0 == notModes.count(maxLevel);
     }
 
     // support for Cereal
     template <class Archive>
-    void serialize(Archive &ar, const std::uint32_t /*version*/)
+    void serialize(Archive &ar, const std::uint32_t version)
     {
+        if (version < 2)
+        {
+            throw std::runtime_error("Recompile. It is not compatible binary with older code.");
+        }
         ar(maxLevel, _debugRead);
     }
 
-    static std::optional<std::uint8_t> LevelToPercents(BatteryLevels level)
+    static std::optional<std::uint8_t> StateToPercents(TBatteryState state)
     {
-        const auto it = kEnum2Value.find(level);
-        if (it == kEnum2Value.end())
-        {
-            return std::nullopt;
-        }
-        return it->second;
+        sfw::LambdaVisitor visitor{
+          [](const BatteryLevels &level) -> std::optional<std::uint8_t> {
+              const auto it = kEnum2Value.find(level);
+              if (it == kEnum2Value.end())
+              {
+                  return std::nullopt;
+              }
+              return it->second;
+          },
+          [](const auto &) -> std::optional<std::uint8_t> {
+              return std::nullopt;
+          },
+        };
+
+        return std::visit(visitor, state);
     }
 
     ///@returns true if byte value (direct read from BIOS) is not recognized as valid charge level
@@ -293,11 +306,11 @@ struct Battery
     /// @returns BatteryLevels constant which corresponds to byte value read from BIOS, or one of
     /// error states.
     /// @note It checks exact numeric match and not the ranges.
-    static BatteryLevels BiosToLevel(AddressedBits value)
+    static TBatteryState BiosToState(AddressedBits value)
     {
         if (IsWrongBytePercent(value))
         {
-            return BatteryLevels::InvalidRange;
+            return TInvalidRange{};
         }
 
         for (const auto &kv : kEnum2Value)
@@ -307,7 +320,7 @@ struct Battery
                 return kv.first;
             }
         }
-        return BatteryLevels::NotKnown;
+        return TLevelWasNotExact{};
     }
 
     /// @returns masked reader/writer (some bits in byte) object for the battery.
@@ -330,13 +343,13 @@ struct Battery
     };
 
     explicit Battery(AddressedBits value) :
-        maxLevel(BiosToLevel(value)),
+        maxLevel(BiosToState(value)),
         _debugRead(value)
     {
     }
     AddressedBits _debugRead{};
 };
-CEREAL_CLASS_VERSION(Battery, 1)
+CEREAL_CLASS_VERSION(Battery, 2)
 
 struct RequestFromUi;
 struct FullInfoBlock;
@@ -444,7 +457,7 @@ struct RequestFromUi
     RequestType request;
     BoostersStates boostersStates{};
     BehaveWithCurve behaveAndCurve{};
-    Battery battery{BatteryLevels::CannotAccess};
+    Battery battery{Battery::TCannotDetectBatteryControlSlot{}};
 
     // support for Cereal
     template <class Archive>
@@ -463,7 +476,15 @@ struct RequestFromUi
     [[nodiscard]]
     bool HasUserAction() const
     {
-        return boostersStates.HasAnyChange() || battery.IsMode();
+        sfw::LambdaVisitor visitor{
+          [](const Battery::BatteryLevels &) {
+              return true;
+          },
+          [](const auto &) {
+              return false;
+          },
+        };
+        return boostersStates.HasAnyChange() || std::visit(visitor, battery.maxLevel);
     }
 };
 CEREAL_CLASS_VERSION(RequestFromUi, 4)

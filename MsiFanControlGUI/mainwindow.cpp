@@ -4,15 +4,20 @@
 #include "communicator.h"          // IWYU pragma: keep
 #include "execonmainthread.h"      // IWYU pragma: keep
 #include "gui_helpers.h"           // IWYU pragma: keep
-#include "messages_types.h"        // IWYU pragma: keep
+#include "lambda_visitors.h"
+#include "messages_types.h" // IWYU pragma: keep
 #include "qcheckbox.h"
 #include "qnamespace.h"
 #include "qradiobutton.h"
 #include "qtimer.h"
 #include "reads_period_detector.h"
 #include "runners.h"
-
 #include "ui_mainwindow.h" // IWYU pragma: keep
+
+#include <qbuttongroup.h>
+#include <qmainwindow.h>
+#include <qpaintdevice.h>
+#include <qrgb.h>
 
 #include <QAction>
 #include <QCloseEvent>
@@ -28,12 +33,6 @@
 #include <QString>
 #include <QSystemTrayIcon>
 #include <QTimer>
-
-#include <qbuttongroup.h>
-#include <qmainwindow.h>
-#include <qpaintdevice.h>
-#include <qrgb.h>
-
 #include <algorithm>
 #include <bits/chrono.h>
 #include <cassert>
@@ -47,6 +46,7 @@
 #include <stdexcept>
 #include <thread>
 #include <utility>
+#include <variant>
 
 namespace {
 using namespace std::chrono_literals;
@@ -76,15 +76,15 @@ MainWindow::MainWindow(StartOptions options, QWidget *parent) :
                     {
                         if (button == ui->rbBatBalance)
                         {
-                            r.battery.maxLevel = BatteryLevels::Balanced;
+                            r.battery.maxLevel = Battery::BatteryLevels::Balanced;
                         }
                         if (button == ui->rbBatMax)
                         {
-                            r.battery.maxLevel = BatteryLevels::BestForMobility;
+                            r.battery.maxLevel = Battery::BatteryLevels::BestForMobility;
                         }
                         if (button == ui->rbBatMin)
                         {
-                            r.battery.maxLevel = BatteryLevels::BestForBattery;
+                            r.battery.maxLevel = Battery::BatteryLevels::BestForBattery;
                         }
                     }
                 });
@@ -409,31 +409,40 @@ void MainWindow::SetUiBattery(const Battery &battery)
 {
     if (!IsReadSettingBlocked(ui->rbBatBalance))
     {
-        const auto block = BlockGuard(ui->rbBatBalance, ui->rbBatMax, ui->rbBatMin);
-
-        // TODO: add some verbosity, like message somewhere "cannot control the battery" depend on
-        // enum's value.
-        if (!battery.IsMode())
-        {
+        const auto errorCondition = [this](const bool setVisible) {
+            ui->groupBat->setVisible(setVisible);
             UncheckAllBatteryButtons();
-            return;
-        }
-        switch (battery.maxLevel)
-        {
-            case BatteryLevels::BestForBattery:
-                ui->rbBatMin->setChecked(true);
-                break;
-            case BatteryLevels::Balanced:
-                ui->rbBatBalance->setChecked(true);
-                break;
-            case BatteryLevels::BestForMobility:
-                ui->rbBatMax->setChecked(true);
-                break;
-            default:
-                assert(false && "Something went wrong, check Battery::IsMode() too.");
-                UncheckAllBatteryButtons();
-                break;
         };
+
+        const sfw::LambdaVisitor visitor{
+          [this](const Battery::BatteryLevels &level) {
+              ui->groupBat->setVisible(true);
+              switch (level)
+              {
+                  case Battery::BatteryLevels::BestForBattery:
+                      ui->rbBatMin->setChecked(true);
+                      break;
+                  case Battery::BatteryLevels::Balanced:
+                      ui->rbBatBalance->setChecked(true);
+                      break;
+                  case Battery::BatteryLevels::BestForMobility:
+                      ui->rbBatMax->setChecked(true);
+                      break;
+              }
+          },
+          [&errorCondition](const Battery::TCannotDetectBatteryControlSlot &) {
+              errorCondition(false);
+          },
+          [&errorCondition](const Battery::TInvalidRange &) {
+              errorCondition(false);
+          },
+          [&errorCondition](const Battery::TLevelWasNotExact &) {
+              errorCondition(true);
+          },
+        };
+
+        const auto block = BlockGuard(ui->rbBatBalance, ui->rbBatMax, ui->rbBatMin);
+        std::visit(visitor, battery.maxLevel);
     }
 }
 

@@ -183,7 +183,7 @@ Battery CDevice::ReadBattery() const
 */
 void CDevice::SetBattery(const Battery &battery) const
 {
-    if (const auto val = Battery::LevelToPercents(battery.maxLevel))
+    if (const auto val = Battery::StateToPercents(battery.maxLevel))
     {
         if (auto cmd = GetBatteryThreshold())
         {
