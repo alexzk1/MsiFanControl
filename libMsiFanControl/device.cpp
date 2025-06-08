@@ -270,7 +270,7 @@ std::optional<AddressedBits> CDevice::GetBatteryThreshold() const
 
     // Trying to detect 1 of the addresses.
     addressDetector.DetectProperAtOnce([this](auto &commandsList) {
-        Throw(commandsList.size() == 2, "Something went wrong. cpuRpmDetector.size() == 2.");
+        Throw(commandsList.size() == 2, "Unexpected command list size to detect battery address.");
         // Order above is important here for the check
         AddressedValueAnyList clone = commandsList;
         readWriteAccess.Read(clone);
