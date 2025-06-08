@@ -289,7 +289,7 @@ std::optional<AddressedBits> CDevice::GetBatteryThreshold() const
 
     if (addressDetector.isValid())
     {
-        return AddressedBits::From1BValue(std::get<AddressedValue1B>(addressDetector.get()), 0x7F);
+        return Battery::ReaderFromAddressedValue(std::get<AddressedValue1B>(addressDetector.get()));
     }
     return std::nullopt;
 }

@@ -246,6 +246,8 @@ struct Battery
     {
     }
 
+    /// @returns true if object contains enum value corresponding to charging level selected.
+    /// @returns false if object contains one of error states.
     bool IsMode() const
     {
         static const std::set<BatteryLevels> notModes = {
@@ -265,25 +267,32 @@ struct Battery
 
     static std::optional<std::uint8_t> LevelToPercents(BatteryLevels level)
     {
-        const auto it = enum2value.find(level);
-        if (it == enum2value.end())
+        const auto it = kEnum2Value.find(level);
+        if (it == kEnum2Value.end())
         {
             return std::nullopt;
         }
         return it->second;
     }
 
+    ///@returns true if byte value (direct read from BIOS) is not recognized as valid charge level
+    /// in percents.
     static bool IsWrongBytePercent(const AddressedValue1B &value)
     {
         static_assert(kRequiredOffset + kFullBattery <= static_cast<std::uint64_t>(0xFF));
         return value.value < kRequiredOffset || value.value > kRequiredOffset + kFullBattery;
     }
 
+    ///@returns true if byte value (direct read from BIOS) masked is not recognized as valid charge
+    /// level in percents.
     static bool IsWrongBytePercent(const AddressedBits &value)
     {
         return value.value > kFullBattery;
     }
 
+    /// @returns BatteryLevels constant which corresponds to byte value read from BIOS, or one of
+    /// error states.
+    /// @note It checks exact numeric match and not the ranges.
     static BatteryLevels BiosToLevel(AddressedBits value)
     {
         if (IsWrongBytePercent(value))
@@ -291,7 +300,7 @@ struct Battery
             return BatteryLevels::InvalidRange;
         }
 
-        for (const auto &kv : enum2value)
+        for (const auto &kv : kEnum2Value)
         {
             if (kv.second == value.value)
             {
@@ -301,13 +310,20 @@ struct Battery
         return BatteryLevels::NotKnown;
     }
 
+    /// @returns masked reader/writer (some bits in byte) object for the battery.
+    static AddressedBits ReaderFromAddressedValue(const AddressedValue1B &value)
+    {
+        static constexpr auto mask = static_cast<std::uint8_t>(~kRequiredOffset);
+        return AddressedBits::From1BValue(value, mask);
+    }
+
   private:
     friend class CDevice;
 
     static constexpr std::uint8_t kRequiredOffset = 0x80;
     static constexpr std::uint8_t kFullBattery = 100 /* (percents) */;
 
-    inline static const std::map<BatteryLevels, std::uint8_t> enum2value = {
+    inline static const std::map<BatteryLevels, std::uint8_t> kEnum2Value = {
       {BatteryLevels::BestForMobility, kFullBattery},
       {BatteryLevels::Balanced, 80 /* (percents) */},
       {BatteryLevels::BestForBattery, 60 /* (percents) */},
