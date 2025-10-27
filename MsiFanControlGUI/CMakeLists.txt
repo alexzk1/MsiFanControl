@@ -13,7 +13,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #https://www.qcustomplot.com/index.php/tutorials/settingup
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets PrintSupport)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets PrintSupport)
-find_package(Boost 1.80 COMPONENTS system program_options REQUIRED)
+find_package(Boost 1.80 COMPONENTS program_options REQUIRED OPTIONAL_COMPONENTS system)
 find_package(cereal REQUIRED)
 
 set(PROJECT_SOURCES

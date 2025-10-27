@@ -9,7 +9,7 @@ find_library(CPUID cpuid REQUIRED)
 
 set(Boost_USE_MULTITHREADED ON)
 
-find_package(Boost 1.80 COMPONENTS system REQUIRED)
+find_package(Boost 1.80 REQUIRED OPTIONAL_COMPONENTS system)
 find_package(cereal REQUIRED)
 
 find_package(ECM REQUIRED NO_MODULE)
