@@ -22,6 +22,11 @@ auto BlockGuard(Ptrs... args)
         explicit SignalBlocker(Ptrs... args) :
             pointers(args...)
         {
+            std::apply(
+              [](Ptrs &...args) {
+                  (..., args->blockSignals(true));
+              },
+              pointers);
         }
         ~SignalBlocker()
         {
