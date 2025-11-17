@@ -12,6 +12,7 @@
 template <typename... Ptrs>
 auto BlockGuard(Ptrs... args)
 {
+    static_assert((std::is_pointer_v<Ptrs> && ...), "All arguments must be raw pointers.");
     class SignalBlocker
     {
       private:
