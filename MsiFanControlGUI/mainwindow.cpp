@@ -12,12 +12,8 @@
 #include "qtimer.h"
 #include "reads_period_detector.h"
 #include "runners.h"
-#include "ui_mainwindow.h" // IWYU pragma: keep
 
-#include <qbuttongroup.h>
-#include <qmainwindow.h>
-#include <qpaintdevice.h>
-#include <qrgb.h>
+#include "ui_mainwindow.h" // IWYU pragma: keep
 
 #include <QAction>
 #include <QCloseEvent>
@@ -33,6 +29,13 @@
 #include <QString>
 #include <QSystemTrayIcon>
 #include <QTimer>
+
+#include <qbuttongroup.h>
+#include <qfont.h>
+#include <qmainwindow.h>
+#include <qpaintdevice.h>
+#include <qrgb.h>
+
 #include <algorithm>
 #include <bits/chrono.h>
 #include <cassert>
@@ -508,12 +511,17 @@ void MainWindow::SetImageIcon(std::optional<int> value, const QColor &color,
 
         if (cpuTurboBoost)
         {
-            const QRectF targetRect(0, 0, 16, 16);
+            const QRectF targetRect(0, 0, 16, 16); // Логотип в углу
+            // Делаем зону текста квадратной или пропорциональной, чтобы не было растягивания
+            // Например: отрезаем 16px слева и оставляем высоту равной ширине доступного места (или
+            // по центру)
             const QRectF textRect(targetRect.width(), 0, image.width() - targetRect.width(),
                                   image.height());
 
             p.drawImage(targetRect, overlay);
-            p.setFont(QFont("Times", 29, QFont::Bold));
+            p.setFont(QFont("Times", 26, QFont::Bold));
+
+            // Важно: центрируем текст в прямоугольнике с правильным соотношением сторон
             p.drawText(textRect, Qt::AlignCenter, QString("%1°").arg(*value));
         }
         else
